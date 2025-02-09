@@ -25,6 +25,7 @@ public class HeroKnight : MonoBehaviour {
     private float               m_delayToIdle = 0.0f;
     private float               m_rollDuration = 8.0f / 14.0f;
     private float               m_rollCurrentTime;
+    private float               m_horizontalInput;
 
 
     // Use this for initialization
@@ -46,12 +47,16 @@ public class HeroKnight : MonoBehaviour {
         m_timeSinceAttack += Time.deltaTime;
 
         // Increase timer that checks roll duration
-        if(m_rolling)
+        if (m_rolling)
+        {
             m_rollCurrentTime += Time.deltaTime;
+        }
 
         // Disable rolling if timer extends duration
         if(m_rollCurrentTime > m_rollDuration)
-            m_rolling = false;
+        {
+             m_rolling = false;
+        }
 
         //Check if character just landed on the ground
         if (!m_grounded && m_groundSensor.State())
@@ -64,32 +69,31 @@ public class HeroKnight : MonoBehaviour {
         //Check if character just started falling
         if (m_grounded && !m_groundSensor.State())
         {
-            Debug.Log("falling");
             m_grounded = false;
             m_animator.SetBool("Grounded", m_grounded);
         }
 
         // -- Handle input and movement --
-        float inputX = Input.GetAxis("Horizontal");
+        m_horizontalInput = Input.GetAxis("Horizontal");
 
         // Swap direction of sprite depending on walk direction
-        if (inputX > 0)
+        if (m_horizontalInput > 0)
         {
             GetComponent<SpriteRenderer>().flipX = false;
             m_facingDirection = 1;
         }
             
-        else if (inputX < 0)
+        else if (m_horizontalInput < 0)
         {
             GetComponent<SpriteRenderer>().flipX = true;
             m_facingDirection = -1;
         }
         
-        Debug.Log("InputX: " + inputX);
-        
         // Move
-        if (!m_rolling )
-            m_body2d.linearVelocity = new Vector2(inputX * m_speed, m_body2d.linearVelocity.y);
+        if (!m_rolling)
+        {
+            m_body2d.linearVelocity = new Vector2(m_horizontalInput * m_speed, m_body2d.linearVelocity.y);
+        }
 
         //Set AirSpeed in animator
         m_animator.SetFloat("AirSpeedY", m_body2d.linearVelocity.y);
@@ -160,7 +164,7 @@ public class HeroKnight : MonoBehaviour {
         }
 
         //Run
-        else if (Mathf.Abs(inputX) > Mathf.Epsilon)
+        else if (Mathf.Abs(m_horizontalInput) > Mathf.Epsilon)
         {
             // Reset timer
             m_delayToIdle = 0.05f;
