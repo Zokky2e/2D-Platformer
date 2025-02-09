@@ -1,0 +1,40 @@
+# Ignore Library folder (Unity cache)
+Library/
+# Ignore Temp folder (Unity cache)
+Temp/
+# Ignore Logs folder (Unity logs)
+Logs/
+
+# Ignore obj folder (compiled object files)
+obj/
+
+# Ignore Visual Studio specific files and folders
+.vs/
+.vscode/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore temporary files
+*.tmp
+
+# Ignore upgrade log file
+UpgradeLog.htm
+
+# Ignore Unity temporary folder
+.utmp/
+
+# Ignore user-specific settings or temporary files in the Settings folder
+Assets/Settings/*.userprefs
+Assets/Settings/*.temp
+Assets/Settings/*.bak
+
+# Ignore TMP-specific settings that are user-specific
+Assets/Settings/TextMesh Pro Settings.userprefs
+
+# Ignore TextMesh Pro Examples & Extras folder
+Assets/TextMesh Pro/Examples & Extras/
+Assets/TextMesh Pro/Examples & Extras.meta
