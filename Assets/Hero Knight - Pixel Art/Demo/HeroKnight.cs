@@ -6,6 +6,7 @@ public class HeroKnight : MonoBehaviour {
     [SerializeField] float      m_speed = 4.0f;
     [SerializeField] float      m_jumpForce = 7.5f;
     [SerializeField] float      m_rollForce = 6.0f;
+    [SerializeField] float      gravity = 1;
     [SerializeField] bool       m_noBlood = false;
     [SerializeField] GameObject m_slideDust;
 
@@ -16,13 +17,15 @@ public class HeroKnight : MonoBehaviour {
     private Sensor_HeroKnight   m_wallSensorR2;
     private Sensor_HeroKnight   m_wallSensorL1;
     private Sensor_HeroKnight   m_wallSensorL2;
+    private BoxCollider2D boxCollider;
+    [SerializeField] private LayerMask groundLayer;
     private bool                m_isWallSliding = false;
-    private bool                m_grounded = false;
     private bool                m_rolling = false;
     private int                 m_facingDirection = 1;
     private int                 m_currentAttack = 0;
     private float               m_timeSinceAttack = 0.0f;
     private float               m_delayToIdle = 0.0f;
+    private float               m_wallCooldown = 0.0f;
     private float               m_rollDuration = 8.0f / 14.0f;
     private float               m_rollCurrentTime;
     private float               m_horizontalInput;
@@ -33,6 +36,7 @@ public class HeroKnight : MonoBehaviour {
     {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
+        boxCollider = GetComponent<BoxCollider2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
         m_wallSensorR1 = transform.Find("WallSensor_R1").GetComponent<Sensor_HeroKnight>();
         m_wallSensorR2 = transform.Find("WallSensor_R2").GetComponent<Sensor_HeroKnight>();
@@ -43,6 +47,7 @@ public class HeroKnight : MonoBehaviour {
     // Update is called once per frame
     void Update ()
     {
+        m_animator.SetBool("Grounded", isGrounded());
         // Increase timer that controls attack combo
         m_timeSinceAttack += Time.deltaTime;
 
@@ -59,17 +64,15 @@ public class HeroKnight : MonoBehaviour {
         }
 
         //Check if character just landed on the ground
-        if (!m_grounded && m_groundSensor.State())
+        if (!isGrounded() && m_groundSensor.State())
         {
-            m_grounded = true;
-            m_animator.SetBool("Grounded", m_grounded);
+            m_animator.SetBool("Grounded", isGrounded());
         }
 
         //Check if character just started falling
-        if (m_grounded && !m_groundSensor.State())
+        if (isGrounded() && !m_groundSensor.State())
         {
-            m_grounded = false;
-            m_animator.SetBool("Grounded", m_grounded);
+            m_animator.SetBool("Grounded", isGrounded());
         }
 
         // -- Handle input and movement --
@@ -150,16 +153,11 @@ public class HeroKnight : MonoBehaviour {
             m_animator.SetTrigger("Roll");
             m_body2d.linearVelocity = new Vector2(m_facingDirection * m_rollForce, m_body2d.linearVelocity.y);
         }
-            
 
         //Jump
-        else if (Input.GetKeyDown("space") && m_grounded && !m_rolling)
+        else if (Input.GetKeyDown("space") && !m_rolling)
         {
-            m_animator.SetTrigger("Jump");
-            m_grounded = false;
-            m_animator.SetBool("Grounded", m_grounded);
-            m_body2d.linearVelocity = new Vector2(m_body2d.linearVelocity.x, m_jumpForce);
-            m_groundSensor.Disable(0.2f);
+            Jump();
         }
 
         //Run
@@ -178,6 +176,64 @@ public class HeroKnight : MonoBehaviour {
                 if(m_delayToIdle < 0)
                     m_animator.SetInteger("AnimState", 0);
         }
+
+        if (m_wallCooldown > 0.2f)
+        {
+            if (onWall() && isGrounded() && !m_rolling)
+            {
+                m_body2d.gravityScale = 0;
+                m_body2d.linearVelocity = Vector2.zero;
+            }
+            else
+            {
+                m_body2d.gravityScale = gravity;
+            }
+            if (Input.GetKeyDown("space") && !m_rolling)
+            {
+                Jump();
+            }
+        } 
+        else
+        {
+            m_wallCooldown += Time.deltaTime;
+        }
+
+        m_animator.SetBool("Grounded", isGrounded());
+    }
+
+    private void Jump()
+    {
+        Debug.Log(onWall());
+        if (isGrounded())
+        {
+            m_animator.SetTrigger("Jump");
+            m_body2d.linearVelocity = new Vector2(m_body2d.linearVelocity.x, m_jumpForce);
+            m_groundSensor.Disable(0.2f);
+        }
+        else if (onWall() && !isGrounded())
+        {
+            if (m_horizontalInput == 0)
+            {
+                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(m_facingDirection) * 6, 0);
+            }
+            else
+            {
+                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(m_facingDirection) * 2, 12);
+            }
+            m_wallCooldown = 0;
+        }
+    }
+
+    private bool isGrounded()
+    {
+        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, Vector2.down, 0.05f, groundLayer);
+        return raycastHit.collider != null;
+    }
+
+    private bool onWall()
+    {
+        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, new Vector2(m_facingDirection, 0), 0.05f, groundLayer);
+        return raycastHit.collider != null;
     }
 
     // Animation Events
