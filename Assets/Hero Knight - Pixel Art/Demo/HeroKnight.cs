@@ -7,6 +7,8 @@ public class HeroKnight : MonoBehaviour {
     [SerializeField] float      m_jumpForce = 7.5f;
     [SerializeField] float      m_rollForce = 6.0f;
     [SerializeField] float      gravity = 1;
+    [SerializeField] float      jump_modifier_x = 1;
+    [SerializeField] float      jump_modifier_y = 1;
     [SerializeField] bool       m_noBlood = false;
     [SerializeField] GameObject m_slideDust;
 
@@ -37,6 +39,7 @@ public class HeroKnight : MonoBehaviour {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         boxCollider = GetComponent<BoxCollider2D>();
+        m_body2d.gravityScale = gravity;
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
         m_wallSensorR1 = transform.Find("WallSensor_R1").GetComponent<Sensor_HeroKnight>();
         m_wallSensorR2 = transform.Find("WallSensor_R2").GetComponent<Sensor_HeroKnight>();
@@ -63,17 +66,7 @@ public class HeroKnight : MonoBehaviour {
              m_rolling = false;
         }
 
-        //Check if character just landed on the ground
-        if (!isGrounded() && m_groundSensor.State())
-        {
-            m_animator.SetBool("Grounded", isGrounded());
-        }
-
-        //Check if character just started falling
-        if (isGrounded() && !m_groundSensor.State())
-        {
-            m_animator.SetBool("Grounded", isGrounded());
-        }
+        m_animator.SetBool("Grounded", isGrounded());
 
         // -- Handle input and movement --
         m_horizontalInput = Input.GetAxis("Horizontal");
@@ -103,7 +96,7 @@ public class HeroKnight : MonoBehaviour {
         // -- Handle Animations --
         //Wall Slide
         m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
-        m_animator.SetBool("WallSlide", m_isWallSliding);
+        
 
         //Death
         if (Input.GetKeyDown("e") && !m_rolling)
@@ -147,19 +140,35 @@ public class HeroKnight : MonoBehaviour {
             m_animator.SetBool("IdleBlock", false);
 
         // Roll
-        else if (Input.GetKeyDown("left shift") && !m_rolling && !m_isWallSliding)
+        else if (Input.GetKeyDown("left shift") && !m_rolling && !onWall())
         {
             m_rolling = true;
             m_animator.SetTrigger("Roll");
-            m_body2d.linearVelocity = new Vector2(m_facingDirection * m_rollForce, m_body2d.linearVelocity.y);
+            m_body2d.gravityScale = 0.1f;
+            Debug.Log(m_body2d.gravityScale);
+            m_body2d.linearVelocity = new Vector2(m_facingDirection * m_rollForce, m_body2d.linearVelocity.y + 2);
+            m_body2d.gravityScale = gravity;
+            Debug.Log(m_body2d.gravityScale);
         }
 
         //Jump
         else if (Input.GetKeyDown("space") && !m_rolling)
         {
-            Jump();
-        }
+            if (m_wallCooldown > 0.5f)
+            {
+                if (onWall() && !isGrounded() && !m_rolling)
+                {
+                    m_body2d.gravityScale = 0;
+                    m_body2d.linearVelocity = Vector2.zero;
+                }
+                else
+                {
+                    m_body2d.gravityScale = gravity;
+                }
 
+                Jump();
+            }
+        }
         //Run
         else if (Mathf.Abs(m_horizontalInput) > Mathf.Epsilon)
         {
@@ -177,33 +186,18 @@ public class HeroKnight : MonoBehaviour {
                     m_animator.SetInteger("AnimState", 0);
         }
 
-        if (m_wallCooldown > 0.2f)
-        {
-            if (onWall() && isGrounded() && !m_rolling)
-            {
-                m_body2d.gravityScale = 0;
-                m_body2d.linearVelocity = Vector2.zero;
-            }
-            else
-            {
-                m_body2d.gravityScale = gravity;
-            }
-            if (Input.GetKeyDown("space") && !m_rolling)
-            {
-                Jump();
-            }
-        } 
-        else
+
+        if (m_wallCooldown < 3f)
         {
             m_wallCooldown += Time.deltaTime;
         }
-
         m_animator.SetBool("Grounded", isGrounded());
     }
 
     private void Jump()
     {
-        Debug.Log(onWall());
+        m_animator.SetBool("WallSlide", false);
+        m_body2d.gravityScale = gravity;
         if (isGrounded())
         {
             m_animator.SetTrigger("Jump");
@@ -218,8 +212,13 @@ public class HeroKnight : MonoBehaviour {
             }
             else
             {
-                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(m_facingDirection) * 2, 12);
+                Debug.Log("wall jump");
+                m_animator.SetTrigger("Jump");
+                m_body2d.gravityScale = 5f;
+                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(m_facingDirection) * jump_modifier_x, jump_modifier_y);
             }
+            m_animator.SetBool("WallSlide", false);
+            m_body2d.gravityScale = gravity;
             m_wallCooldown = 0;
         }
     }
@@ -232,7 +231,11 @@ public class HeroKnight : MonoBehaviour {
 
     private bool onWall()
     {
-        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, new Vector2(m_facingDirection, 0), 0.05f, groundLayer);
+        RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, new Vector2(m_facingDirection, 0), 0.1f, groundLayer);
+        if (raycastHit.collider != null)
+        {
+            m_animator.SetBool("WallSlide", true);
+        }
         return raycastHit.collider != null;
     }
 
