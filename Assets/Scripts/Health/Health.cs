@@ -50,7 +50,6 @@ public class Health : MonoBehaviour
 
     private IEnumerator Invunerability()
     {
-        Debug.Log(playerLayerNumber);
         if (playerLayerNumber == 6)
         {
             Physics2D.IgnoreLayerCollision(playerLayerNumber, enemyLayerNumber, true);
