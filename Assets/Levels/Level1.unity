@@ -2519,6 +2519,7 @@ GameObject:
   - component: {fileID: 1080072124}
   - component: {fileID: 1080072123}
   - component: {fileID: 1080072125}
+  - component: {fileID: 1080072126}
   m_Layer: 8
   m_Name: Merchant
   m_TagString: NPC
@@ -2682,6 +2683,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   facingToRight: 1
+--- !u!95 &1080072126
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080072120}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 3b2d8d897dc8668438b06247e6e4b7af, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &1107086625
 PrefabInstance:
   m_ObjectHideFlags: 0
