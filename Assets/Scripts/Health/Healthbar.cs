@@ -3,18 +3,25 @@ using UnityEngine.UI;
 
 public class Healthbar : MonoBehaviour
 {
-    public Health playerHealth;
+    private Health playerHealth;
     public Image totalHealthbar;
     public Image currentHealthbar;
 
     public void Start()
     {
-        totalHealthbar.fillAmount = playerHealth.currentHealth / 10;
+        if (PersistentPlayerHealth.Instance != null)
+        {
+            float healthPercent = PersistentPlayerHealth.Instance.currentHealth / 10;
+            totalHealthbar.fillAmount = healthPercent;
+        }
     }
 
-    public void Update()
+    void Update()
     {
-        currentHealthbar.fillAmount = playerHealth.currentHealth / 10;
-        
+        if (PersistentPlayerHealth.Instance != null)
+        {
+            float healthPercent = PersistentPlayerHealth.Instance.currentHealth / 10;
+            currentHealthbar.fillAmount = healthPercent;
+        }
     }
 }

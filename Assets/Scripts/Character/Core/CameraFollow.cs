@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    public Transform player; // Assign the player GameObject in the Inspector
+    private Transform player; // Assign the player GameObject in the Inspector
     public Vector2 minBounds; // Minimum X and Y boundary
     public Vector2 maxBounds; // Maximum X and Y boundary
     public float smoothSpeed = 5f; // How smooth the camera follows
@@ -18,8 +18,10 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!player) return;
-
+        if (!player) 
+        {
+            player = PersistentPlayerHealth.Instance.GetComponent<HeroKnight>().transform;
+        }
         // Get target position
         float targetX = Mathf.Clamp(player.position.x, minBounds.x + camHalfWidth, maxBounds.x - camHalfWidth);
         float targetY = Mathf.Clamp(player.position.y, minBounds.y + camHalfHeight, maxBounds.y - camHalfHeight);
