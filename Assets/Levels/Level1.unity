@@ -3294,7 +3294,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nextSceneName: Level2
-  spawnPointName: EntryPoint
+  spawnPoint: {fileID: 0}
   fadeAnimator: {fileID: 1525051508}
 --- !u!1001 &1984782192
 PrefabInstance:
@@ -3671,11 +3671,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.9513466
+      value: -2.92
       objectReference: {fileID: 0}
     - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -5.7929444
+      value: -5.41
       objectReference: {fileID: 0}
     - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
       propertyPath: m_LocalPosition.z
