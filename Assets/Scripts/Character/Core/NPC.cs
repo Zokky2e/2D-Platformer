@@ -12,8 +12,6 @@ public class NPC : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        Debug.Log("testing trigger");
-        Debug.Log(collision.tag);
         if (collision.tag == "Player")
         {
             Transform player = collision.transform;

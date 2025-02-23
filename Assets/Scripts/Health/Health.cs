@@ -31,15 +31,18 @@ public class Health : MonoBehaviour
 
     public void TakeDamage(float _damage)
     {
-        currentHealth = Mathf.Clamp(currentHealth - _damage, 0, startingHealth);
-        if (currentHealth > 0)
+        if (!entity.IsBlocking())
         {
-            entity.TakeDamage();
-            StartCoroutine(Invunerability());
-        }
-        else
-        {
-            entity.Die();
+            if (currentHealth - _damage > 0)
+            {
+                entity.TakeDamage();
+                StartCoroutine(Invunerability());
+            }
+            else
+            {
+                entity.Die();
+            }
+            currentHealth = Mathf.Clamp(currentHealth - _damage, 0, startingHealth);
         }
     }
 

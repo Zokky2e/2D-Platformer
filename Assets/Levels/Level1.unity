@@ -3667,7 +3667,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
       propertyPath: damage
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: attackDelay
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: attackSpeedAnimation
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
       propertyPath: m_LocalPosition.x

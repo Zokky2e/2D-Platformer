@@ -33,6 +33,7 @@ public class HeroKnight : MonoBehaviour, IEntity {
     private float               m_rollDuration = 8.0f / 14.0f;
     private float               m_rollCurrentTime;
     private float               m_horizontalInput;
+    private bool m_isBlocking = false;
 
 
     // Use this for initialization
@@ -126,11 +127,15 @@ public class HeroKnight : MonoBehaviour, IEntity {
         else if (Input.GetMouseButtonDown(1) && !m_rolling)
         {
             m_animator.SetTrigger("Block");
-            m_animator.SetBool("IdleBlock", true);
+            m_animator.SetBool("IdleBlock", true); 
+            m_isBlocking = true;
         }
 
         else if (Input.GetMouseButtonUp(1))
+        {
             m_animator.SetBool("IdleBlock", false);
+            m_isBlocking = false;
+        }
 
         // Roll
         else if (Input.GetKeyDown("left shift") && !m_rolling && !onWall())
@@ -234,13 +239,21 @@ public class HeroKnight : MonoBehaviour, IEntity {
 
     public void TakeDamage()
     {
-        m_animator.SetTrigger("Hurt");
+        if (!IsBlocking())
+        {
+            m_animator.SetTrigger("Hurt");
+        }
     }
 
     public void Die()
     {
         m_animator.SetBool("noBlood", m_noBlood);
         m_animator.SetTrigger("Death");
+    }
+
+    public bool IsBlocking()
+    {
+        return m_isBlocking;
     }
 
     // Animation Events
