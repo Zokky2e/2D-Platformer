@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Bandit : MonoBehaviour {
+public class Bandit : Enemy {
 
     [SerializeField] float      m_speed = 4.0f;
     [SerializeField] float      m_jumpForce = 7.5f;
@@ -14,10 +14,11 @@ public class Bandit : MonoBehaviour {
     private bool                m_isDead = false;
 
     // Use this for initialization
-    void Start () {
+    new void Start () {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_Bandit>();
+        base.Start();
     }
 	
 	// Update is called once per frame
@@ -93,5 +94,20 @@ public class Bandit : MonoBehaviour {
         //Idle
         else
             m_animator.SetInteger("AnimState", 0);
+    }
+
+    public new void TakeDamage()
+    {
+        base.TakeDamage();
+    }
+
+    public new void Die()
+    {
+        base.TakeDamage();
+    }
+
+    public new bool IsBlocking()
+    {
+        return base.IsBlocking();
     }
 }
