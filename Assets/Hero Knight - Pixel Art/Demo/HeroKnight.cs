@@ -104,7 +104,7 @@ public class HeroKnight : MonoBehaviour, IEntity {
         
 
         //Attack
-        if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f && !m_rolling)
+        if(IsAttacking())
         {
             m_currentAttack++;
 
@@ -254,6 +254,15 @@ public class HeroKnight : MonoBehaviour, IEntity {
     public bool IsBlocking()
     {
         return m_isBlocking;
+    }
+
+    public bool IsAttacking(bool debug = false)
+    {
+        if(debug)
+        {
+            Debug.Log(m_timeSinceAttack);
+        }
+        return Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f && !m_rolling;
     }
 
     // Animation Events

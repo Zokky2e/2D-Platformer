@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 3960600894886555389}
   - component: {fileID: 5900540177321249893}
   - component: {fileID: 7303822367880151215}
+  - component: {fileID: 1520711120491560709}
+  - component: {fileID: 7602096678982149115}
   m_Layer: 7
   m_Name: Bandit
   m_TagString: Enemy
@@ -79,7 +81,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -738363131
-  m_SortingLayer: 2
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 317b8365a4649ab459f6cb58ec8f9f18, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -200,6 +202,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damage: 1
+  isTrap: 0
+  attackDelay: 1.5
+  attackSpeedAnimation: 0.5
 --- !u!114 &7303822367880151215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -221,3 +226,32 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 0
+--- !u!114 &1520711120491560709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2528060356887685696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0fd3a74d5e7c8f45ba8c0ba7ffc094f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  facingToRight: 0
+--- !u!114 &7602096678982149115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2528060356887685696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd5f279fdebc7644ca88078c764c5b7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  entityHealth: {fileID: 7303822367880151215}
+  totalHealthbar: {fileID: 0}
+  currentHealthbar: {fileID: 0}
+  slider: {fileID: 0}
