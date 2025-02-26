@@ -24,7 +24,7 @@ class Weapon : MonoBehaviour
         if (collision.tag == "Enemy" && damage > 0)
         {
             Debug.Log("Enemy In Range!");
-            isAttacking = player.IsAttacking(debug: true);
+            isAttacking = player.IsAttacking();
             if (isAttacking)
             {
                 if (!isEnemyHit)

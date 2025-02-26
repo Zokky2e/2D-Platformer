@@ -35,11 +35,10 @@ public class Enemy : MonoBehaviour, IEntity
             playerInRange = collision;
             if (isTrap)
             {
-                playerInRange = collision;
                 playerInRange.GetComponent<Health>().TakeDamage(damage);
                 Debug.Log("Player hit!");
             }
-            else
+            else if(enemyHealth.currentHealth > 0)
             {
                 StartCoroutine(Attack());
             }
@@ -65,9 +64,6 @@ public class Enemy : MonoBehaviour, IEntity
             {
                 playerInRange.GetComponent<Health>().TakeDamage(damage);
                 Debug.Log("Player hit!");
-            } else
-            {
-                enemyHealth.TakeDamage(1);
             }
             yield return new WaitForSeconds(attackDelay);
         }
