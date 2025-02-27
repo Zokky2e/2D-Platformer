@@ -9,23 +9,79 @@ public enum HeroStates
     Run,
     Jump,
     Roll,
-    Attack
+    Attack,
+    Block
 }
 
 public class Hero : MonoBehaviour, IEntity {
 
     [SerializeField] float      m_speed = 4.0f;
     [SerializeField] float      m_jumpForce = 7.5f;
+    public float JumpForce
+    {
+        get
+        {
+            return m_jumpForce;
+        }
+    }
     [SerializeField] float      m_rollForce = 6.0f;
+    public float RollForce
+    {
+        get
+        {
+            return m_rollForce;
+        }
+    }
     [SerializeField] float      gravity = 1;
+    public float Gravity
+    {
+        get
+        {
+            return gravity;
+        }
+    }
     [SerializeField] float      jump_modifier_x = 1;
+    public float JumpModifierX
+    {
+        get 
+        {
+            return jump_modifier_x;
+        }
+    }
     [SerializeField] float      jump_modifier_y = 1;
+    public float JumpModifierY 
+    {
+        get
+        {
+            return jump_modifier_y;
+        }
+    }
     [SerializeField] bool       m_noBlood = false;
     [SerializeField] GameObject m_slideDust;
-
     private Animator            m_animator;
+    public Animator Animator
+    {
+        get
+        {
+            return m_animator;
+        }
+    }
     private Rigidbody2D         m_body2d;
+    public Rigidbody2D Body2D
+    {
+        get
+        {
+            return m_body2d;
+        }
+    }
     private Sensor_HeroKnight   m_groundSensor;
+    public Sensor_HeroKnight GroundSensor
+    {
+        get
+        {
+            return m_groundSensor;
+        }
+    }
     private Sensor_HeroKnight   m_wallSensorR1;
     private Sensor_HeroKnight   m_wallSensorR2;
     private Sensor_HeroKnight   m_wallSensorL1;
@@ -34,13 +90,23 @@ public class Hero : MonoBehaviour, IEntity {
     private Health playerHealth;
     [SerializeField] private LayerMask groundLayer;
     private bool                m_isWallSliding = false;
-    private bool                m_rolling = false;
     private int                 m_facingDirection = 1;
+    public int FacingDirection
+    {
+        get
+        {
+            return m_facingDirection;
+        }
+    }
     private float               m_delayToIdle = 0.0f;
-    private float               m_wallCooldown = 0.0f;
-    private float               m_rollDuration = 8.0f / 14.0f;
-    private float               m_rollCurrentTime;
     private float               m_horizontalInput;
+    public float HorizontalInput
+    {
+        get
+        {
+            return m_horizontalInput;
+        }
+    }
     private bool m_isBlocking = false;
 
 
@@ -68,6 +134,9 @@ public class Hero : MonoBehaviour, IEntity {
         m_animator.SetBool("Grounded", isGrounded());
         // -- Handle input and movement --
         m_horizontalInput = Input.GetAxis("Horizontal");
+        m_animator.SetFloat("AirSpeedY", m_body2d.linearVelocity.y);
+        //Wall Slide
+        m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
         // Swap direction of sprite depending on walk direction
         if (m_horizontalInput > 0)
         {
@@ -80,6 +149,29 @@ public class Hero : MonoBehaviour, IEntity {
             GetComponent<SpriteRenderer>().flipX = true;
             m_facingDirection = -1;
         }
+
+        if(state.GetCurrentState() != HeroStates.Roll)
+        {
+            m_body2d.linearVelocity = new Vector2(m_horizontalInput * m_speed, m_body2d.linearVelocity.y);
+        }
+
+        //Run
+        if (Mathf.Abs(m_horizontalInput) > Mathf.Epsilon)
+        {
+            // Reset timer
+            m_delayToIdle = 0.05f;
+            m_animator.SetInteger("AnimState", 1);
+        }
+        //Idle
+        else
+        {
+            // Prevents flickering transitions to idle
+            m_delayToIdle -= Time.deltaTime;
+            if (m_delayToIdle < 0)
+                m_animator.SetInteger("AnimState", 0);
+        }
+
+        m_animator.SetBool("Grounded", isGrounded());
     }
 
     void handleInput()
@@ -91,144 +183,15 @@ public class Hero : MonoBehaviour, IEntity {
     // Update is called once per frame
     void OldUpdate ()
     {
-        // Increase timer that controls attack combo
-
-        // Increase timer that checks roll duration
-        if (m_rolling)
-        {
-            m_rollCurrentTime += Time.deltaTime;
-        }
-
-        // Disable rolling if timer extends duration
-        if(m_rollCurrentTime > m_rollDuration)
-        {
-             m_rolling = false;
-        }
-
-        m_animator.SetBool("Grounded", isGrounded());
-
-        
-        // Move
-        if (!m_rolling)
-        {
-            m_body2d.linearVelocity = new Vector2(m_horizontalInput * m_speed, m_body2d.linearVelocity.y);
-        }
-
-        //Set AirSpeed in animator
-        m_animator.SetFloat("AirSpeedY", m_body2d.linearVelocity.y);
-
-        // -- Handle Animations --
-        //Wall Slide
-        m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
-        
-
-        //Attack
-
-        // Block
-        if (Input.GetMouseButtonDown(1) && !m_rolling)
-        {
-            m_animator.SetTrigger("Block");
-            m_animator.SetBool("IdleBlock", true); 
-            m_isBlocking = true;
-        }
-
-        else if (Input.GetMouseButtonUp(1))
-        {
-            m_animator.SetBool("IdleBlock", false);
-            m_isBlocking = false;
-        }
-
-        // Roll
-        else if (Input.GetKeyDown("left shift") && !m_rolling && !onWall())
-        {
-            m_rolling = true;
-            m_animator.SetTrigger("Roll");
-            m_body2d.gravityScale = 0.1f;
-            Debug.Log(m_body2d.gravityScale);
-            m_body2d.linearVelocity = new Vector2(m_facingDirection * m_rollForce, m_body2d.linearVelocity.y + 2);
-            m_body2d.gravityScale = gravity;
-            Debug.Log(m_body2d.gravityScale);
-        }
-
-        //Jump
-        else if (Input.GetKeyDown("space") && !m_rolling)
-        {
-            if (m_wallCooldown > 0.5f)
-            {
-                if (onWall() && !isGrounded() && !m_rolling)
-                {
-                    m_body2d.gravityScale = 0;
-                    m_body2d.linearVelocity = Vector2.zero;
-                }
-                else
-                {
-                    m_body2d.gravityScale = gravity;
-                }
-
-                Jump();
-            }
-        }
-        //Run
-        else if (Mathf.Abs(m_horizontalInput) > Mathf.Epsilon)
-        {
-            // Reset timer
-            m_delayToIdle = 0.05f;
-            m_animator.SetInteger("AnimState", 1);
-        }
-
-        //Idle
-        else
-        {
-            // Prevents flickering transitions to idle
-            m_delayToIdle -= Time.deltaTime;
-                if(m_delayToIdle < 0)
-                    m_animator.SetInteger("AnimState", 0);
-        }
-
-
-        if (m_wallCooldown < 3f)
-        {
-            m_wallCooldown += Time.deltaTime;
-        }
-        m_animator.SetBool("Grounded", isGrounded());
     }
 
-    private void Jump()
-    {
-        m_animator.SetBool("WallSlide", false);
-        m_body2d.gravityScale = gravity;
-        if (isGrounded())
-        {
-            m_animator.SetTrigger("Jump");
-            m_body2d.linearVelocity = new Vector2(m_body2d.linearVelocity.x, m_jumpForce);
-            m_groundSensor.Disable(0.2f);
-        }
-        else if (onWall() && !isGrounded())
-        {
-            if (m_horizontalInput == 0)
-            {
-                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(m_facingDirection) * 6, 0);
-            }
-            else
-            {
-                Debug.Log("wall jump");
-                m_animator.SetTrigger("Jump");
-                m_body2d.gravityScale = 5f;
-                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(m_facingDirection) * jump_modifier_x, jump_modifier_y);
-            }
-            m_animator.SetBool("WallSlide", false);
-            m_body2d.gravityScale = gravity;
-            m_wallCooldown = 0;
-        }
-    }
-
-    private bool isGrounded()
+    public bool isGrounded()
     {
         RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, Vector2.down, 0.05f, groundLayer);
         return raycastHit.collider != null;
     }
 
-    private bool onWall()
+    public bool onWall()
     {
         RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, new Vector2(m_facingDirection, 0), 0.1f, groundLayer);
         if (raycastHit.collider != null)
@@ -257,11 +220,7 @@ public class Hero : MonoBehaviour, IEntity {
         return m_isBlocking;
     }
 
-    public Animator GetHeroAnimator()
-    {
-        return m_animator;
-    }
-    
+
     public HeroStates GetCurrentHeroState()
     {
         return state.GetCurrentState();
