@@ -32,7 +32,7 @@ public class HeroState
     }
 }
 
-
+//Default
 public class IdleState : HeroState
 {
     override public HeroState handleInput()
@@ -69,6 +69,7 @@ public class IdleState : HeroState
 public class JumpingState : HeroState
 {
     private float m_wallCooldown = 0.0f;
+    private Hero hero;
     override public HeroState handleInput()
     {
         return this;
@@ -77,6 +78,16 @@ public class JumpingState : HeroState
     {
         currentState = HeroStates.Jump;
         base.startState(hero);
+        this.hero = hero;
+    }
+
+    public override void Update()
+    {
+        base.Update();
+        if (m_wallCooldown < 3f)
+        {
+            m_wallCooldown += Time.deltaTime;
+        }
         if (m_wallCooldown > 0.5f)
         {
             if (hero.onWall() && !hero.isGrounded())
@@ -90,16 +101,6 @@ public class JumpingState : HeroState
             }
 
             Jump(hero);
-        }
-    }
-
-    public override void Update()
-    {
-        base.Update();
-
-        if (m_wallCooldown < 3f)
-        {
-            m_wallCooldown += Time.deltaTime;
         }
     }
 
@@ -137,7 +138,6 @@ public class AttackingState : HeroState
 {
     private int m_currentAttack = 0;
     private float m_timeSinceAttack = 0.0f;
-    private Animator m_animator;
     override public HeroState handleInput()
     {
         return this;

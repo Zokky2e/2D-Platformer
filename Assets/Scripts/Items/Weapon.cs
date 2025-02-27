@@ -10,7 +10,6 @@ class Weapon : MonoBehaviour
     private Collider2D enemyInRange;
     private Collider2D weaponSensor;
     private Hero player;
-    private bool isAttacking = false;
     private bool isEnemyHit = false;
     public void Awake()
     {
