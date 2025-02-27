@@ -9,12 +9,12 @@ class Weapon : MonoBehaviour
 
     private Collider2D enemyInRange;
     private Collider2D weaponSensor;
-    private HeroKnight player;
+    private Hero player;
     private bool isAttacking = false;
     private bool isEnemyHit = false;
     public void Awake()
     {
-        player = this.GetComponent<HeroKnight>();
+        player = this.GetComponent<Hero>();
         weaponSensor = transform.Find("WeaponSensor")?.GetComponent<Collider2D>();
         //player has WeaponSensor as a child game object i need to fetch its collider component
         //this will be used to check if enemy is hit by the collider
@@ -24,8 +24,7 @@ class Weapon : MonoBehaviour
         if (collision.tag == "Enemy" && damage > 0)
         {
             Debug.Log("Enemy In Range!");
-            isAttacking = player.IsAttacking();
-            if (isAttacking)
+            if (player.GetCurrentHeroState() == HeroStates.Attack)
             {
                 if (!isEnemyHit)
                 {
@@ -34,10 +33,7 @@ class Weapon : MonoBehaviour
                     Debug.Log("Enemy Hit!");
                 }
             }
-            else
-            {
-                isEnemyHit = false;
-            }
+            isEnemyHit = false;
         }
     }
 }

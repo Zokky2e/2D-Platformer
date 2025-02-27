@@ -20,7 +20,7 @@ public class CameraFollow : MonoBehaviour
     {
         if (!player) 
         {
-            player = PersistentPlayerHealth.Instance.GetComponent<HeroKnight>().transform;
+            player = PersistentPlayerHealth.Instance.GetComponent<Hero>().transform;
         }
         // Get target position
         float targetX = Mathf.Clamp(player.position.x, minBounds.x + camHalfWidth, maxBounds.x - camHalfWidth);
