@@ -172,6 +172,7 @@ public class Hero : MonoBehaviour, IEntity {
         }
 
         m_animator.SetBool("Grounded", isGrounded());
+        state.Update();
     }
 
     void handleInput()
