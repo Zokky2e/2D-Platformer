@@ -23,16 +23,16 @@ class Weapon : MonoBehaviour
         if (collision.tag == "Enemy" && damage > 0)
         {
             Debug.Log("Enemy In Range!");
-            if (player.GetCurrentHeroState() == HeroStates.Attack)
+            if (player.GetCurrentHeroState() == HeroStates.Attack && !isEnemyHit)
             {
-                if (!isEnemyHit)
-                {
-                    collision.GetComponent<Health>()?.TakeDamage(damage);
-                    isEnemyHit = true;
-                    Debug.Log("Enemy Hit!");
-                }
+                collision.GetComponent<Health>()?.TakeDamage(damage);
+                isEnemyHit = true;
+                Debug.Log("Enemy Hit!");
             }
-            isEnemyHit = false;
+            if (player.GetCurrentHeroState() != HeroStates.Attack)
+            {
+                isEnemyHit = false;
+            }
         }
     }
 }

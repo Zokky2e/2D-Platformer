@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 
@@ -141,10 +142,15 @@ public class AttackingState : HeroState
 {
     private int m_currentAttack = 0;
     private float m_timeSinceAttack = 0.0f;
+    private bool canAttack;
     public AttackingState() : base(HeroStates.Attack) { }
     override public HeroState handleInput()
     {
         // If attack animation is done, go back to idle
+        if (IsAttacking() && canAttack)
+        {
+            return new AttackingState(); // Restart attack if valid
+        }
         if (m_timeSinceAttack > 0.5f) return new IdleState();
         return this;
     }
@@ -154,7 +160,7 @@ public class AttackingState : HeroState
         base.Update();
         m_timeSinceAttack += Time.deltaTime;
 
-        if (IsAttacking())
+        if (IsAttacking() && !PauseMenu.GameIsPaused)
         {
             m_currentAttack++;
 
@@ -176,7 +182,23 @@ public class AttackingState : HeroState
     public override void startState(Hero hero)
     {
         base.startState(hero);
-        m_animator.SetTrigger("Attack1"); // Start first attack
+        if (!PauseMenu.GameIsPaused)
+        {
+            hero.StartCoroutine(AttackRoutine());
+        }
+    }
+    private IEnumerator AttackRoutine()
+    {
+        canAttack = false;
+
+        m_currentAttack++;
+        if (m_currentAttack > 3) m_currentAttack = 1;
+
+        m_animator.SetTrigger("Attack" + m_currentAttack);
+
+        yield return new WaitForSeconds(0.5f); // Adjust based on animation length
+
+        canAttack = true;
     }
 }
 public class BlockingState : HeroState

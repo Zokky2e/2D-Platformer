@@ -223,7 +223,7 @@ public class Hero : MonoBehaviour, IEntity {
 
     public bool IsBlocking()
     {
-        return GetCurrentHeroState() == HeroStates.Block;
+        return GetCurrentHeroState() == HeroStates.Block || GetCurrentHeroState() == HeroStates.Roll;
     }
 
 
