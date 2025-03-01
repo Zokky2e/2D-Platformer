@@ -8,6 +8,10 @@ public class HeroState
     protected Rigidbody2D m_body2d;
     protected Hero hero;
     protected HeroStates currentState;
+    protected HeroState(HeroStates state)
+    {
+        currentState = state;
+    }
     virtual public void startState(Hero hero)
     {
         this.hero = hero;
@@ -37,6 +41,7 @@ public class HeroState
 //Default
 public class IdleState : HeroState
 {
+    public IdleState(): base(HeroStates.Idle) { }
     override public HeroState handleInput()
     {
         if (Input.GetKeyDown("space"))
@@ -63,7 +68,6 @@ public class IdleState : HeroState
 
     public override void startState(Hero hero)
     {
-        currentState = HeroStates.Idle;
         base.startState(hero);
         m_animator.SetInteger("AnimState", 0);
     }
@@ -71,6 +75,8 @@ public class IdleState : HeroState
 
 public class JumpingState : HeroState
 {
+
+    public JumpingState() : base(HeroStates.Jump) { }
     private float m_wallCooldown = 0.0f;
     override public HeroState handleInput()
     {
@@ -79,7 +85,6 @@ public class JumpingState : HeroState
     }
     public override void startState(Hero hero)
     {
-        currentState = HeroStates.Jump;
         base.startState(hero);
         Jump();
     }
@@ -136,6 +141,7 @@ public class AttackingState : HeroState
 {
     private int m_currentAttack = 0;
     private float m_timeSinceAttack = 0.0f;
+    public AttackingState() : base(HeroStates.Attack) { }
     override public HeroState handleInput()
     {
         // If attack animation is done, go back to idle
@@ -169,13 +175,13 @@ public class AttackingState : HeroState
     }
     public override void startState(Hero hero)
     {
-        currentState = HeroStates.Attack;
         base.startState(hero);
         m_animator.SetTrigger("Attack1"); // Start first attack
     }
 }
 public class BlockingState : HeroState
 {
+    public BlockingState() : base(HeroStates.Block) { }
     override public HeroState handleInput()
     {
         if (Input.GetMouseButtonUp(1))
@@ -187,7 +193,6 @@ public class BlockingState : HeroState
     }
     public override void startState(Hero hero)
     {
-        currentState = HeroStates.Block;
         base.startState(hero);
         m_animator.SetTrigger("Block");
         m_animator.SetBool("IdleBlock", true);
@@ -197,21 +202,22 @@ public class BlockingState : HeroState
 public class RollingState : HeroState
 {
     private float m_rollDuration = 8.0f / 14.0f;
-    private float m_rollCurrentTime;
+    private float m_rollCurrentTime = 0f;
+    public RollingState() : base(HeroStates.Roll) { }
     override public HeroState handleInput()
     {
         // Disable rolling if timer extends duration
         if (m_rollCurrentTime > m_rollDuration)
         {
+            m_body2d.gravityScale = hero.Gravity;
             return new IdleState();
         }
         return this;
     }
     public override void startState(Hero hero)
     {
-        currentState = HeroStates.Roll;
-        m_rollCurrentTime = 0f;
         base.startState(hero);
+        m_animator.SetTrigger("Roll");
         Roll(hero);
     }
 
@@ -223,9 +229,7 @@ public class RollingState : HeroState
 
     private void Roll(Hero hero)
     {
-        m_animator.SetTrigger("Roll");
         m_body2d.gravityScale = 0.1f;
-        m_body2d.linearVelocity = new Vector2(hero.FacingDirection * hero.RollForce, m_body2d.linearVelocity.y + 2);
-        m_body2d.gravityScale = hero.Gravity;
+        m_body2d.linearVelocity = new Vector2(hero.FacingDirection * hero.RollForce, m_body2d.linearVelocity.y);
     }
 }

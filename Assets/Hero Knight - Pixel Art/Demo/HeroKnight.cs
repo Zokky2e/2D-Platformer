@@ -143,10 +143,8 @@ public class HeroKnight : MonoBehaviour, IEntity {
             m_rolling = true;
             m_animator.SetTrigger("Roll");
             m_body2d.gravityScale = 0.1f;
-            Debug.Log(m_body2d.gravityScale);
             m_body2d.linearVelocity = new Vector2(m_facingDirection * m_rollForce, m_body2d.linearVelocity.y + 2);
             m_body2d.gravityScale = gravity;
-            Debug.Log(m_body2d.gravityScale);
         }
 
         //Jump

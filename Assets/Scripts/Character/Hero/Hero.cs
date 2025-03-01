@@ -126,6 +126,7 @@ public class Hero : MonoBehaviour, IEntity {
         m_wallSensorL1 = transform.Find("WallSensor_L1").GetComponent<Sensor_HeroKnight>();
         m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
         state = new IdleState();
+        state.startState(this);
     }
 
     void Update()
@@ -177,9 +178,12 @@ public class Hero : MonoBehaviour, IEntity {
 
     void handleInput()
     {
-        state = state.handleInput();
-        Debug.Log(state.GetCurrentState());
-        state.startState(this);
+        HeroState newState = state.handleInput();
+        if (state.GetCurrentState() != newState.GetCurrentState())
+        {
+            state = newState;
+            state.startState(this);
+        }
     }
 
     // Update is called once per frame
