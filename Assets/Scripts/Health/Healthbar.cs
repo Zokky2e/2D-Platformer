@@ -1,27 +1,30 @@
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 public class Healthbar : MonoBehaviour
 {
     public Health entityHealth;
-    public Image totalHealthbar;
-    public Image currentHealthbar;
+    public UnityEngine.UI.Slider healthValue;
+    public TextMeshProUGUI healthText;
 
     public void Start()
     {
-        if (PersistentPlayerHealth.Instance != null)
-        { 
-            float healthPercent = PersistentPlayerHealth.Instance.currentHealth / 10;
-            totalHealthbar.fillAmount = healthPercent;
-        }
+        setHealthbar();
     }
 
     public void Update()
     {
+        setHealthbar();
+    }
+
+    private void setHealthbar()
+    {
+
         if (PersistentPlayerHealth.Instance != null)
         {
-            float healthPercent = PersistentPlayerHealth.Instance.currentHealth / 10;
-            currentHealthbar.fillAmount = healthPercent;
+            float healthPercent = PersistentPlayerHealth.Instance.currentHealth / PersistentPlayerHealth.Instance.startingHealth;
+            healthText.text = PersistentPlayerHealth.Instance.currentHealth.ToString();
+            healthValue.value = healthPercent;
         }
     }
 }

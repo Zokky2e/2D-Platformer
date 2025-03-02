@@ -3,7 +3,6 @@ using UnityEngine.UI;
 
 public class FloatingHealthBar : Healthbar
 {
-    public Slider slider;
 
     new void Start()
     {
@@ -12,7 +11,7 @@ public class FloatingHealthBar : Healthbar
 
     new void Update()
     {
-        slider.value = entityHealth.currentHealth / entityHealth.startingHealth;
+        healthValue.value = entityHealth.currentHealth / entityHealth.startingHealth;
     }
 
 }
