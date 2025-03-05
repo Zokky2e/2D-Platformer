@@ -21,7 +21,6 @@ public class PersistentPlayerHealth : Health
 
     public override void TakeDamage(float _damage)
     {
-        Debug.Log("Persistant");
         base.TakeDamage(_damage);
         if (currentHealth == 0)
         {

@@ -36,7 +36,6 @@ public class Enemy : MonoBehaviour, IEntity
             if (isTrap)
             {
                 playerInRange.GetComponent<Health>().TakeDamage(damage);
-                Debug.Log("Player hit!");
             }
             else if(enemyHealth.currentHealth > 0)
             {
@@ -63,7 +62,6 @@ public class Enemy : MonoBehaviour, IEntity
             if (playerInRange != null) // Check again to avoid null errors
             {
                 playerInRange.GetComponent<Health>().TakeDamage(damage);
-                Debug.Log("Player hit!");
             }
             yield return new WaitForSeconds(attackDelay);
         }

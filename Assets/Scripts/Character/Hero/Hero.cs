@@ -2,6 +2,8 @@
 using System.Collections;
 using Assets.Scripts;
 using Unity.VisualScripting.FullSerializer;
+using NUnit.Framework;
+using System.Collections.Generic;
 
 public enum HeroStates
 {
@@ -10,7 +12,8 @@ public enum HeroStates
     Jump,
     Roll,
     Attack,
-    Block
+    Block,
+    Dead
 }
 
 public class Hero : MonoBehaviour, IEntity {
@@ -57,6 +60,13 @@ public class Hero : MonoBehaviour, IEntity {
         }
     }
     [SerializeField] bool       m_noBlood = false;
+    public bool NoBlood
+    {
+        get
+        {
+            return m_noBlood;
+        }
+    }
     [SerializeField] GameObject m_slideDust;
     private Animator            m_animator;
     public Animator Animator
@@ -88,6 +98,13 @@ public class Hero : MonoBehaviour, IEntity {
     private Sensor_HeroKnight   m_wallSensorL2;
     private BoxCollider2D boxCollider;
     private Health playerHealth;
+    public float CurrentHealth
+    {
+        get
+        {
+            return playerHealth.currentHealth;
+        }
+    }
     [SerializeField] private LayerMask groundLayer;
     private bool                m_isWallSliding = false;
     private int                 m_facingDirection = 1;
@@ -110,6 +127,7 @@ public class Hero : MonoBehaviour, IEntity {
 
 
     private HeroState state;
+    private List<HeroStates> noMovementStates = new List<HeroStates>() { HeroStates.Roll, HeroStates.Dead };
 
     // Use this for initialization
     void Start ()
@@ -151,7 +169,7 @@ public class Hero : MonoBehaviour, IEntity {
             m_facingDirection = -1;
         }
 
-        if(state.GetCurrentState() != HeroStates.Roll)
+        if(!noMovementStates.Contains(state.GetCurrentState()))
         {
             m_body2d.linearVelocity = new Vector2(m_horizontalInput * m_speed, m_body2d.linearVelocity.y);
         }
@@ -186,11 +204,6 @@ public class Hero : MonoBehaviour, IEntity {
         }
     }
 
-    // Update is called once per frame
-    void OldUpdate ()
-    {
-    }
-
     public bool isGrounded()
     {
         RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, Vector2.down, 0.05f, groundLayer);
@@ -217,8 +230,6 @@ public class Hero : MonoBehaviour, IEntity {
 
     public void Die()
     {
-        m_animator.SetBool("noBlood", m_noBlood);
-        m_animator.SetTrigger("Death");
     }
 
     public bool IsBlocking()

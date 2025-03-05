@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public class PauseMenu : MonoBehaviour
@@ -52,6 +53,8 @@ public class PauseMenu : MonoBehaviour
         pauseMenuUI.SetActive(false);
         Time.timeScale = 1f;
         GameIsPaused = false;
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(this.GetComponent<RectTransform>());
     }
 
     private void Pause()
@@ -59,6 +62,8 @@ public class PauseMenu : MonoBehaviour
         pauseMenuUI.SetActive(true);
         Time.timeScale = 0f;
         GameIsPaused = true;
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(this.GetComponent<RectTransform>());
     }
 
     public void OnRespawnClicked()
@@ -73,7 +78,7 @@ public class PauseMenu : MonoBehaviour
     public void OnQuitGameClicked()
     {
         Resume();
-        Application.Quit();
         Debug.Log("Quit Game");
+        Application.Quit();
     }
 }

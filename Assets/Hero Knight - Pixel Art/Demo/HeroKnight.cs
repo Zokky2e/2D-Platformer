@@ -208,7 +208,6 @@ public class HeroKnight : MonoBehaviour, IEntity {
             }
             else
             {
-                Debug.Log("wall jump");
                 m_animator.SetTrigger("Jump");
                 m_body2d.gravityScale = 5f;
                 m_body2d.linearVelocity = new Vector2(-Mathf.Sign(m_facingDirection) * jump_modifier_x, jump_modifier_y);
@@ -254,12 +253,8 @@ public class HeroKnight : MonoBehaviour, IEntity {
         return m_isBlocking;
     }
 
-    public bool IsAttacking(bool debug = false)
+    public bool IsAttacking()
     {
-        if(debug)
-        {
-            Debug.Log(m_timeSinceAttack);
-        }
         return Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f && !m_rolling;
     }
 

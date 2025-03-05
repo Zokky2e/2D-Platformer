@@ -22,12 +22,10 @@ class Weapon : MonoBehaviour
     {
         if (collision.tag == "Enemy" && damage > 0)
         {
-            Debug.Log("Enemy In Range!");
             if (player.GetCurrentHeroState() == HeroStates.Attack && !isEnemyHit)
             {
                 collision.GetComponent<Health>()?.TakeDamage(damage);
                 isEnemyHit = true;
-                Debug.Log("Enemy Hit!");
             }
             if (player.GetCurrentHeroState() != HeroStates.Attack)
             {

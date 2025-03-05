@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameRespawn : MonoBehaviour
 {
@@ -43,6 +45,16 @@ public class GameRespawn : MonoBehaviour
     //clicking respawn button on screen should cause the player to respawn
     public void RespawnPlayer() 
     {
+        if (PersistentPlayerHealth.Instance != null)
+        {
+            StartCoroutine(FadeTransition.Instance.FadeAndExecute(Respawn));
+        }
+    }
+
+    private void Respawn()
+    {
+
+        PersistentPlayerHealth.Instance.AddHealth(PersistentPlayerHealth.Instance.startingHealth);
         Vector3 respawnPosition = (playerRespawn != null) ? playerRespawn.position : startingPosition;
         transform.position = respawnPosition;
     }

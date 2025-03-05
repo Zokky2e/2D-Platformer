@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 
 public class HeroState
@@ -45,6 +44,10 @@ public class IdleState : HeroState
     public IdleState(): base(HeroStates.Idle) { }
     override public HeroState handleInput()
     {
+        if (hero.CurrentHealth == 0)
+        {
+            return new DeadState();
+        }
         if (Input.GetKeyDown("space"))
         {
             return new JumpingState();
@@ -126,7 +129,6 @@ public class JumpingState : HeroState
             }
             else
             {
-                Debug.Log("wall jump");
                 m_animator.SetTrigger("Jump");
                 m_body2d.gravityScale = 5f;
                 m_body2d.linearVelocity = new Vector2(-Mathf.Sign(hero.FacingDirection) * hero.JumpModifierX, hero.JumpModifierY);
@@ -253,5 +255,26 @@ public class RollingState : HeroState
     {
         m_body2d.gravityScale = 0.1f;
         m_body2d.linearVelocity = new Vector2(hero.FacingDirection * hero.RollForce, m_body2d.linearVelocity.y);
+    }
+}
+
+public class DeadState : HeroState
+{
+    public DeadState() : base (HeroStates.Dead) { }
+
+    override public HeroState handleInput()
+    {
+        if (hero.CurrentHealth != 0)
+        {
+            m_animator.SetTrigger("Revive");
+            return new IdleState();
+        }
+        return this;
+    }
+    public override void startState(Hero hero)
+    {
+        base.startState(hero);
+        m_animator.SetBool("noBlood", hero.NoBlood);
+        m_animator.SetTrigger("Death");
     }
 }
