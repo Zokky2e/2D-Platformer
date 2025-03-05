@@ -4,8 +4,23 @@ using UnityEngine;
 
 public class PauseMenu : MonoBehaviour
 {
-    public static bool GameIsPaused = false;
+    public static bool GameIsPaused = true;
     public GameObject pauseMenuUI;
+    public static PauseMenu Instance;
+
+    public void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            Instance.CheckForPause();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     private void Update()
     {
@@ -15,8 +30,13 @@ public class PauseMenu : MonoBehaviour
         }
     }
 
-    public void CheckForPause()
+    public void CheckForPause(bool forcePause = false)
     {
+        if (forcePause)
+        {
+            Pause();
+            return;
+        }
         if (GameIsPaused)
         {
             Resume();
@@ -39,5 +59,21 @@ public class PauseMenu : MonoBehaviour
         pauseMenuUI.SetActive(true);
         Time.timeScale = 0f;
         GameIsPaused = true;
+    }
+
+    public void OnRespawnClicked()
+    {
+        if (GameRespawn.Instance != null)
+        {
+            Resume();
+            GameRespawn.Instance.RespawnPlayer();
+        }
+    }
+
+    public void OnQuitGameClicked()
+    {
+        Resume();
+        Application.Quit();
+        Debug.Log("Quit Game");
     }
 }

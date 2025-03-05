@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class PersistentPlayerHealth : Health
 {
@@ -16,5 +17,23 @@ public class PersistentPlayerHealth : Health
         {
             Destroy(gameObject);
         }
+    }
+
+    public override void TakeDamage(float _damage)
+    {
+        Debug.Log("Persistant");
+        base.TakeDamage(_damage);
+        if (currentHealth == 0)
+        {
+            StartCoroutine(DoDeathAnimation());
+        }
+    }
+
+    IEnumerator DoDeathAnimation()
+    {
+
+        yield return new WaitForSeconds(2f);
+        PauseMenu.Instance.CheckForPause(forcePause: true);
+        yield break;
     }
 }

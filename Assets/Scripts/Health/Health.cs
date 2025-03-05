@@ -29,7 +29,7 @@ public class Health : MonoBehaviour
         enemyLayerNumber = (int)Math.Log(enemyLayer.value, 2);
     }
 
-    public void TakeDamage(float _damage)
+    public virtual void TakeDamage(float _damage)
     {
         if (!entity.IsBlocking())
         {
