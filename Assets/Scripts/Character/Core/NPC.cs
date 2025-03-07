@@ -1,16 +1,36 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
+public enum NPCAction
+{
+    None = 0,
+    Attention,
+    Information
+}
+
 public class NPC : MonoBehaviour
 {
     public bool facingToRight = true;
     private SpriteRenderer spriteRenderer;
     private Health health;
 
+    [Header("NPC Quest/Dialogue State")]
+    public NPCAction currentAction = NPCAction.None;
+    [Header("Indicators")]
+    [SerializeField] private GameObject exclamationMarkPrefab;
+    [SerializeField] private GameObject questionMarkPrefab;
+    private GameObject activeIndicator; // To store the currently active indicator
+    private Interactable interactable; // Reference to interactable component
     private void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>(); // Get the SpriteRenderer component
         health = GetComponent<Health>();
+        
+        interactable = gameObject.AddComponent<Interactable>();
+        interactable.onInteract = InteractWithNPC; // Assign interaction behavior
+
+        UpdateIndicator();
+        UpdateInteractableState();
     }
 
     private void OnTriggerStay2D(Collider2D collision)
@@ -33,9 +53,68 @@ public class NPC : MonoBehaviour
     {
         if (health && health.currentHealth <= 0)
         {
-            //TO DO: dont flip
+            // Prevent flipping if NPC is dead
+            return;
         }
         facingToRight = !facingToRight;
         spriteRenderer.flipX = !spriteRenderer.flipX;
+    }
+
+    // Function to update the NPC's indicator based on the action state
+    public void UpdateIndicator()
+    {
+        // Destroy the current indicator if it exists
+        if (activeIndicator != null)
+        {
+            Destroy(activeIndicator);
+        }
+
+        // Spawn the correct indicator based on currentAction
+        switch (currentAction)
+        {
+            case NPCAction.Attention:
+                activeIndicator = Instantiate(exclamationMarkPrefab, transform.position + new Vector3(0, 0.5f, 0), Quaternion.identity, transform);
+                break;
+
+            case NPCAction.Information:
+                activeIndicator = Instantiate(questionMarkPrefab, transform.position + new Vector3(0, 0.5f, 0), Quaternion.identity, transform);
+                break;
+
+            case NPCAction.None:
+            default:
+                activeIndicator = null;
+                break;
+        }
+        UpdateInteractableState(); // Update interactability when indicator updates
+    }
+
+    // Method to change the NPC action dynamically
+    public void SetAction(NPCAction newAction)
+    {
+        currentAction = newAction;
+        UpdateIndicator();
+    }
+    private void UpdateInteractableState()
+    {
+        // Enable/disable interactable based on the NPC's current action
+        bool isInteractable = currentAction != NPCAction.None;
+
+        if (interactable != null)
+        {
+            interactable.SetInteractableState(isInteractable);
+        }
+    }
+    private void InteractWithNPC()
+    {
+        if (currentAction == NPCAction.Attention)
+        {
+            Debug.Log("NPC: Here is your quest!");
+            // Implement quest logic here
+        }
+        else if (currentAction == NPCAction.Information)
+        {
+            Debug.Log("NPC: I have some information for you.");
+            // Implement dialogue logic here
+        }
     }
 }
