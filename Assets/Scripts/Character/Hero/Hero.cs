@@ -4,6 +4,8 @@ using Assets.Scripts;
 using Unity.VisualScripting.FullSerializer;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEngine.InputSystem.LowLevel;
 
 public enum HeroStates
 {
@@ -146,9 +148,14 @@ public class Hero : MonoBehaviour, IEntity {
         state = new IdleState();
         state.startState(this);
     }
-
     void Update()
     {
+        if (!CanMove()) 
+        {
+            state = new IdleState();
+            state.startState(this);
+            return; // Disable movement if dialog is active
+        }
         handleInput();
         m_animator.SetBool("Grounded", isGrounded());
         // -- Handle input and movement --
@@ -218,6 +225,11 @@ public class Hero : MonoBehaviour, IEntity {
             m_animator.SetBool("WallSlide", true);
         }
         return raycastHit.collider != null;
+    }
+
+    public bool CanMove()
+    {
+        return !DialogSystem.Instance.DialogActive;
     }
 
     public void TakeDamage()

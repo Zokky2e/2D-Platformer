@@ -5,7 +5,8 @@ public enum NPCAction
 {
     None = 0,
     Attention,
-    Information
+    Information,
+    Trade
 }
 
 public class NPC : MonoBehaviour
@@ -15,7 +16,10 @@ public class NPC : MonoBehaviour
     private Health health;
 
     [Header("NPC Quest/Dialogue State")]
+    public bool isTrader = false;
     public NPCAction currentAction = NPCAction.None;
+    public string npcName = "NPC Name";
+    [TextArea(3, 5)] public string npcDialog = "Hello, adventurer!";
     [Header("Indicators")]
     [SerializeField] private GameObject exclamationMarkPrefab;
     [SerializeField] private GameObject questionMarkPrefab;
@@ -80,6 +84,10 @@ public class NPC : MonoBehaviour
                 activeIndicator = Instantiate(questionMarkPrefab, transform.position + new Vector3(0, 0.5f, 0), Quaternion.identity, transform);
                 break;
 
+            case NPCAction.Trade:
+                activeIndicator = Instantiate(questionMarkPrefab, transform.position + new Vector3(0, 0.5f, 0), Quaternion.identity, transform);
+                break;
+
             case NPCAction.None:
             default:
                 activeIndicator = null;
@@ -109,12 +117,21 @@ public class NPC : MonoBehaviour
         if (currentAction == NPCAction.Attention)
         {
             Debug.Log("NPC: Here is your quest!");
-            // Implement quest logic here
+            DialogSystem.Instance.ShowDialog(npcName, npcDialog);
         }
         else if (currentAction == NPCAction.Information)
         {
             Debug.Log("NPC: I have some information for you.");
-            // Implement dialogue logic here
+            DialogSystem.Instance.ShowDialog(npcName, npcDialog);
+        }
+        else if (currentAction == NPCAction.Trade)
+        {
+            Debug.Log("NPC: I have something to trade!");
+        }
+        if (isTrader)
+        {
+            currentAction = NPCAction.Trade;
+            UpdateIndicator();
         }
     }
 }
