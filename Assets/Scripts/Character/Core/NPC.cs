@@ -23,6 +23,7 @@ public class NPC : MonoBehaviour
     [Header("Indicators")]
     [SerializeField] private GameObject exclamationMarkPrefab;
     [SerializeField] private GameObject questionMarkPrefab;
+    [SerializeField] private GameObject traderMarkPrefab;
     private GameObject activeIndicator; // To store the currently active indicator
     private Interactable interactable; // Reference to interactable component
     private void Start()
@@ -85,7 +86,7 @@ public class NPC : MonoBehaviour
                 break;
 
             case NPCAction.Trade:
-                activeIndicator = Instantiate(questionMarkPrefab, transform.position + new Vector3(0, 0.5f, 0), Quaternion.identity, transform);
+                activeIndicator = Instantiate(traderMarkPrefab, transform.position + new Vector3(0, 0.5f, 0), Quaternion.identity, transform);
                 break;
 
             case NPCAction.None:
