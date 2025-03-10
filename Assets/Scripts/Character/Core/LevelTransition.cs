@@ -11,13 +11,24 @@ public class LevelTransition : MonoBehaviour
     {
         if (other.CompareTag("Player"))  // Ensure the Player has a "Player" tag
         {
-            StartCoroutine(FadeTransition.Instance.FadeAndExecute(LoadNextScene));
+            if (other.CompareTag("Player"))
+            {
+                StartCoroutine(FadeTransition.Instance.FadeAndExecute(() => StartCoroutine(LoadNextScene())));
+            }
         }
     }
 
-    private void LoadNextScene()
+    private IEnumerator LoadNextScene()
     {
+        SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.LoadScene(nextSceneName);
+        // Now that the scene is loaded, wait a small delay before fading back
+        FadeTransition.Instance.FadeBack();
+        Debug.Log("Im loading scene");
+        yield return new WaitForSeconds(0.2f);
+
+        Debug.Log("Im Calling back fade");
+        // Fade back after loading
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -31,10 +42,5 @@ public class LevelTransition : MonoBehaviour
         }
 
         SceneManager.sceneLoaded -= OnSceneLoaded; // Unsubscribe after setting position
-    }
-
-    private void Start()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 }

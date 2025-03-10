@@ -3,6 +3,21 @@ using UnityEngine.SceneManagement;
 
 public class SensorManager : MonoBehaviour
 {
+    private static SensorManager instance;
+
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
     private void Start()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;

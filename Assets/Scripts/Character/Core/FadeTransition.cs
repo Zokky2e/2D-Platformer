@@ -36,4 +36,16 @@ public class FadeTransition : MonoBehaviour
         // Trigger fade animation back to normal
         fadeAnimator.SetBool("FadeToBlack", false);
     }
+
+    public void FadeBack()
+    {
+        StartCoroutine(FadeBackCoroutine());
+    }
+
+    private IEnumerator FadeBackCoroutine()
+    {
+        yield return new WaitForSeconds(0.5f);  // Optional delay before fading back
+        Debug.Log("Fade From Black");
+        fadeAnimator.SetBool("FadeToBlack", false);
+    }
 }
