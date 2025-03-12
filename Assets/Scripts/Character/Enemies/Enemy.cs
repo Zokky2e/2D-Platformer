@@ -6,66 +6,135 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour, IEntity
 {
+    [Header("General Settings")]
     public float damage;
     public bool isTrap = false;
 
-    [Header("Non Trap")] //TODO show only if isTrap is false
+    [Header("Patrol & Movement")]
+    public float moveSpeed = 2f;
+    public Transform[] patrolPoints;
+    private int currentPointIndex = 0;
+    private bool isChasing = false;
 
+    [Header("Combat")]
     public float attackDelay = 1.5f;
     public float attackSpeedAnimation = 0.3f;
+    public float attackRange = 1.5f;
+    public float detectionRange = 4f;
+
     private Animator animator;
     private FloatingHealthBar floatingHealthBar;
-    private Health enemyHealth;
+    private SpriteRenderer spriteRenderer;
+    private Health health;
     private bool isAttacking = false;
-    private Collider2D playerInRange;
+    private bool canAttack = true;
+    private Transform player;
 
     public void Start()
     {
         animator = this.GetComponent<Animator>();
         floatingHealthBar = this.GetComponent<FloatingHealthBar>();
-        enemyHealth = this.GetComponent<Health>();
-        if (enemyHealth != null)
-            enemyHealth.entity = this;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        health = this.GetComponent<Health>();
+
+        if (health != null)
+            health.entity = this;
+
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        if (!isTrap) 
+            StartCoroutine(Patrol());
+    }
+    void Update()
+    {
+        if (player == null) return;
+
+        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+
+        if (!isTrap)
+        {
+            if (distanceToPlayer <= detectionRange)
+            {
+                StopAllCoroutines();
+                isChasing = true;
+                ChasePlayer();
+            }
+            else if (isChasing)
+            {
+                isChasing = false;
+                StartCoroutine(Patrol());
+            }
+        }
+    }
+
+    private IEnumerator Patrol()
+    {
+        while (!isChasing && patrolPoints.Length > 1)
+        {
+            Transform targetPoint = patrolPoints[currentPointIndex];
+
+            while (Vector2.Distance(transform.position, targetPoint.position) > 0.1f)
+            {
+                animator.SetInteger("AnimState", 2);
+                MoveTowards(targetPoint.position);
+                yield return null;
+            }
+
+            animator.SetInteger("AnimState", 0);
+            currentPointIndex = (currentPointIndex + 1) % patrolPoints.Length;
+            yield return new WaitForSeconds(2f);
+        }
+    }
+
+    private void MoveTowards(Vector2 target)
+    {
+        Vector2 direction = target - (Vector2)transform.position;
+        transform.position = Vector2.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+
+        // Flip the sprite based on movement direction
+        spriteRenderer.flipX = direction.x > 0;
+    }
+
+    private void ChasePlayer()
+    {
+        if (player != null)
+        {
+            animator.SetInteger("AnimState", 2);
+            MoveTowards(player.position);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Player" && damage > 0 && !isAttacking)
+        if (collision.tag == "Player" && damage > 0 && health.currentHealth > 0)
         {
-            playerInRange = collision;
             if (isTrap)
             {
-                playerInRange.GetComponent<Health>().TakeDamage(damage);
+                collision.GetComponent<Health>().TakeDamage(damage);
             }
-            else if(enemyHealth.currentHealth > 0)
+            else if(canAttack && !isAttacking)
             {
-                StartCoroutine(Attack());
+                StartCoroutine(Attack(collision.GetComponent<Health>()));
             }
         }
     }
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Player"))
-        {
-            playerInRange = null;  // Remove player reference when they leave
-        }
-    }
 
-    public IEnumerator Attack()
+    private IEnumerator Attack(Health playerHealth)
     {
-        isAttacking = true; // Prevent multiple attacks
+        isAttacking = true;
+        canAttack = false;
 
-        while (playerInRange != null) // Keep attacking while the player is inside
+        animator.SetTrigger("Attack");
+        yield return new WaitForSeconds(attackSpeedAnimation);
+
+        if (playerHealth != null && Vector2.Distance(transform.position, playerHealth.transform.position) <= attackRange)
         {
-            animator.SetTrigger("Attack");  // Start attack animation
-            yield return new WaitForSeconds(attackSpeedAnimation); // Wait until attack lands
-            if (playerInRange != null) // Check again to avoid null errors
-            {
-                playerInRange.GetComponent<Health>().TakeDamage(damage);
-            }
-            yield return new WaitForSeconds(attackDelay);
+            playerHealth.TakeDamage(damage);
         }
+
+        yield return new WaitForSeconds(attackDelay);
         isAttacking = false;
+        canAttack = true;
     }
 
     public void TakeDamage()
@@ -76,6 +145,7 @@ public class Enemy : MonoBehaviour, IEntity
     public void Die()
     {
         animator.SetTrigger("Death");
+        StopAllCoroutines();
     }
 
     public bool IsBlocking()

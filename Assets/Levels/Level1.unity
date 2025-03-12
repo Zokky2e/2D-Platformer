@@ -2886,6 +2886,68 @@ TilemapCollider2D:
   m_MaximumTileChangeCount: 1000
   m_ExtrusionFactor: 0
   m_UseDelaunayMesh: 0
+--- !u!1001 &815226831
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.39
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1885266531794151859, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_Name
+      value: PatrolPoint B
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+--- !u!4 &815226832 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+  m_PrefabInstance: {fileID: 815226831}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &876422958 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3199234433168532604, guid: 4c09aa47d6e0e954f899cb8efe5a6816, type: 3}
@@ -2900,6 +2962,11 @@ Transform:
 Transform:
   m_CorrespondingSourceObject: {fileID: 4563503118586567198, guid: c9e8fa1bad332ca4bbff9999263a6c77, type: 3}
   m_PrefabInstance: {fileID: 9197684042529329196}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1049703338 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+  m_PrefabInstance: {fileID: 2942134064961162922}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &1080072122 stripped
 Transform:
@@ -3950,6 +4017,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bandit
       objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: patrolPoints.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: 'patrolPoints.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1049703338}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: 'patrolPoints.Array.data[1]'
+      value: 
+      objectReference: {fileID: 815226832}
     - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.89
@@ -4162,6 +4241,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 25aabd6d7f1ff1f4e81fa39452111843, type: 3}
+--- !u!1001 &2942134064961162922
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.79
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -4
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 155103109167428804, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1885266531794151859, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+      propertyPath: m_Name
+      value: PatrolPoint A
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
 --- !u!1001 &3315845559946333157
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5035,3 +5171,5 @@ SceneRoots:
   - {fileID: 4285943752690483848}
   - {fileID: 1621709558308018875}
   - {fileID: 4683510501766261344}
+  - {fileID: 2942134064961162922}
+  - {fileID: 815226831}
