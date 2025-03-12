@@ -47,12 +47,11 @@ public class Enemy : MonoBehaviour, IEntity
     }
     void Update()
     {
-        if (player == null) return;
-
-        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-
         if (!isTrap)
         {
+            if (player == null && !health || health.currentHealth <= 0) return;
+
+            float distanceToPlayer = Vector2.Distance(transform.position, player.position);
             if (distanceToPlayer <= detectionRange)
             {
                 StopAllCoroutines();
@@ -99,8 +98,17 @@ public class Enemy : MonoBehaviour, IEntity
     {
         if (player != null)
         {
-            animator.SetInteger("AnimState", 2);
-            MoveTowards(player.position);
+            float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+            // Stop moving if the enemy is within attack range
+            if (distanceToPlayer > attackRange * 0.6f)
+            {
+                animator.SetInteger("AnimState", 2);
+                MoveTowards(player.position);
+            }
+            else
+            {
+                animator.SetInteger("AnimState", 0); // Idle animation when within range
+            }
         }
     }
 
@@ -112,29 +120,31 @@ public class Enemy : MonoBehaviour, IEntity
             {
                 collision.GetComponent<Health>().TakeDamage(damage);
             }
-            else if(canAttack && !isAttacking)
+            else if(!isAttacking)
             {
-                StartCoroutine(Attack(collision.GetComponent<Health>()));
+                StartCoroutine(AttackLoop(collision.GetComponent<Health>()));
             }
         }
     }
 
-    private IEnumerator Attack(Health playerHealth)
+    private IEnumerator AttackLoop(Health playerHealth)
     {
         isAttacking = true;
-        canAttack = false;
 
-        animator.SetTrigger("Attack");
-        yield return new WaitForSeconds(attackSpeedAnimation);
-
-        if (playerHealth != null && Vector2.Distance(transform.position, playerHealth.transform.position) <= attackRange)
+        while (playerHealth != null && Vector2.Distance(transform.position, playerHealth.transform.position) <= attackRange)
         {
-            playerHealth.TakeDamage(damage);
+            animator.SetTrigger("Attack");
+            yield return new WaitForSeconds(attackSpeedAnimation);
+
+            if (playerHealth != null && Vector2.Distance(transform.position, playerHealth.transform.position) <= attackRange)
+            {
+                playerHealth.TakeDamage(damage);
+            }
+
+            yield return new WaitForSeconds(attackDelay);
         }
 
-        yield return new WaitForSeconds(attackDelay);
-        isAttacking = false;
-        canAttack = true;
+        isAttacking = false; // Stop attacking when the player leaves range
     }
 
     public void TakeDamage()

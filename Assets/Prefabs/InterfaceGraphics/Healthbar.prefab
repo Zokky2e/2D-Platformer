@@ -114,6 +114,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EntityHealth
       objectReference: {fileID: 0}
+    - target: {fileID: 1018648163358631474, guid: 7b9c3d59895fc1747977d7160f8defd1, type: 3}
+      propertyPath: m_Layer
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 1342269739266895527, guid: 7b9c3d59895fc1747977d7160f8defd1, type: 3}
       propertyPath: m_Value
       value: 1
