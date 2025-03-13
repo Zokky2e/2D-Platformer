@@ -97,17 +97,22 @@ public class JumpingState : HeroState
     {
         base.Update();
         m_wallCooldown += Time.deltaTime;
-        if (m_wallCooldown > 0.5f)
+        if (m_wallCooldown > 1f)
         {
             if (hero.onWall() && !hero.isGrounded())
             {
-                m_body2d.gravityScale = 0;
+                m_animator.SetBool("WallSlide", true);
                 m_body2d.linearVelocity = Vector2.zero;
             }
             else
             {
-                m_body2d.gravityScale = hero.Gravity;
+                m_animator.SetBool("WallSlide", false);
             }
+                m_body2d.gravityScale = hero.Gravity;
+        }
+        else if (Input.GetKeyDown("space"))
+        {
+            Jump();
         }
     }
 

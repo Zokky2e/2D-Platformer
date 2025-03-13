@@ -220,10 +220,6 @@ public class Hero : MonoBehaviour, IEntity {
     public bool onWall()
     {
         RaycastHit2D raycastHit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, new Vector2(m_facingDirection, 0), 0.1f, groundLayer);
-        if (raycastHit.collider != null)
-        {
-            m_animator.SetBool("WallSlide", true);
-        }
         return raycastHit.collider != null;
     }
 

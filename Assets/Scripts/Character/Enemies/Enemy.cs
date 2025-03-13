@@ -108,19 +108,23 @@ public class Enemy : MonoBehaviour, IEntity
             else
             {
                 animator.SetInteger("AnimState", 0); // Idle animation when within range
+                if (canAttack && !isAttacking)
+                {
+                    StartCoroutine(AttackLoop(player.GetComponent<Health>()));
+                }
             }
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Player" && damage > 0 && health.currentHealth > 0)
+        if (collision.tag == "Player" && damage > 0)
         {
             if (isTrap)
             {
                 collision.GetComponent<Health>().TakeDamage(damage);
             }
-            else if(!isAttacking)
+            else if(!isAttacking && health.currentHealth > 0)
             {
                 StartCoroutine(AttackLoop(collision.GetComponent<Health>()));
             }
@@ -131,8 +135,15 @@ public class Enemy : MonoBehaviour, IEntity
     {
         isAttacking = true;
 
-        while (playerHealth != null && Vector2.Distance(transform.position, playerHealth.transform.position) <= attackRange)
+        while (playerHealth != null)
         {
+            float distanceToPlayer = Vector2.Distance(transform.position, playerHealth.transform.position);
+
+            if (distanceToPlayer > attackRange)
+            {
+                isAttacking = false; // Stop attacking when the player leaves range
+                break; // Stop attacking if player moves out of range
+            }
             animator.SetTrigger("Attack");
             yield return new WaitForSeconds(attackSpeedAnimation);
 
