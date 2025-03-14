@@ -160,9 +160,6 @@ public class Hero : MonoBehaviour, IEntity {
         m_animator.SetBool("Grounded", isGrounded());
         // -- Handle input and movement --
         m_horizontalInput = Input.GetAxis("Horizontal");
-        m_animator.SetFloat("AirSpeedY", m_body2d.linearVelocity.y);
-        //Wall Slide
-        m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
         // Swap direction of sprite depending on walk direction
         if (m_horizontalInput > 0)
         {
@@ -174,11 +171,6 @@ public class Hero : MonoBehaviour, IEntity {
         {
             GetComponent<SpriteRenderer>().flipX = true;
             m_facingDirection = -1;
-        }
-
-        if(!noMovementStates.Contains(state.GetCurrentState()))
-        {
-            m_body2d.linearVelocity = new Vector2(m_horizontalInput * m_speed, m_body2d.linearVelocity.y);
         }
 
         //Run
@@ -199,6 +191,18 @@ public class Hero : MonoBehaviour, IEntity {
 
         m_animator.SetBool("Grounded", isGrounded());
         state.Update();
+    }
+
+    void FixedUpdate()
+    {
+        m_animator.SetFloat("AirSpeedY", m_body2d.linearVelocity.y);
+        //Wall Slide
+        m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
+        if (!noMovementStates.Contains(state.GetCurrentState()))
+        {
+            m_body2d.linearVelocity = new Vector2(m_horizontalInput * m_speed, m_body2d.linearVelocity.y);
+        }
+        RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxCollider.size, 0, new Vector2(m_facingDirection, 0), 0.1f, groundLayer);
     }
 
     void handleInput()
