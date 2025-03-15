@@ -4,6 +4,9 @@
             <ui:Label text="Inventory" name="Title" style="font-size: 64px; right: auto; left: auto; top: auto; align-items: auto; justify-content: flex-start; align-self: auto; align-content: auto; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; -unity-font-style: bold; color: rgb(255, 255, 255);" />
             <ui:Button text="X" name="ExitButton" style="font-size: 48px; width: 64px; height: 64px; padding-top: 16px; padding-right: 16px; padding-bottom: 16px; padding-left: 16px; border-top-left-radius: 32px; border-top-right-radius: 32px; border-bottom-right-radius: 32px; border-bottom-left-radius: 32px; background-color: rgba(255, 255, 255, 0.29); transition-property: all; transition-duration: 0s; transition-timing-function: ease; transition-delay: 0s; color: rgb(255, 255, 255);" />
         </ui:VisualElement>
-        <ui:VisualElement name="InventoryContainer" style="flex-grow: 1;" />
+        <ui:VisualElement name="InventoryContainer" style="flex-grow: 1; max-width: initial; max-height: initial; width: 100%; height: 100%; align-items: flex-start; justify-content: space-between; flex-direction: row; flex-wrap: wrap;">
+            <ui:VisualElement name="Loadout" style="flex-grow: 1; width: 50%; align-items: auto; height: 100%; padding-top: 16px; padding-right: 16px; padding-bottom: 16px; padding-left: 16px;" />
+            <ui:ScrollView name="Items" style="align-self: auto; align-content: auto; justify-content: flex-start; align-items: flex-start; width: 50%; height: 100%; background-color: rgba(0, 0, 0, 0.05); padding-top: 16px; padding-right: 16px; padding-bottom: 16px; padding-left: 16px; flex-direction: row; flex-wrap: wrap;" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

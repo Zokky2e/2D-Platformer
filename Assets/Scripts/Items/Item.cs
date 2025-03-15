@@ -6,15 +6,23 @@ public class Item : MonoBehaviour
 
     [SerializeField] private string _description;
 
-    public string Name { get { return _name; } }
-    public string Description { get { return _description; } }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public Sprite Sprite { get; private set; }
+    public string Name => _name;
+    public string Description => _description;
+    void Awake()
     {
-        
-    }
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            Sprite = spriteRenderer.sprite;
+            Debug.Log($"Item '{_name}' sprite loaded: {Sprite.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"Item '{_name}' is missing a SpriteRenderer!");
+        }
 
-    // Update is called once per frame
+    }
     void Update()
     {
         

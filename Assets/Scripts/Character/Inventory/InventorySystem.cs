@@ -2,15 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 public class InventorySystem : MonoBehaviour
 {
-    public static InventorySystem Instance; // Singleton
+    public static InventorySystem Instance { get; private set; } // Singleton
     public List<Item> items = new List<Item>(); // List of items
     public delegate void OnInventoryChanged();
     public event OnInventoryChanged onInventoryChanged;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
     private void Awake()
     {
         // Ensure only one instance exists
@@ -20,7 +16,10 @@ public class InventorySystem : MonoBehaviour
             DontDestroyOnLoad(gameObject);
         }
         else
+        {
             Destroy(gameObject);
+            return;
+        }
     }
     // Update is called once per frame
     void Update()
