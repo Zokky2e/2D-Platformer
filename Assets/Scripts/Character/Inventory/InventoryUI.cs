@@ -202,6 +202,7 @@ public class InventoryUI : MonoBehaviour
 
     private void UseItem(Item item)
     {
+        item.UseItem();
         inventory.RemoveItem(item); // Remove after use
     }
 }

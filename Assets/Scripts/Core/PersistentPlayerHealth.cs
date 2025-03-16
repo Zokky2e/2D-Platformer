@@ -4,7 +4,7 @@ using UnityEngine;
 public class PersistentPlayerHealth : Health
 {
     public static PersistentPlayerHealth Instance;
-
+    [SerializeField] public Healthbar Healthbar;
     public new void Awake()
     {
         if (Instance == null)
@@ -25,6 +25,15 @@ public class PersistentPlayerHealth : Health
         if (currentHealth == 0)
         {
             StartCoroutine(DoDeathAnimation());
+        }
+    }
+
+    public void AddMaxHealth(float _maxHealth) 
+    {
+        startingHealth += _maxHealth; 
+        if (Healthbar != null)
+        {
+            Healthbar.createBreakpoints();
         }
     }
 

@@ -37,15 +37,19 @@ public class Healthbar : MonoBehaviour
         }
     }
 
-    private void createBreakpoints()
+    public void createBreakpoints()
     {
-
+        // Clear existing breakpoints first to avoid duplicating them
+        foreach (var marker in markers)
+        {
+            Destroy(marker);
+        }
         if (PersistentPlayerHealth.Instance != null)
         {
             float maxHealth = PersistentPlayerHealth.Instance.startingHealth;
             float currentHealth = PersistentPlayerHealth.Instance.currentHealth;
             int currentBreakpoint = breakpointEveryX;
-            while (currentBreakpoint < currentHealth)
+            while (currentBreakpoint < maxHealth)
             {
                 float normalizedPos = (float)currentBreakpoint / maxHealth;
                 CreateBreakpoint(normalizedPos);

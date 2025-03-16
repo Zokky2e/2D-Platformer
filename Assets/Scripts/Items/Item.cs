@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
-    [SerializeField] private string _name;
+    [SerializeField] protected string _name;
 
-    [SerializeField] private string _description;
+    [SerializeField] protected string _description;
 
     public Sprite Sprite { get; private set; }
     public string Name => _name;
@@ -17,7 +17,7 @@ public class Item : MonoBehaviour
             Sprite = spriteRenderer.sprite;
             Debug.Log($"Item '{_name}' sprite loaded: {Sprite.name}");
         }
-        else
+        else 
         {
             Debug.LogWarning($"Item '{_name}' is missing a SpriteRenderer!");
         }
@@ -27,4 +27,6 @@ public class Item : MonoBehaviour
     {
         
     }
+
+    public virtual void UseItem() { }
 }

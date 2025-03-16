@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class HealthCollectable : Item
+public class MaxHealthCollectable : Item
 {
     public float healthValue;
 
@@ -16,6 +16,7 @@ public class HealthCollectable : Item
     public override void UseItem()
     {
         base.UseItem();
+        PersistentPlayerHealth.Instance.AddMaxHealth(healthValue);
         PersistentPlayerHealth.Instance.AddHealth(healthValue);
     }
 }
