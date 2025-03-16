@@ -82,18 +82,54 @@ public class InventoryUI : MonoBehaviour
 
     private void UpdateInventoryUI()
     {
+        //inventoryContainer.Clear(); //Clear inventory
         items.Clear(); // Clear old items
 
+        UpdateInventoryItemsUI();
+    }
+
+    private void UpdateInventoryItemsUI()
+    {
         int columns = 4; // Number of columns in the grid
-        VisualElement gridContainer = new VisualElement(); 
+        int rows = 4;
+        int totalSlots = Mathf.Max(inventory.items.Count, columns * rows);
+
+        // Create scrollable inventory grid
+        ScrollView gridScrollView = new ScrollView(ScrollViewMode.Vertical);
+        gridScrollView.style.height = Length.Percent(30); // Full height of inventory panel
+        gridScrollView.style.width = Length.Percent(100);
+        gridScrollView.style.overflow = Overflow.Hidden; // Prevents content overflow
+        gridScrollView.verticalScrollerVisibility = ScrollerVisibility.Auto;
+
+        // Ensure scrolling works with the mouse wheel
+        gridScrollView.RegisterCallback<WheelEvent>(evt =>
+        {
+            gridScrollView.scrollOffset += new Vector2(0, evt.delta.y * 0.25f); // Adjust speed if needed
+            evt.StopPropagation();
+        });
+        VisualElement gridContainer = new VisualElement();
         gridContainer.style.flexDirection = FlexDirection.Row;
         gridContainer.style.flexWrap = Wrap.Wrap; // Allow wrapping into multiple rows
         gridContainer.style.justifyContent = Justify.FlexStart; // Align left
         gridContainer.style.alignItems = Align.Center; // Center items vertically
         gridContainer.style.paddingBottom = 10;
-        foreach (Item item in inventory.items)
-        {
+        gridContainer.style.width = Length.Percent(100);
+        gridContainer.style.height = Length.Percent(100);
 
+        Label tooltip = new Label(); // Tooltip for item descriptions
+        tooltip.style.position = Position.Absolute;
+        tooltip.style.backgroundColor = new Color(0, 0, 0, 0.8f);
+        tooltip.style.color = Color.white;
+        tooltip.style.paddingLeft = 5;
+        tooltip.style.paddingRight = 5;
+        tooltip.style.paddingTop = 2;
+        tooltip.style.paddingBottom = 2;
+        tooltip.style.fontSize = 24;
+        tooltip.style.visibility = Visibility.Hidden;
+        inventoryContainer.Add(tooltip); // Add tooltip to the inventory UI
+
+        for (int i = 0; i < totalSlots; i++)
+        {
             // Create container for item (sprite + text)
             VisualElement itemSlot = new VisualElement();
             itemSlot.style.flexDirection = FlexDirection.Column;
@@ -103,22 +139,55 @@ public class InventoryUI : MonoBehaviour
             itemSlot.style.marginRight = 10; // Spacing between columns
             itemSlot.style.marginBottom = 10; // Spacing between rows
             itemSlot.style.alignItems = Align.Center; // Center text
+            itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Light transparent slot background
 
             // Create image for item
             VisualElement itemImage = new VisualElement();
             itemImage.style.width = 120;
             itemImage.style.height = 120;
-            itemImage.style.backgroundColor = Color.black;
-            itemImage.style.backgroundImage = new StyleBackground(item.Sprite); // Set sprite
+            itemImage.style.alignSelf = Align.Center; // Center image
 
             // Create label for item name
-            Label itemLabel = new Label(item.Name);
+            Label itemLabel = new Label();
             itemLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             itemLabel.style.fontSize = 24;
             itemLabel.style.color = Color.white;
 
-            // Add click event to entire item slot
-            itemSlot.RegisterCallback<ClickEvent>(evt => UseItem(item));
+            if (i < inventory.items.Count)
+            {
+                Item item = inventory.items[i];
+                itemImage.style.backgroundImage = new StyleBackground(item.Sprite); // Assign sprite
+                itemLabel.text = item.Name; // Assign name
+
+                itemSlot.RegisterCallback<MouseEnterEvent>(evt =>
+                {
+                    Debug.Log("Showing description: " + item.Description);
+                    itemSlot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
+                    tooltip.text = item.Description; // Show item description
+                    tooltip.style.visibility = Visibility.Visible;
+                    tooltip.style.left = evt.mousePosition.x;
+                    tooltip.style.top = evt.mousePosition.y - 15;
+                });
+                // Remove highlight when leaving
+                itemSlot.RegisterCallback<MouseLeaveEvent>(evt =>
+                {
+                    itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Light transparent slot background
+                    tooltip.style.visibility = Visibility.Hidden;
+                });
+                // Move tooltip with mouse
+                itemSlot.RegisterCallback<MouseMoveEvent>(evt =>
+                {
+                    tooltip.style.left = evt.mousePosition.x;
+                    tooltip.style.top = evt.mousePosition.y - 15;
+                });
+                // Add click event to use the item
+                itemSlot.RegisterCallback<ClickEvent>(evt =>
+                {
+                    itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
+                    tooltip.style.visibility = Visibility.Hidden;
+                    UseItem(item); 
+                });
+            }
 
             // Add sprite & text to container
             itemSlot.Add(itemImage);
@@ -127,13 +196,12 @@ public class InventoryUI : MonoBehaviour
             // Add to UI
             gridContainer.Add(itemSlot);
         }
+        gridScrollView.Add(gridContainer);
         items.Add(gridContainer);
     }
 
-
     private void UseItem(Item item)
     {
-        Debug.Log("Using item: " + item.Name);
         inventory.RemoveItem(item); // Remove after use
     }
 }
