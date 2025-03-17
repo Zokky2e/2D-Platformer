@@ -6,8 +6,10 @@ using UnityEngine;
 public class Health : MonoBehaviour
 {
     [Header ("Health")]
-    public float startingHealth;
-    public float currentHealth { get; private set; }
+    public float baseHealth = 100f;
+    public float bonusHealth = 0f;
+    public float CurrentHealth { get; private set; }
+    public float MaxHealth => baseHealth + bonusHealth; // Dynamic max HP
 
     public IEntity entity;
 
@@ -23,7 +25,7 @@ public class Health : MonoBehaviour
 
     public void Awake()
     {
-        currentHealth = startingHealth;
+        CurrentHealth = MaxHealth;
         spriteRend = GetComponent<SpriteRenderer>();
         playerLayerNumber = (int)Math.Log(playerLayer.value, 2);
         enemyLayerNumber = (int)Math.Log(enemyLayer.value, 2);
@@ -33,22 +35,26 @@ public class Health : MonoBehaviour
     {
         if (!entity.IsBlocking())
         {
-            if (currentHealth - _damage > 0)
+            _damage = entity.TakeDamage(_damage);
+            if (_damage == 0)
             {
-                entity.TakeDamage();
+                return;
+            }
+            else if (CurrentHealth - _damage > 0)
+            {
                 StartCoroutine(Invunerability());
             }
             else
             {
                 entity.Die();
             }
-            currentHealth = Mathf.Clamp(currentHealth - _damage, 0, startingHealth);
+            CurrentHealth = Mathf.Clamp(CurrentHealth - _damage, 0, MaxHealth);
         }
     }
 
     public void AddHealth(float _healthAmount)
     {
-        currentHealth = Mathf.Clamp(currentHealth + _healthAmount, 0, startingHealth);
+        CurrentHealth = Mathf.Clamp(CurrentHealth + _healthAmount, 0, MaxHealth);
     }
 
     private IEnumerator Invunerability()

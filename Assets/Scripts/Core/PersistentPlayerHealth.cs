@@ -22,7 +22,7 @@ public class PersistentPlayerHealth : Health
     public override void TakeDamage(float _damage)
     {
         base.TakeDamage(_damage);
-        if (currentHealth == 0)
+        if (CurrentHealth == 0)
         {
             StartCoroutine(DoDeathAnimation());
         }
@@ -30,7 +30,7 @@ public class PersistentPlayerHealth : Health
 
     public void AddMaxHealth(float _maxHealth) 
     {
-        startingHealth += _maxHealth; 
+        bonusHealth += _maxHealth;
         if (Healthbar != null)
         {
             Healthbar.createBreakpoints();

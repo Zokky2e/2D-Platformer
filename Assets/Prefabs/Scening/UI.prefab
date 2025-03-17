@@ -657,7 +657,7 @@ MonoBehaviour:
   healthValue: {fileID: 3708113990325133039}
   healthBarFill: {fileID: 6283064654277003891}
   breakpointPrefab: {fileID: 4424713766388526111, guid: 773c6142ef1753f40b80ce5e0dc80024, type: 3}
-  breakpointEveryX: 25
+  breakpointEveryX: 50
   healthText: {fileID: 2426808283866503733}
   markers: []
 --- !u!114 &3708113990325133039 stripped

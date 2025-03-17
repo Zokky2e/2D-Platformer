@@ -54,7 +54,7 @@ public class GameRespawn : MonoBehaviour
     private void Respawn()
     {
 
-        PersistentPlayerHealth.Instance.AddHealth(PersistentPlayerHealth.Instance.startingHealth);
+        PersistentPlayerHealth.Instance.AddHealth(PersistentPlayerHealth.Instance.MaxHealth);
         Vector3 respawnPosition = (playerRespawn != null) ? playerRespawn.position : startingPosition;
         transform.position = respawnPosition;
     }

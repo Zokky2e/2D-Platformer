@@ -11,7 +11,7 @@ public class FloatingHealthBar : Healthbar
 
     new void Update()
     {
-        healthValue.value = entityHealth.currentHealth / entityHealth.startingHealth;
+        healthValue.value = entityHealth.CurrentHealth / entityHealth.MaxHealth;
     }
 
 }

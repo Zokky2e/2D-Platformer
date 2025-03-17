@@ -234,12 +234,14 @@ public class HeroKnight : MonoBehaviour, IEntity {
         return raycastHit.collider != null;
     }
 
-    public void TakeDamage()
+    public float TakeDamage(float _damage)
     {
         if (!IsBlocking())
         {
             m_animator.SetTrigger("Hurt");
+            return _damage;
         }
+        return 0;
     }
 
     public void Die()

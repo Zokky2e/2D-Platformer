@@ -56,7 +56,7 @@ public class NPC : MonoBehaviour
     }
     private void Flip()
     {
-        if (health && health.currentHealth <= 0)
+        if (health && health.CurrentHealth <= 0)
         {
             // Prevent flipping if NPC is dead
             return;

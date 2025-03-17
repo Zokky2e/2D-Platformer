@@ -7,11 +7,9 @@ using UnityEngine;
 public class Enemy : MonoBehaviour, IEntity
 {
     [Header("General Settings")]
-    public float damage;
     public bool isTrap = false;
 
     [Header("Patrol & Movement")]
-    public float moveSpeed = 2f;
     public Transform[] patrolPoints;
     private int currentPointIndex = 0;
     private bool isChasing = false;
@@ -26,6 +24,7 @@ public class Enemy : MonoBehaviour, IEntity
     private FloatingHealthBar floatingHealthBar;
     private SpriteRenderer spriteRenderer;
     private Health health;
+    public CharacterStats stats;
     private bool isAttacking = false;
     private bool canAttack = true;
     private Transform player;
@@ -36,7 +35,7 @@ public class Enemy : MonoBehaviour, IEntity
         floatingHealthBar = this.GetComponent<FloatingHealthBar>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         health = this.GetComponent<Health>();
-
+        stats = this.GetComponent<CharacterStats>();
         if (health != null)
             health.entity = this;
 
@@ -49,7 +48,7 @@ public class Enemy : MonoBehaviour, IEntity
     {
         if (!isTrap)
         {
-            if (player == null && !health || health.currentHealth <= 0) return;
+            if (player == null && !health || health.CurrentHealth <= 0) return;
 
             float distanceToPlayer = Vector2.Distance(transform.position, player.position);
             if (distanceToPlayer <= detectionRange)
@@ -88,7 +87,7 @@ public class Enemy : MonoBehaviour, IEntity
     private void MoveTowards(Vector2 target)
     {
         Vector2 direction = target - (Vector2)transform.position;
-        transform.position = Vector2.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+        transform.position = Vector2.MoveTowards(transform.position, target, stats.TotalMoveSpeed * Time.deltaTime);
 
         // Flip the sprite based on movement direction
         spriteRenderer.flipX = direction.x > 0;
@@ -118,13 +117,13 @@ public class Enemy : MonoBehaviour, IEntity
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Player" && damage > 0)
+        if (collision.tag == "Player" && stats.TotalDamage > 0)
         {
             if (isTrap)
             {
-                collision.GetComponent<Health>().TakeDamage(damage);
+                collision.GetComponent<Health>().TakeDamage(stats.TotalDamage);
             }
-            else if(!isAttacking && health.currentHealth > 0)
+            else if(!isAttacking && health.CurrentHealth > 0)
             {
                 StartCoroutine(AttackLoop(collision.GetComponent<Health>()));
             }
@@ -149,7 +148,7 @@ public class Enemy : MonoBehaviour, IEntity
 
             if (playerHealth != null && Vector2.Distance(transform.position, playerHealth.transform.position) <= attackRange)
             {
-                playerHealth.TakeDamage(damage);
+                playerHealth.TakeDamage(stats.TotalDamage);
             }
 
             yield return new WaitForSeconds(attackDelay);
@@ -158,9 +157,10 @@ public class Enemy : MonoBehaviour, IEntity
         isAttacking = false; // Stop attacking when the player leaves range
     }
 
-    public void TakeDamage()
+    public float TakeDamage(float _damage)
     {
         animator.SetTrigger("Hurt");
+        return stats.CalculateDamage(_damage);
     }
 
     public void Die()

@@ -31,8 +31,8 @@ public class Healthbar : MonoBehaviour
 
         if (PersistentPlayerHealth.Instance != null)
         {
-            float healthPercent = PersistentPlayerHealth.Instance.currentHealth / PersistentPlayerHealth.Instance.startingHealth;
-            healthText.text = PersistentPlayerHealth.Instance.currentHealth.ToString();
+            float healthPercent = PersistentPlayerHealth.Instance.CurrentHealth / PersistentPlayerHealth.Instance.MaxHealth;
+            healthText.text = PersistentPlayerHealth.Instance.CurrentHealth.ToString();
             healthValue.value = healthPercent;
         }
     }
@@ -46,8 +46,8 @@ public class Healthbar : MonoBehaviour
         }
         if (PersistentPlayerHealth.Instance != null)
         {
-            float maxHealth = PersistentPlayerHealth.Instance.startingHealth;
-            float currentHealth = PersistentPlayerHealth.Instance.currentHealth;
+            float maxHealth = PersistentPlayerHealth.Instance.MaxHealth;
+            float currentHealth = PersistentPlayerHealth.Instance.CurrentHealth;
             int currentBreakpoint = breakpointEveryX;
             while (currentBreakpoint < maxHealth)
             {

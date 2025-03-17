@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,7 +25,7 @@ class Weapon : MonoBehaviour
         {
             if (player.GetCurrentHeroState() == HeroStates.Attack && !isEnemyHit)
             {
-                collision.GetComponent<Health>()?.TakeDamage(damage);
+                collision.GetComponent<Health>()?.TakeDamage(player.stats.TotalDamage + damage);
                 isEnemyHit = true;
             }
             if (player.GetCurrentHeroState() != HeroStates.Attack)

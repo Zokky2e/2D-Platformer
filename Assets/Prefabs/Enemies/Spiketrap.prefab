@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2007391626233740197}
   - component: {fileID: 6396781756374741916}
   - component: {fileID: 6987313437450088293}
+  - component: {fileID: 8590777302707880055}
   - component: {fileID: 8848470247432220313}
   m_Layer: 7
   m_Name: Spiketrap
@@ -75,8 +76,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -738363131
-  m_SortingLayer: 2
+  m_SortingLayerID: 1325466459
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300228, guid: 7810966f0f690954c87305933cabf2b0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -101,7 +102,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfb5f9813ae08894099fd4ee41bd79a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 1
+  isTrap: 1
+  patrolPoints: []
+  attackDelay: 1.5
+  attackSpeedAnimation: 0.3
+  attackRange: 1.5
+  detectionRange: 4
+  stats: {fileID: 0}
+--- !u!114 &8590777302707880055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9162628702136643279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0b45d8d83bd56045884d0bbfc8033b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseMoveSpeed: 4
+  baseJumpHeight: 10
+  baseDamage: 15
+  baseArmor: 5
+  balancingArmorConstant: 50
+  bonusMoveSpeed: 0
+  bonusJumpHeight: 0
+  bonusDamage: 0
+  bonusArmor: 0
 --- !u!61 &8848470247432220313
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -136,7 +164,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.171875}
+  m_Offset: {x: 0, y: 0.19559415}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0}
@@ -146,5 +174,5 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.03125, y: 0.34375}
+  m_Size: {x: 1.03125, y: 0.3911883}
   m_EdgeRadius: 0

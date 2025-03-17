@@ -96,14 +96,14 @@ public class Bandit : Enemy {
             m_animator.SetInteger("AnimState", 0);
     }
 
-    public new void TakeDamage()
+    public new float TakeDamage(float _damage)
     {
-        base.TakeDamage();
+        return base.TakeDamage(_damage);
     }
 
     public new void Die()
     {
-        base.TakeDamage();
+        base.Die();
     }
 
     public new bool IsBlocking()

@@ -20,7 +20,6 @@ public enum HeroStates
 
 public class Hero : MonoBehaviour, IEntity {
 
-    [SerializeField] float      m_speed = 4.0f;
     [SerializeField] float      m_jumpForce = 7.5f;
     public float JumpForce
     {
@@ -100,11 +99,12 @@ public class Hero : MonoBehaviour, IEntity {
     private Sensor_HeroKnight   m_wallSensorL2;
     private BoxCollider2D boxCollider;
     private Health playerHealth;
+    public CharacterStats stats;
     public float CurrentHealth
     {
         get
         {
-            return playerHealth.currentHealth;
+            return playerHealth.CurrentHealth;
         }
     }
     [SerializeField] private LayerMask groundLayer;
@@ -138,6 +138,7 @@ public class Hero : MonoBehaviour, IEntity {
         m_body2d = GetComponent<Rigidbody2D>();
         boxCollider = GetComponent<BoxCollider2D>();
         playerHealth = GetComponent<Health>();
+        stats = GetComponent<CharacterStats>();
         playerHealth.entity = this;
         m_body2d.gravityScale = gravity;
         m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
@@ -200,7 +201,7 @@ public class Hero : MonoBehaviour, IEntity {
         m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
         if (!noMovementStates.Contains(state.GetCurrentState()))
         {
-            m_body2d.linearVelocity = new Vector2(m_horizontalInput * m_speed, m_body2d.linearVelocity.y);
+            m_body2d.linearVelocity = new Vector2(m_horizontalInput * stats.TotalMoveSpeed, m_body2d.linearVelocity.y);
         }
         RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxCollider.size, 0, new Vector2(m_facingDirection, 0), 0.1f, groundLayer);
     }
@@ -232,12 +233,17 @@ public class Hero : MonoBehaviour, IEntity {
         return !DialogSystem.Instance.DialogActive;
     }
 
-    public void TakeDamage()
+    public float TakeDamage(float _damage)
     {
         if (!IsBlocking())
         {
+            float newDamage = stats.CalculateDamage(_damage);
+            if (newDamage <= 0)
+                return 0;
             m_animator.SetTrigger("Hurt");
+            return newDamage;
         }
+        return 0;
     }
 
     public void Die()
