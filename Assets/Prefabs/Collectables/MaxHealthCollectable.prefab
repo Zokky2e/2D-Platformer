@@ -147,6 +147,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c8ae8fd7fca1b841aef4c6692679903, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _name: 
-  _description: 
-  healthValue: 0
+  _name: Max Health
+  _description: This item gives player 10 max health
+  _type: 0
+  healthValue: 120

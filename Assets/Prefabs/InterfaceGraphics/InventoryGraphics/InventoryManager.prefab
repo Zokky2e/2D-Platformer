@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4044292685152064668}
   - component: {fileID: 7592118077778144341}
+  - component: {fileID: 9207923479673077358}
   m_Layer: 0
   m_Name: InventoryManager
   m_TagString: Untagged
@@ -45,3 +46,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   items: []
+--- !u!114 &9207923479673077358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1206814615969938472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b7bb428c146a4a47a77d052b1542164, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EquippedWeapon: {fileID: 0}
+  EquippedArmor: {fileID: 0}
+  EquippedAccessory: {fileID: 0}

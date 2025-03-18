@@ -3,7 +3,7 @@ using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-class Weapon : MonoBehaviour
+class Weapon : Item
 {
     public float damage;
     public bool isRanged = false;

@@ -103,6 +103,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _name: Heal
   _description: This item Heals the player for 50
+  _type: 0
   healthValue: 50
 --- !u!61 &7638459724107994204
 BoxCollider2D:

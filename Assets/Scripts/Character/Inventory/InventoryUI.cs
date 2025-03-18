@@ -8,6 +8,7 @@ public class InventoryUI : MonoBehaviour
     private InventorySystem inventory;
     private VisualElement inventoryPanel;
     private VisualElement inventoryContainer;
+    public EquipmentUI equipmentUI;
     private ScrollView items;
     private Button closeButton;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -23,6 +24,7 @@ public class InventoryUI : MonoBehaviour
     }
     void Start()
     {
+        equipmentUI = GetComponentInChildren<EquipmentUI>();
     }
 
     // Update is called once per frame
@@ -185,7 +187,7 @@ public class InventoryUI : MonoBehaviour
                 {
                     itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
                     tooltip.style.visibility = Visibility.Hidden;
-                    UseItem(item); 
+                    OnItemClick(item); 
                 });
             }
 
@@ -199,7 +201,17 @@ public class InventoryUI : MonoBehaviour
         gridScrollView.Add(gridContainer);
         items.Add(gridContainer);
     }
-
+    public void OnItemClick(Item item)
+    {
+        if (item.Type == ItemType.Weapon || item.Type == ItemType.Armor || item.Type == ItemType.Accessory)
+        {
+            EquipmentSystem.Instance.EquipItem(item);
+        }
+        else
+        {
+            UseItem(item);
+        }
+    }
     private void UseItem(Item item)
     {
         item.UseItem();
