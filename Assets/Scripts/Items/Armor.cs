@@ -3,7 +3,7 @@ using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-class Armor : Item
+class Armor : MonoBehaviour
 {
     public float armor;
 

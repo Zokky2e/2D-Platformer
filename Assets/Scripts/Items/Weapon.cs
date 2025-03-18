@@ -3,11 +3,8 @@ using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-class Weapon : Item
+class WeaponSensor : MonoBehaviour
 {
-    public float damage;
-    public bool isRanged = false;
-
     private Collider2D enemyInRange;
     private Collider2D weaponSensor;
     private Hero player;
@@ -21,11 +18,11 @@ class Weapon : Item
     }
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (collision.tag == "Enemy" && damage > 0)
+        if (collision.tag == "Enemy" && player.stats.TotalDamage > 0)
         {
             if (player.GetCurrentHeroState() == HeroStates.Attack && !isEnemyHit)
             {
-                collision.GetComponent<Health>()?.TakeDamage(player.stats.TotalDamage + damage);
+                collision.GetComponent<Health>()?.TakeDamage(player.stats.TotalDamage);
                 isEnemyHit = true;
             }
             if (player.GetCurrentHeroState() != HeroStates.Attack)

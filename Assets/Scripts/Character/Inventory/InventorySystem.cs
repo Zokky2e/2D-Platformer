@@ -5,6 +5,7 @@ public class InventorySystem : MonoBehaviour
     public static InventorySystem Instance { get; private set; } // Singleton
     public List<Item> items = new List<Item>(); // List of items
     public delegate void OnInventoryChanged();
+    public Hero player;
     public event OnInventoryChanged onInventoryChanged;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
@@ -20,6 +21,7 @@ public class InventorySystem : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        player = FindAnyObjectByType<Hero>();
     }
     // Update is called once per frame
     void Update()
@@ -38,5 +40,10 @@ public class InventorySystem : MonoBehaviour
     {
         items.Remove(item);
         onInventoryChanged?.Invoke(); // Update UI when item is removed
+    }
+
+    public void UseItem(Item item) 
+    {
+        item.UseItem(player.stats, player.Health);
     }
 }

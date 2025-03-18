@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 public class EquipmentSystem : MonoBehaviour
 {
@@ -9,11 +10,23 @@ public class EquipmentSystem : MonoBehaviour
     public Item EquippedArmor;
     public Item EquippedAccessory;
 
+    public Hero player;
     public event Action OnEquipmentChanged;
 
     private void Awake()
     {
-        Instance = this;
+        // Ensure only one instance exists
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+        player = FindAnyObjectByType<Hero>();
     }
 
     public void EquipItem(Item item)
@@ -30,10 +43,12 @@ public class EquipmentSystem : MonoBehaviour
         {
             Swap(ref EquippedAccessory, item);
         }
+        item.ApplyEffects(player.stats, player.Health);
     }
 
     public void UnequipItem(ItemType type)
     {
+        Item equippedItem = null;
         if (type == ItemType.Weapon && EquippedWeapon != null)
         {
             InventorySystem.Instance.AddItem(EquippedWeapon);
@@ -51,6 +66,10 @@ public class EquipmentSystem : MonoBehaviour
         }
 
         OnEquipmentChanged?.Invoke();
+        if (equippedItem != null)
+        {
+            equippedItem.RemoveEffects(player.stats, player.Health);
+        }
     }
 
     private void Swap(ref Item equippedSlot, Item newItem)

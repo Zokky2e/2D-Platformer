@@ -100,6 +100,14 @@ public class Hero : MonoBehaviour, IEntity {
     private BoxCollider2D boxCollider;
     private Health playerHealth;
     public CharacterStats stats;
+
+    public Health Health
+    {
+        get
+        {
+            return playerHealth;
+        }
+    }
     public float CurrentHealth
     {
         get
