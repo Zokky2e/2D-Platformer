@@ -45,5 +45,6 @@ public class InventorySystem : MonoBehaviour
     public void UseItem(Item item) 
     {
         item.UseItem(player.stats, player.Health);
+        RemoveItem(item); // Remove after use
     }
 }

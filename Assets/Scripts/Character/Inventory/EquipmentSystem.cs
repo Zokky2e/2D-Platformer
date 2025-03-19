@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static UnityEditor.Progress;
@@ -15,10 +16,12 @@ public class EquipmentSystem : MonoBehaviour
 
     private void Awake()
     {
+        player = FindAnyObjectByType<Hero>();
         // Ensure only one instance exists
         if (Instance == null)
         {
             Instance = this;
+            StartCoroutine(ApplyInitialStats());
             DontDestroyOnLoad(gameObject);
         }
         else
@@ -26,7 +29,20 @@ public class EquipmentSystem : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        player = FindAnyObjectByType<Hero>();
+    }
+
+    private IEnumerator ApplyInitialStats()
+    {
+        while (player.stats == null && player.Health == null)
+        {
+            yield return null; // Wait for next frame
+        }
+        if (EquippedWeapon != null)
+            EquippedWeapon.ApplyEffects(player.stats, player.Health);
+        if (EquippedArmor != null)
+            EquippedArmor.ApplyEffects(player.stats, player.Health);
+        if (EquippedAccessory != null)
+            EquippedAccessory.ApplyEffects(player.stats, player.Health);
     }
 
     public void EquipItem(Item item)
@@ -52,16 +68,19 @@ public class EquipmentSystem : MonoBehaviour
         if (type == ItemType.Weapon && EquippedWeapon != null)
         {
             InventorySystem.Instance.AddItem(EquippedWeapon);
+            equippedItem = EquippedWeapon;
             EquippedWeapon = null;
         }
         else if (type == ItemType.Armor && EquippedArmor != null)
         {
             InventorySystem.Instance.AddItem(EquippedArmor);
+            equippedItem = EquippedArmor;
             EquippedArmor = null;
         }
         else if (type == ItemType.Accessory && EquippedAccessory != null)
         {
             InventorySystem.Instance.AddItem(EquippedAccessory);
+            equippedItem = EquippedAccessory;
             EquippedAccessory = null;
         }
 

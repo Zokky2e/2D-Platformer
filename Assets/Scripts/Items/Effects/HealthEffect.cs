@@ -5,6 +5,12 @@ public class HealthEffect : ItemEffect<Health>
 {
     public float bonusHealth;
 
+    public override string AdjustDescription(string description)
+    {
+        string sign = bonusHealth >= 0 ? "+" : "";
+        description = description.Replace("{bonusHealth}", sign + bonusHealth.ToString());
+        return description;
+    }
     public override void ApplyEffect(Health target)
     {
         target.bonusHealth += bonusHealth;

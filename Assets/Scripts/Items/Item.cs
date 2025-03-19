@@ -14,7 +14,7 @@ public abstract class Item : ScriptableObject
 {
     [SerializeField] protected string _name;
 
-    [SerializeField] protected string _description;
+    [TextArea(3, 5)][SerializeField] protected string _description;
 
     [SerializeField] protected Sprite _sprite;
 
@@ -22,7 +22,8 @@ public abstract class Item : ScriptableObject
 
     public Sprite Sprite => _sprite;
     public string Name => _name;
-    public string Description => _description;
+    public string FixedDescription => _description;
+    [HideInInspector] public string Description = "";
     public ItemType Type => _type;
 
     // Explicitly specify the type argument for the generic ItemEffect<T>
@@ -30,6 +31,30 @@ public abstract class Item : ScriptableObject
     public List<ItemEffect<Health>> healthEffects = new List<ItemEffect<Health>>();
     public List<ItemEffect<CharacterStats>> onActivateCharacterStatsEffects = new List<ItemEffect<CharacterStats>>();
     public List<ItemEffect<Health>> onActivateHealthEffects = new List<ItemEffect<Health>>();
+
+    public void AdjustDescription()
+    {
+        var newDescription = FixedDescription;
+        foreach (var effect in characterStatsEffects)
+        {
+            newDescription = effect.AdjustDescription(newDescription);
+        }
+
+        foreach (var effect in healthEffects)
+        {
+            newDescription = effect.AdjustDescription(newDescription);
+        }
+        foreach (var effect in onActivateCharacterStatsEffects)
+        {
+            newDescription = effect.AdjustDescription(newDescription);
+        }
+
+        foreach (var effect in onActivateHealthEffects)
+        {
+            newDescription = effect.AdjustDescription(newDescription);
+        }
+        Description = newDescription;
+    }
 
     public void ApplyEffects(CharacterStats characterStats, Health health)
     {

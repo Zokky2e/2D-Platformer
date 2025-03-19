@@ -11,6 +11,9 @@ public class InventoryUI : MonoBehaviour
     public EquipmentUI equipmentUI;
     private ScrollView items;
     private Button closeButton;
+    private VisualElement tooltip;
+    private Label tooltipName;
+    private Label tooltipDescription;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
     {
@@ -25,6 +28,7 @@ public class InventoryUI : MonoBehaviour
     void Start()
     {
         equipmentUI = GetComponentInChildren<EquipmentUI>();
+        Label tooltip = new Label(); // Tooltip for item descriptions
     }
 
     // Update is called once per frame
@@ -65,7 +69,7 @@ public class InventoryUI : MonoBehaviour
         closeButton = root.Q<Button>("ExitButton");
         inventoryPanel.style.display = DisplayStyle.None;
         closeButton.clicked += ToggleInventory;
-
+        SetupTooltip(); // Initialize tooltip setups
         UpdateInventoryUI();
     }
 
@@ -118,26 +122,14 @@ public class InventoryUI : MonoBehaviour
         gridContainer.style.width = Length.Percent(100);
         gridContainer.style.height = Length.Percent(100);
 
-        Label tooltip = new Label(); // Tooltip for item descriptions
-        tooltip.style.position = Position.Absolute;
-        tooltip.style.backgroundColor = new Color(0, 0, 0, 0.8f);
-        tooltip.style.color = Color.white;
-        tooltip.style.paddingLeft = 5;
-        tooltip.style.paddingRight = 5;
-        tooltip.style.paddingTop = 2;
-        tooltip.style.paddingBottom = 2;
-        tooltip.style.fontSize = 24;
-        tooltip.style.visibility = Visibility.Hidden;
-        inventoryContainer.Add(tooltip); // Add tooltip to the inventory UI
-
         for (int i = 0; i < totalSlots; i++)
         {
             // Create container for item (sprite + text)
             VisualElement itemSlot = new VisualElement();
             itemSlot.style.flexDirection = FlexDirection.Column;
             itemSlot.style.alignItems = Align.Center;
-            itemSlot.style.width = 140;
-            itemSlot.style.height = 140; // Extra height to fit text
+            itemSlot.style.width = 120;
+            itemSlot.style.height = 120; // Extra height to fit text
             itemSlot.style.marginRight = 10; // Spacing between columns
             itemSlot.style.marginBottom = 10; // Spacing between rows
             itemSlot.style.alignItems = Align.Center; // Center text
@@ -149,26 +141,19 @@ public class InventoryUI : MonoBehaviour
             itemImage.style.height = 120;
             itemImage.style.alignSelf = Align.Center; // Center image
 
-            // Create label for item name
-            Label itemLabel = new Label();
-            itemLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-            itemLabel.style.fontSize = 24;
-            itemLabel.style.color = Color.white;
-
             if (i < inventory.items.Count)
             {
                 Item item = inventory.items[i];
                 itemImage.style.backgroundImage = new StyleBackground(item.Sprite); // Assign sprite
-                itemLabel.text = item.Name; // Assign name
 
                 itemSlot.RegisterCallback<MouseEnterEvent>(evt =>
                 {
-                    Debug.Log("Showing description: " + item.Description);
                     itemSlot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
-                    tooltip.text = item.Description; // Show item description
+                    tooltipName.text = item.Name; // Set item name
+                    item.AdjustDescription();
+                    tooltipDescription.text = item.Description; // Show item description
                     tooltip.style.visibility = Visibility.Visible;
-                    tooltip.style.left = evt.mousePosition.x;
-                    tooltip.style.top = evt.mousePosition.y - 15;
+                    UpdateTooltipPosition(evt.mousePosition); // Update tooltip position
                 });
                 // Remove highlight when leaving
                 itemSlot.RegisterCallback<MouseLeaveEvent>(evt =>
@@ -179,8 +164,7 @@ public class InventoryUI : MonoBehaviour
                 // Move tooltip with mouse
                 itemSlot.RegisterCallback<MouseMoveEvent>(evt =>
                 {
-                    tooltip.style.left = evt.mousePosition.x;
-                    tooltip.style.top = evt.mousePosition.y - 15;
+                    UpdateTooltipPosition(evt.mousePosition); // Update tooltip position
                 });
                 // Add click event to use the item
                 itemSlot.RegisterCallback<ClickEvent>(evt =>
@@ -193,7 +177,6 @@ public class InventoryUI : MonoBehaviour
 
             // Add sprite & text to container
             itemSlot.Add(itemImage);
-            itemSlot.Add(itemLabel);
 
             // Add to UI
             gridContainer.Add(itemSlot);
@@ -201,6 +184,73 @@ public class InventoryUI : MonoBehaviour
         gridScrollView.Add(gridContainer);
         items.Add(gridContainer);
     }
+
+    private void SetupTooltip()
+    {
+        tooltip = new Label();
+        tooltip.style.position = Position.Absolute;
+        tooltip.style.backgroundColor = new Color(0, 0, 0, 0.8f);
+        tooltip.style.color = Color.white;
+        tooltip.style.paddingLeft = 10;
+        tooltip.style.paddingRight = 10;
+        tooltip.style.paddingTop = 5;
+        tooltip.style.paddingBottom = 5;
+        tooltip.style.fontSize = 24;
+        tooltip.style.maxWidth = 500;
+        tooltip.style.visibility = Visibility.Hidden;
+
+        // Create the item name label
+        tooltipName = new Label();
+        tooltipName.style.unityFontStyleAndWeight = FontStyle.Bold;
+        tooltipName.style.fontSize = 28;
+        tooltipName.style.color = Color.white;
+        tooltipName.style.marginBottom = 5; // Space between name and description
+        tooltipName.style.whiteSpace = WhiteSpace.Normal;
+        tooltipName.style.overflow = Overflow.Hidden;
+        tooltipName.style.textOverflow = TextOverflow.Clip;
+
+        // Create the item description label
+        tooltipDescription = new Label();
+        tooltipDescription.style.fontSize = 22;
+        tooltipDescription.style.color = Color.white;
+        tooltipDescription.style.whiteSpace = WhiteSpace.Normal;
+        tooltipDescription.style.overflow = Overflow.Hidden;
+        tooltipDescription.style.textOverflow = TextOverflow.Clip;
+
+        // Add labels to the tooltip container
+        tooltip.Add(tooltipName);
+        tooltip.Add(tooltipDescription);
+
+        inventoryContainer.Add(tooltip); // Add tooltip to the inventory UI
+    }
+    private void UpdateTooltipPosition(Vector2 mousePosition)
+    {
+        float tooltipWidth = tooltip.resolvedStyle.width;
+        float tooltipHeight = tooltip.resolvedStyle.height;
+        float screenWidth = Screen.width;
+        float screenHeight = Screen.height;
+        float offset = 40f;
+        // Default position (to the right of the cursor)
+        float newX = mousePosition.x - offset;
+        float newY = mousePosition.y - offset * 2;
+
+        // Check right boundary
+        if (newX + tooltipWidth > screenWidth)
+        {
+            newX = mousePosition.x - tooltipWidth - offset * 3; // Move to the left
+        }
+
+        // Check bottom boundary
+        if (newY + tooltipHeight > screenHeight)
+        {
+            newY = mousePosition.y - tooltipHeight - offset * 3; // Move up
+        }
+
+        // Apply position
+        tooltip.style.left = newX;
+        tooltip.style.top = newY;
+    }
+
     public void OnItemClick(Item item)
     {
         if (item.Type == ItemType.Weapon || item.Type == ItemType.Armor || item.Type == ItemType.Accessory)
@@ -215,6 +265,5 @@ public class InventoryUI : MonoBehaviour
     private void UseItem(Item item)
     {
         inventory.UseItem(item);
-        inventory.RemoveItem(item); // Remove after use
     }
 }

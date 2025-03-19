@@ -13,9 +13,22 @@ MonoBehaviour:
   m_Name: BroadSword
   m_EditorClassIdentifier: 
   _name: Broadsword
-  _description: Basket-hilted sword
-  _sprite: {fileID: 712035800519618848, guid: 5555116c8467a454c8c90c5cece8dc84, type: 3}
+  _description: '{bonusDamage} Damage
+
+    {bonusHealth} Health
+
+
+    Basket-hilted
+    sword fitted for a knight.'
+  _sprite: {fileID: -3753825769889500098, guid: f3bd35de2d7508c40b6d869153c8d194, type: 3}
   _type: 1
+  Description: '+5 Damage
+
+    +10 Health
+
+
+    Basket-hilted sword fitted for a
+    knight.'
   characterStatsEffects:
   - {fileID: 11400000, guid: df0d711cc765842479c9a810faa269a6, type: 2}
   healthEffects:

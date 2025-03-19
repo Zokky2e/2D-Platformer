@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a4939e441303e441abeb2afdabd2bbd, type: 3}
   m_Name: DamageEffect
   m_EditorClassIdentifier: 
-  damageBonus: 5
+  bonusDamage: 5
