@@ -58,7 +58,7 @@ public class IdleState : HeroState
             return new AttackingState();
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1) && hero.stats.canUseBlock)
         {
             return new BlockingState();
         }

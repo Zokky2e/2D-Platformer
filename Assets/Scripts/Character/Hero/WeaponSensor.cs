@@ -1,23 +1,19 @@
-﻿using System;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
-using UnityEngine;
-using UnityEngine.InputSystem;
+﻿using UnityEngine;
 
 class WeaponSensor : MonoBehaviour
 {
     private Collider2D enemyInRange;
-    private Collider2D weaponSensor;
     private Hero player;
     private bool isEnemyHit = false;
     public void Awake()
     {
-        player = this.GetComponent<Hero>();
-        weaponSensor = transform.Find("WeaponSensor")?.GetComponent<Collider2D>();
+        player = Object.FindAnyObjectByType<Hero>();
         //player has WeaponSensor as a child game object i need to fetch its collider component
         //this will be used to check if enemy is hit by the collider
     }
     private void OnTriggerStay2D(Collider2D collision)
     {
+        Debug.Log(collision.tag);
         if (collision.tag == "Enemy" && player.stats.TotalDamage > 0)
         {
             if (player.GetCurrentHeroState() == HeroStates.Attack && !isEnemyHit)
@@ -30,5 +26,11 @@ class WeaponSensor : MonoBehaviour
                 isEnemyHit = false;
             }
         }
+    }
+
+    public void Update()
+    {
+        float rotationAngle = player.FacingDirection == -1 ? 180f : 0f;
+        transform.rotation = Quaternion.Euler(0, rotationAngle, 0);
     }
 }

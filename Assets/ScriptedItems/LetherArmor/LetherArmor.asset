@@ -21,7 +21,7 @@ MonoBehaviour:
     Basic lether
     clothing for travelling.'
   _sprite: {fileID: -2035543249, guid: a2e446e2d6138274dbdfd16111f78df3, type: 3}
-  _type: 2
+  _type: 3
   Description: '+20 Armor
 
     +15 Health

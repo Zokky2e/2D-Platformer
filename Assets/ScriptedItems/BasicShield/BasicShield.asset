@@ -13,16 +13,14 @@ MonoBehaviour:
   m_Name: BasicShield
   m_EditorClassIdentifier: 
   _name: Basic Metal Shield
-  _description: '{bonusArmor} Armor
-
-
-    Effect: Pressing right click causes you
-    to block any incoming damage with your shield.'
+  _description: '{bonusArmor} Armor'
   _sprite: {fileID: 2389193319765324094, guid: 0dfc64bc92fd0084cafc9409cb19177f, type: 3}
-  _type: 3
-  Description: 
+  _type: 2
+  Description: "+5 Armor\nThis item has block. \nBlock: Pressing right click causes
+    you to block any incoming damage with your shield."
   characterStatsEffects:
   - {fileID: 11400000, guid: b3a1300d04e505b46bf99a9a1d366bc4, type: 2}
+  - {fileID: 11400000, guid: a9bef68b6be4b1b4cbf921c0bafa6488, type: 2}
   healthEffects: []
   onActivateCharacterStatsEffects: []
   onActivateHealthEffects: []

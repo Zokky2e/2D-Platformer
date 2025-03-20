@@ -50,14 +50,11 @@ public class InventoryUI : MonoBehaviour
         // Wait until the InventorySystem instance is ready
         while (InventorySystem.Instance == null)
         {
-            Debug.Log("Instance is null");
             yield return null; // Wait for next frame
         }
-        Debug.Log("Instance is not null");
         inventory = InventorySystem.Instance; // Find inventory
         inventory.onInventoryChanged += () =>
         {
-            Debug.Log("Inventory UI Updated!");
             UpdateInventoryUI(); // Listen for changes
         };
             
@@ -253,7 +250,7 @@ public class InventoryUI : MonoBehaviour
 
     public void OnItemClick(Item item)
     {
-        if (item.Type == ItemType.Weapon || item.Type == ItemType.Armor || item.Type == ItemType.Accessory)
+        if (item.Type != ItemType.Consumable)
         {
             EquipmentSystem.Instance.EquipItem(item);
         }

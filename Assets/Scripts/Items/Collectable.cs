@@ -4,6 +4,7 @@ public class Collectable : MonoBehaviour
 {
     public Item item;
     private SpriteRenderer spriteRenderer;
+    public bool useOnPickup = false;
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -29,7 +30,15 @@ public class Collectable : MonoBehaviour
     {
         if (collision.tag == "Player")
         {
-            InventorySystem.Instance.AddItem(item);
+            Hero player = collision.GetComponent<Hero>();
+            if (!useOnPickup)
+            {
+                InventorySystem.Instance.AddItem(item);
+            }
+            else if (player != null)
+            {
+                item.UseItem(player.stats, player.Health);
+            }
             gameObject.SetActive(false);
         }
     }

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.UIElements;
 
 public class EquipmentUI : MonoBehaviour
@@ -11,9 +9,11 @@ public class EquipmentUI : MonoBehaviour
     private EquipmentSystem equipment;
     private TemplateContainer equipmentContainer;
     private VisualElement weaponSlot;
+    private VisualElement shieldSlot;
     private VisualElement armorSlot;
     private VisualElement accessorySlot;
     public Sprite defaultWeaponSprite;
+    public Sprite defaultShieldSprite;
     public Sprite defaultArmorSprite;
     public Sprite defaultAccessorySprite;
     private VisualElement tooltip;
@@ -30,14 +30,11 @@ public class EquipmentUI : MonoBehaviour
         // Wait until the InventorySystem instance is ready
         while (EquipmentSystem.Instance == null)
         {
-            Debug.Log("Equipment is null");
             yield return null; // Wait for next frame
         }
-        Debug.Log("Equipment is not null");
         equipment = EquipmentSystem.Instance; // Find inventory
         equipment.OnEquipmentChanged += () =>
         {
-            Debug.Log("Equipment UI Updated!");
             UpdateUI(); // Listen for changes
         };
         var root = uiDocument.rootVisualElement;
@@ -49,6 +46,7 @@ public class EquipmentUI : MonoBehaviour
         {
             equipmentContainer = loadoutContainer.Q<TemplateContainer>("EquipmentContainer");
             weaponSlot = equipmentContainer.Q<VisualElement>("Weapon");
+            shieldSlot = equipmentContainer.Q<VisualElement>("Shield");
             armorSlot = equipmentContainer.Q<VisualElement>("Armor");
             accessorySlot = equipmentContainer.Q<VisualElement>("Accessory");
         }
@@ -69,6 +67,7 @@ public class EquipmentUI : MonoBehaviour
     private void UpdateUI()
     {
         UpdateSlot(weaponSlot, EquipmentSystem.Instance.EquippedWeapon, defaultWeaponSprite);
+        UpdateSlot(shieldSlot, EquipmentSystem.Instance.EquippedShield, defaultShieldSprite);
         UpdateSlot(armorSlot, EquipmentSystem.Instance.EquippedArmor, defaultArmorSprite);
         UpdateSlot(accessorySlot, EquipmentSystem.Instance.EquippedAccessory, defaultAccessorySprite);
     }
@@ -83,40 +82,21 @@ public class EquipmentUI : MonoBehaviour
 
         }
 
+        slot.UnregisterCallback<MouseEnterEvent, Item>(OnMouseEnter);
+        slot.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
+        slot.UnregisterCallback<MouseLeaveEvent>(OnMouseLeave);
+        slot.UnregisterCallback<ClickEvent, Item>(OnItemClick);
         if (item != null)
         {
-            slot.RegisterCallback<MouseEnterEvent>(evt =>
-            {
-                slot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
-                item.AdjustDescription();
-                tooltipName.text = item.Name;
-                tooltipDescription.text = item.Description;
-                tooltip.style.visibility = Visibility.Visible;
-                UpdateTooltipPosition(evt.mousePosition); // Update tooltip position
-            });
-
-            slot.RegisterCallback<MouseMoveEvent>(evt =>
-            {
-                UpdateTooltipPosition(evt.mousePosition);
-            });
-            slot.RegisterCallback<MouseLeaveEvent>(evt =>
-            {
-                slot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Light transparent slot background
-                tooltip.style.visibility = Visibility.Hidden;
-            });
-            slot.RegisterCallback<ClickEvent>(evt =>
-            {
-                slot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
-                tooltip.style.visibility = Visibility.Hidden;
-                OnEquipedItemClicked(slot, item);
-            });
+            slot.RegisterCallback<MouseEnterEvent, Item>(OnMouseEnter, item); // Pass item via lambda
+            slot.RegisterCallback<MouseMoveEvent>(OnMouseMove);
+            slot.RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
+            slot.RegisterCallback<ClickEvent, Item>(OnItemClick, item);
         }
         else
         {
-            slot.UnregisterCallback<MouseEnterEvent>(evt => { });
-            slot.UnregisterCallback<MouseMoveEvent>(evt => { });
-            slot.UnregisterCallback<MouseLeaveEvent>(evt => { });
-            slot.UnregisterCallback<ClickEvent>(evt => { });
+            // If no item, reset the slot background
+            slot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
         }
     }
 
@@ -127,7 +107,38 @@ public class EquipmentUI : MonoBehaviour
             equipment.UnequipItem(item.Type);
         }
     }
+    private void OnMouseEnter(MouseEnterEvent evt, Item item)
+    {
+        var slot = evt.target as VisualElement;
+        slot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
+        item.AdjustDescription(); // Ensure description updates dynamically
+        tooltipName.text = item.Name;
+        tooltipDescription.text = item.Description;
+        tooltip.style.visibility = Visibility.Visible;
+        UpdateTooltipPosition(evt.mousePosition);
+    }
 
+    private void OnMouseMove(MouseMoveEvent evt)
+    {
+        UpdateTooltipPosition(evt.mousePosition);
+    }
+
+    private void OnMouseLeave(MouseLeaveEvent evt)
+    {
+        var slot = evt.target as VisualElement;
+        slot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Reset background when leaving
+
+        tooltip.style.visibility = Visibility.Hidden;
+    }
+
+    private void OnItemClick(ClickEvent evt, Item item)
+    {
+        var slot = evt.target as VisualElement;
+        slot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Reset background after clicking
+
+        tooltip.style.visibility = Visibility.Hidden;
+        OnEquipedItemClicked(slot, item);
+    }
     private void SetupTooltip()
     {
         tooltip = new Label();

@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
-
 public abstract class ItemEffect<T> : ScriptableObject
 {
     // Base class for all item effects

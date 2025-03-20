@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 public class EquipmentSystem : MonoBehaviour
 {
     public static EquipmentSystem Instance;
     public Item EquippedWeapon;
+    public Item EquippedShield;
     public Item EquippedArmor;
     public Item EquippedAccessory;
 
-    public Hero player;
+    private Hero player;
     public event Action OnEquipmentChanged;
 
     private void Awake()
@@ -39,6 +38,8 @@ public class EquipmentSystem : MonoBehaviour
         }
         if (EquippedWeapon != null)
             EquippedWeapon.ApplyEffects(player.stats, player.Health);
+        if (EquippedShield != null)
+            EquippedShield.ApplyEffects(player.stats, player.Health);
         if (EquippedArmor != null)
             EquippedArmor.ApplyEffects(player.stats, player.Health);
         if (EquippedAccessory != null)
@@ -47,17 +48,20 @@ public class EquipmentSystem : MonoBehaviour
 
     public void EquipItem(Item item)
     {
-        if (item.Type == ItemType.Weapon)
+        switch(item.Type)
         {
-            Swap(ref EquippedWeapon, item);
-        }
-        else if (item.Type == ItemType.Armor)
-        {
-            Swap(ref EquippedArmor, item);
-        }
-        else if (item.Type == ItemType.Accessory)
-        {
-            Swap(ref EquippedAccessory, item);
+            case ItemType.Weapon:
+                Swap(ref EquippedWeapon, item);
+                break;
+            case ItemType.Shield:
+                Swap(ref EquippedShield, item);
+                break;
+            case ItemType.Armor:
+                Swap(ref EquippedArmor, item);
+                break;
+            case ItemType.Accessory:
+                Swap(ref EquippedAccessory, item);
+                break;
         }
         item.ApplyEffects(player.stats, player.Health);
     }
@@ -70,6 +74,12 @@ public class EquipmentSystem : MonoBehaviour
             InventorySystem.Instance.AddItem(EquippedWeapon);
             equippedItem = EquippedWeapon;
             EquippedWeapon = null;
+        }
+        else if (type == ItemType.Shield && EquippedShield != null)
+        {
+            InventorySystem.Instance.AddItem(EquippedShield);
+            equippedItem = EquippedShield;
+            EquippedShield = null;
         }
         else if (type == ItemType.Armor && EquippedArmor != null)
         {

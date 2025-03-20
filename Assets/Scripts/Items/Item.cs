@@ -5,6 +5,7 @@ public enum ItemType
 {
     Consumable,
     Weapon,
+    Shield,
     Armor,
     Accessory
 }

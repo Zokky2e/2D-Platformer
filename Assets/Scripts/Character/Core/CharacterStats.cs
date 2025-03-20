@@ -16,6 +16,9 @@ public class CharacterStats : MonoBehaviour
     public float bonusDamage = 0f;
     public float bonusArmor = 0f;
 
+    [HideInInspector] public bool canUseBlock = false;
+
+
     public float TotalMoveSpeed => baseMoveSpeed + bonusMoveSpeed;
     public float TotalJumpHeight => baseJumpHeight + bonusJumpHeight;
     public float TotalDamage => baseDamage + bonusDamage;
