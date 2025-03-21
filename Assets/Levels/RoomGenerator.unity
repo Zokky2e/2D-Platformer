@@ -167,12 +167,28 @@ MonoBehaviour:
   gridHeight: 5
   roomSize: 12
   startRoomPos: {x: 0, y: 0}
-  enemyRoomPrefab: {fileID: -2704450995800107441, guid: d5cabe019975d63448a2289e0c27fee5, type: 3}
-  lootRoomPrefab: {fileID: -1441078625677388625, guid: 9a6723e0d4098474ab702e85ee664feb, type: 3}
-  corridorPrefab: {fileID: 8670867959430009065, guid: 6b0f24199f0cc364e8dcfd6c6f0e43d4, type: 3}
-  parkourPrefab: {fileID: 4076992494217340141, guid: ded05464b2f442e4798137ce8dc526e1, type: 3}
+  bossRoomPos: {x: 0, y: 0}
+  enemyRoomPrefabVarients:
+  - {fileID: 1369043936296466612, guid: 07823847de41e3445b0fadb906993c56, type: 3}
+  - {fileID: -5246354281678920931, guid: 07175a44e3cd9194487a9074239c527a, type: 3}
+  - {fileID: -114891664809394742, guid: d5a086199a18d0348bcd8699857e4956, type: 3}
+  lootRoomPrefabVarients:
+  - {fileID: 7371908932908747934, guid: 0e76833abf7d5e44783d799de0ca617d, type: 3}
+  - {fileID: -2891744064773224389, guid: fb3a6d24f1b211f4eb5a57faa92c6caa, type: 3}
+  - {fileID: -5026165087280179456, guid: b3fd8ab8db3c96e4db689ab91ab8bfd1, type: 3}
+  corridorPrefabVarients:
+  - {fileID: -2101431970608621267, guid: f9e46ee2b57fccd468c13a84115032ff, type: 3}
+  - {fileID: 6968782776164403980, guid: 11938106e2806d7469afe6ae76070847, type: 3}
+  - {fileID: 1997683576696874573, guid: d8492a2edd497274f8e4efe95ddafe38, type: 3}
+  - {fileID: -629128210615650891, guid: 65e998c9d0d035043888c33a781558ed, type: 3}
+  parkourPrefabVarients:
+  - {fileID: -8668000655061934717, guid: ecb390747d345dc42884f5e4b7501cb7, type: 3}
+  - {fileID: 5521267486925396840, guid: f1720847a84de9448a2fcaf81946bf1e, type: 3}
+  - {fileID: 5493541101179325259, guid: bfc06f45e95e4784f83bdd68e759749b, type: 3}
+  - {fileID: 6184504966742860295, guid: 5828f14c864c81e48b75aea0707b41e9, type: 3}
   startRoomPrefab: {fileID: -7341604891822138136, guid: 05f9f7b6cd9940f41bdf2c9a7836c594, type: 3}
   bossRoomPrefab: {fileID: -667860201668684981, guid: 6704a86788d55b64799d7a3578c43288, type: 3}
+  emptyRoomPrefab: {fileID: 1050928701657535456, guid: 89531d39decaf6f4a877d67de6fc986f, type: 3}
 --- !u!1 &1822438234
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,6 +200,7 @@ GameObject:
   - component: {fileID: 1822438237}
   - component: {fileID: 1822438236}
   - component: {fileID: 1822438235}
+  - component: {fileID: 1822438238}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -265,6 +282,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1822438238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1822438234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

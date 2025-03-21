@@ -11,15 +11,14 @@ public class RoomGrid : MonoBehaviour
     public Room[,] levelGrid;
     public Vector2Int startRoomPos;
     public Vector2Int bossRoomPos;
-    public List<Vector2Int> enemyRoomPositions = new List<Vector2Int>();
-    public List<Vector2Int> lootRoomPositions = new List<Vector2Int>();
     // Assign these prefabs in the Unity Inspector
-    public GameObject enemyRoomPrefab;
-    public GameObject lootRoomPrefab;
-    public GameObject corridorPrefab;
-    public GameObject parkourPrefab;
+    public List<GameObject> enemyRoomPrefabVarients;
+    public List<GameObject> lootRoomPrefabVarients;
+    public List<GameObject> corridorPrefabVarients;
+    public List<GameObject> parkourPrefabVarients;
     public GameObject startRoomPrefab;
     public GameObject bossRoomPrefab;
+    public GameObject emptyRoomPrefab;
     public void Start()
     {
         Initialize();
@@ -42,9 +41,11 @@ public class RoomGrid : MonoBehaviour
         GenerateCorridorsAndParkours();
         GenerateEnemyAndLootRooms();
         EnsureParkourInEachRow();
+        AddDirectionBooleans();
         // Instantiate the actual GameObjects
         InstantiateRooms();
     }
+
     void GenerateCorridorsAndParkours()
     {
         for (int x = 1; x < gridWidth - 1; x++) // Avoid first and last columns for corridors/parkours
@@ -155,22 +156,87 @@ public class RoomGrid : MonoBehaviour
                 Room room = levelGrid[x, y];
                 if (room == null) continue;
 
-                GameObject prefab = GetPrefabForRoomType(room.Type);
+                GameObject prefab = GetPrefabForRoomType(room);
                 Vector3 position = new Vector3(x * roomSize, y * roomSize, 0);
                 Instantiate(prefab, position, Quaternion.identity);
             }
         }
     }
-    GameObject GetPrefabForRoomType(RoomType type)
+    GameObject GetPrefabForRoomType(Room room)
     {
-        switch (type)
+        switch (room.Type)
         {
-            case RoomType.Enemy: return enemyRoomPrefab;
-            case RoomType.Loot: return lootRoomPrefab;
-            case RoomType.Corridor: return corridorPrefab;
-            case RoomType.Parkour: return parkourPrefab;
+            case RoomType.Enemy: return GetRoomPrefabLR(room, prefabVariants: enemyRoomPrefabVarients);
+            case RoomType.Loot: return GetRoomPrefabLR(room, prefabVariants: lootRoomPrefabVarients);
+            case RoomType.Corridor: return GetRoomPrefabBT(room, prefabVariants: corridorPrefabVarients);
+            case RoomType.Parkour: return GetRoomPrefabBT(room, prefabVariants: parkourPrefabVarients);
             case RoomType.Boss: return bossRoomPrefab;
-            default: return startRoomPrefab;
+            case RoomType.Start: return startRoomPrefab;
+            default: return emptyRoomPrefab;
         }
     }
+    private GameObject GetRoomPrefabLR(Room room, List<GameObject> prefabVariants)
+    {
+        if (room.HasLeftExit && room.HasRightExit)
+        {
+            return prefabVariants[0];
+        }
+        else if(room.HasLeftExit)
+        {
+            return prefabVariants[1];
+        }
+        else
+        {
+            return prefabVariants[2];
+        }
+    }
+    private GameObject GetRoomPrefabBT(Room room, List<GameObject> prefabVariants)
+    {
+        if (room.HasBottomExit && room.HasTopExit)
+        {
+            return prefabVariants[0];
+        }
+        else if (room.HasTopExit)
+        {
+            return prefabVariants[1];
+        }
+        else if (room.HasBottomExit) 
+        {
+            return prefabVariants[2];
+        }
+        else
+        {
+            return prefabVariants[3];
+        }
+    }
+    private void AddDirectionBooleans()
+    {
+        //in this function i need to go around the grid, and for each room in the grid check if it has
+        //left right top or bottom neighbour and if so switch the required boolean
+        //public bool HasTopExit, HasBottomExit, HasLeftExit, HasRightExit;
+
+        for (int x = 0; x < gridWidth; x++)
+        {
+            for (int y = 0; y < gridHeight; y++)
+            {
+                Room room = levelGrid[x, y];
+                if (room == null)
+                {
+                    levelGrid[x, y] = new Room(RoomType.Empty, new Vector2Int(x, y));
+                    room = levelGrid[x, y];
+                }
+
+                // Check for neighboring rooms and set exits accordingly
+                if (x > 0 && levelGrid[x - 1, y] != null) // Left neighbor
+                    room.HasLeftExit = true;
+                if (x < gridWidth - 1 && levelGrid[x + 1, y] != null) // Right neighbor
+                    room.HasRightExit = true;
+                if (y > 0 && levelGrid[x, y - 1] != null) // Bottom neighbor
+                    room.HasBottomExit = true;
+                if (y < gridHeight - 1 && levelGrid[x, y + 1] != null) // Top neighbor
+                    room.HasTopExit = true;
+            }
+        }
+    }
+
 }
