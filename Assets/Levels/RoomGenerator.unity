@@ -186,7 +186,7 @@ MonoBehaviour:
   - {fileID: 5521267486925396840, guid: f1720847a84de9448a2fcaf81946bf1e, type: 3}
   - {fileID: 5493541101179325259, guid: bfc06f45e95e4784f83bdd68e759749b, type: 3}
   - {fileID: 6184504966742860295, guid: 5828f14c864c81e48b75aea0707b41e9, type: 3}
-  startRoomPrefab: {fileID: -7341604891822138136, guid: 05f9f7b6cd9940f41bdf2c9a7836c594, type: 3}
+  startRoomPrefab: {fileID: 206132723792545150, guid: 0f876a2cd6ad99547b76d469c0495972, type: 3}
   bossRoomPrefab: {fileID: -667860201668684981, guid: 6704a86788d55b64799d7a3578c43288, type: 3}
   emptyRoomPrefab: {fileID: 1050928701657535456, guid: 89531d39decaf6f4a877d67de6fc986f, type: 3}
 --- !u!1 &1822438234

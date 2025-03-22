@@ -38,8 +38,8 @@ public class RoomGrid : MonoBehaviour
         levelGrid[bossRoomPos.x, bossRoomPos.y] = new Room(RoomType.Boss, bossRoomPos);
 
         // Place the remaining rooms (corridors and parkours) first
-        GenerateCorridorsAndParkours();
         GenerateEnemyAndLootRooms();
+        GenerateCorridorsAndParkours();
         EnsureParkourInEachRow();
         AddDirectionBooleans();
         // Instantiate the actual GameObjects
@@ -66,33 +66,27 @@ public class RoomGrid : MonoBehaviour
         int enemyCountRoom = Mathf.FloorToInt(totalRooms / 25f) + 4; // 4 enemies by default, increase by 1 per 5 tiles
         int lootCountRoom = Mathf.FloorToInt(totalRooms / 25f) + 3; // 3 loot rooms by default, increase by 1 per 5 tiles
 
-        int roomsPlaced = 0;
         int enemyRoomsPlaced = 0;
         int lootRoomsPlaced = 0;
 
         // Place Enemy and Loot rooms
-        for (int x = 0; x < gridWidth; x++) // Avoid first and last columns
+        while (enemyRoomsPlaced < enemyCountRoom || lootRoomsPlaced < lootCountRoom)
         {
-            for (int y = 0; y < gridHeight; y++)
+            int x = Random.Range(0, gridWidth);
+            int y = Random.Range(0, gridHeight);
+            if (levelGrid[x, y] != null) continue; // Skip already filled positions
+
+            RoomType rotype = GetLootOrEnemyRoomType(enemyRoomsPlaced < enemyCountRoom, lootRoomsPlaced < lootCountRoom);
+
+            if (rotype == RoomType.Enemy && x + 1 < gridWidth && levelGrid[x + 1, y]?.Type == RoomType.Boss)
             {
-                if (levelGrid[x, y] != null) continue; // Skip already filled positions
-
-                RoomType rotype = GetLootOrEnemyRoomType(enemyRoomsPlaced < enemyCountRoom, lootRoomsPlaced < lootCountRoom);
-                levelGrid[x, y] = new Room(rotype, new Vector2Int(x, y));
-                if (rotype == RoomType.Enemy)
-                {
-                    enemyRoomsPlaced++;
-                }
-                else
-                {
-                    lootRoomsPlaced++;
-                }
-
-                roomsPlaced++;
-
-                if (enemyRoomsPlaced == enemyCountRoom && lootRoomsPlaced == lootCountRoom) // We have placed enough rooms
-                    break;
+                continue; // Skip this placement and try again
             }
+
+            levelGrid[x, y] = new Room(rotype, new Vector2Int(x, y));
+
+            if (rotype == RoomType.Enemy) enemyRoomsPlaced++;
+            else lootRoomsPlaced++;
         }
     }
 
@@ -214,7 +208,8 @@ public class RoomGrid : MonoBehaviour
         //in this function i need to go around the grid, and for each room in the grid check if it has
         //left right top or bottom neighbour and if so switch the required boolean
         //public bool HasTopExit, HasBottomExit, HasLeftExit, HasRightExit;
-
+        List<RoomType> corridorNeighbors = new List<RoomType>() { RoomType.Parkour };
+        List<RoomType> parkourNeighbors = new List<RoomType>() { RoomType.Corridor, RoomType.Parkour };
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y < gridHeight; y++)
@@ -231,12 +226,29 @@ public class RoomGrid : MonoBehaviour
                     room.HasLeftExit = true;
                 if (x < gridWidth - 1 && levelGrid[x + 1, y] != null) // Right neighbor
                     room.HasRightExit = true;
-                if (y > 0 && levelGrid[x, y - 1] != null) // Bottom neighbor
+                if (
+                        y > 0 && 
+                        levelGrid[x, y - 1] != null && 
+                        IsNeighbourLE(room, levelGrid[x, y - 1], room.Type == RoomType.Corridor ? corridorNeighbors : parkourNeighbors)
+                    ) // Bottom neighbor
                     room.HasBottomExit = true;
-                if (y < gridHeight - 1 && levelGrid[x, y + 1] != null) // Top neighbor
+                if (
+                        y < gridHeight - 1 && 
+                        levelGrid[x, y + 1] != null && 
+                        IsNeighbourLE(room, levelGrid[x, y + 1], room.Type == RoomType.Corridor ? corridorNeighbors : parkourNeighbors)
+                    ) // Top neighbor
                     room.HasTopExit = true;
             }
         }
+    }
+
+    private bool IsNeighbourLE(Room target, Room neighbor, List<RoomType> neighborRoomTypes)
+    {
+        if ((target.Type == RoomType.Corridor || target.Type == RoomType.Parkour) && !neighborRoomTypes.Contains(neighbor.Type))
+        {
+            return false;
+        }
+        return true;
     }
 
 }
