@@ -13,7 +13,6 @@ class WeaponSensor : MonoBehaviour
     }
     private void OnTriggerStay2D(Collider2D collision)
     {
-        Debug.Log(collision.tag);
         if (collision.tag == "Enemy" && player.stats.TotalDamage > 0)
         {
             if (player.GetCurrentHeroState() == HeroStates.Attack && !isEnemyHit)

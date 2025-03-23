@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.MaterialProperty;
-using static UnityEngine.Rendering.DebugUI.Table;
 
 public class RoomGrid : MonoBehaviour
 {
@@ -44,6 +42,7 @@ public class RoomGrid : MonoBehaviour
         AddDirectionBooleans();
         // Instantiate the actual GameObjects
         InstantiateRooms();
+        SpawnPlayer();
     }
 
     void GenerateCorridorsAndParkours()
@@ -251,4 +250,20 @@ public class RoomGrid : MonoBehaviour
         return true;
     }
 
+    private void SpawnPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            Debug.LogError("Player not found in the scene!");
+            return;
+        }
+        GameObject entryPoint = GameObject.Find("EntryPoint");
+        if (entryPoint == null)
+        {
+            Debug.LogError("EntryPoint not found in the scene!");
+            return;
+        }
+        player.transform.position = entryPoint.transform.position;
+    }
 }
