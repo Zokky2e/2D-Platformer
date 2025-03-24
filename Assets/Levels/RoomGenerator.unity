@@ -341,8 +341,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f38a11703a1ae74199a5263f47c7bf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridWidth: 5
-  gridHeight: 5
+  gridWidth: 7
+  gridHeight: 7
   roomSize: 12
   startRoomPos: {x: 0, y: 0}
   bossRoomPos: {x: 0, y: 0}

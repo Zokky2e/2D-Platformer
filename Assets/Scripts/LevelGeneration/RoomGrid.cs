@@ -61,9 +61,12 @@ public class RoomGrid : MonoBehaviour
     }
     void GenerateEnemyAndLootRooms()
     {
+        int baseEnemyRooms = 4; // Start with 4 enemy rooms
+        int baseLootRooms = 3;  // Start with 3 loot rooms
         int totalRooms = gridWidth * gridHeight - 2; //minus the start and boss
-        int enemyCountRoom = Mathf.FloorToInt(totalRooms / 25f) + 4; // 4 enemies by default, increase by 1 per 5 tiles
-        int lootCountRoom = Mathf.FloorToInt(totalRooms / 25f) + 3; // 3 loot rooms by default, increase by 1 per 5 tiles
+        int extraRooms = Mathf.Max(0, totalRooms - 20); // Only count rooms beyond the first 25
+        int enemyCountRoom = baseEnemyRooms + (extraRooms / 5); // Increase by 1 per 5 extra rooms
+        int lootCountRoom = baseLootRooms + (extraRooms / 5);  // Same logic for loot
 
         int enemyRoomsPlaced = 0;
         int lootRoomsPlaced = 0;
