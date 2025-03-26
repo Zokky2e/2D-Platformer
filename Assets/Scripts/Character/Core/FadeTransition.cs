@@ -2,23 +2,9 @@
 using System.Collections;
 using UnityEngine;
 
-public class FadeTransition : MonoBehaviour
+public class FadeTransition : Singleton<FadeTransition>
 {
-    public static FadeTransition Instance { get; private set; }
     [SerializeField] private Animator fadeAnimator;  // Reference to the fade Animator
-    private void Awake()
-    {
-        // Ensure only one instance exists, and it persists across scenes if needed
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // Optional: Keep this object across scenes
-        }
-    }
     public IEnumerator FadeAndExecute(System.Action action)
     {
         // Trigger fade animation to black

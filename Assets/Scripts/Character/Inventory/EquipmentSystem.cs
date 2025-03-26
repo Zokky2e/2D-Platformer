@@ -2,9 +2,8 @@
 using System.Collections;
 using UnityEngine;
 
-public class EquipmentSystem : MonoBehaviour
+public class EquipmentSystem : Singleton<EquipmentSystem>
 {
-    public static EquipmentSystem Instance;
     public Item EquippedWeapon;
     public Item EquippedShield;
     public Item EquippedArmor;
@@ -13,21 +12,11 @@ public class EquipmentSystem : MonoBehaviour
     private Hero player;
     public event Action OnEquipmentChanged;
 
-    private void Awake()
+    protected override void Awake()
     {
         player = FindAnyObjectByType<Hero>();
-        // Ensure only one instance exists
-        if (Instance == null)
-        {
-            Instance = this;
-            StartCoroutine(ApplyInitialStats());
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
+        base.Awake();
+        StartCoroutine(ApplyInitialStats());
     }
 
     private IEnumerator ApplyInitialStats()

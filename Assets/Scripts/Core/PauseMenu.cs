@@ -3,24 +3,15 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class PauseMenu : MonoBehaviour
+public class PauseMenu : Singleton<PauseMenu>
 {
     public static bool GameIsPaused = true;
     public GameObject pauseMenuUI;
-    public static PauseMenu Instance;
 
-    public void Awake()
+    protected override void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            Instance.CheckForPause();
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        base.Awake();
+        Instance.CheckForPause();
     }
 
     private void Update()

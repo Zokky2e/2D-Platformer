@@ -1,23 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class SensorManager : MonoBehaviour
+public class SensorManager : Singleton<SensorManager>
 {
-    private static SensorManager instance;
-
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
     private void Start()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;

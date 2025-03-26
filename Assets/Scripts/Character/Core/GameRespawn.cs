@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameRespawn : MonoBehaviour
+public class GameRespawn : Singleton<GameRespawn>
 {
     public float threshold = -10f;
     private Transform playerRespawn;
@@ -10,20 +10,12 @@ public class GameRespawn : MonoBehaviour
     private Health playerHealth;
     public static GameRespawn Instance;
 
-    private void Awake()
+    protected override void Awake()
     {
-        if (Instance == null)
-        {
-            playerHealth = GetComponent<Health>();
-            startingPosition = transform.position;
-            playerRespawn = null;
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        base.Awake();
+        playerHealth = GetComponent<Health>();
+        startingPosition = transform.position;
+        playerRespawn = null;
     }
 
     //i will have gameobjects on my levels which are clickable and they should get set here as the respawn point

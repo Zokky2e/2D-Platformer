@@ -4,10 +4,8 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic; 
 
-public class DialogSystem : MonoBehaviour
+public class DialogSystem : Singleton<DialogSystem>
 {
-    public static DialogSystem Instance; // Singleton to access it from NPCs
-
     public GameObject dialogBox;
     public TMP_Text nameText;  // Reference to the name field
     public TMP_Text dialogText; // Reference to the dialog field
@@ -27,16 +25,9 @@ public class DialogSystem : MonoBehaviour
             return dialogActive;
         }
     }
-    private void Awake()
+    protected override void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-            Destroy(gameObject);
-
+        base.Awake();
         dialogBox.SetActive(false);
     }
 

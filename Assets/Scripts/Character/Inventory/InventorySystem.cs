@@ -1,34 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
-public class InventorySystem : MonoBehaviour
+public class InventorySystem : Singleton<InventorySystem>
 {
-    public static InventorySystem Instance { get; private set; } // Singleton
     public List<Item> items = new List<Item>(); // List of items
     public delegate void OnInventoryChanged();
     private Hero player;
     public event OnInventoryChanged onInventoryChanged;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private void Awake()
+    protected override void Awake()
     {
         player = FindAnyObjectByType<Hero>();
-        // Ensure only one instance exists
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
+        base.Awake();
     }
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
 
     public void AddItem(Item newItem)
     {
