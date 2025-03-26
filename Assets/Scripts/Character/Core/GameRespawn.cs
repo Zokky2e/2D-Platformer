@@ -8,7 +8,6 @@ public class GameRespawn : Singleton<GameRespawn>
     private Transform playerRespawn;
     private Vector3 startingPosition;
     private Health playerHealth;
-    public static GameRespawn Instance;
 
     protected override void Awake()
     {

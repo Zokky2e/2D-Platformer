@@ -3,8 +3,7 @@ using UnityEngine;
 
 public class RoomGrid : MonoBehaviour
 {
-    public int gridWidth = 5;
-    public int gridHeight = 5;
+    public DungeonManager dungeonManager;
     public float roomSize = 12f; // Set room size for positioning
     public Room[,] levelGrid;
     public Vector2Int startRoomPos;
@@ -19,12 +18,15 @@ public class RoomGrid : MonoBehaviour
     public GameObject emptyRoomPrefab;
     public void Start()
     {
+        dungeonManager = DungeonManager.Instance;
+        dungeonManager.RegenerateDungeon();
         Initialize();
     }
     public void Initialize()
     {
-        levelGrid = new Room[gridWidth, gridHeight];
-
+        levelGrid = new Room[dungeonManager.GridWidth, dungeonManager.GridHeight];
+        int gridWidth = dungeonManager.GridWidth;
+        int gridHeight = dungeonManager.GridHeight;
         // Start room and boss room
         startRoomPos = new Vector2Int(0, Random.Range(1, gridHeight - 1));
         levelGrid[startRoomPos.x, startRoomPos.y] = new Room(RoomType.Start, startRoomPos);
@@ -47,6 +49,8 @@ public class RoomGrid : MonoBehaviour
 
     void GenerateCorridorsAndParkours()
     {
+        int gridWidth = dungeonManager.GridWidth;
+        int gridHeight = dungeonManager.GridHeight;
         for (int x = 1; x < gridWidth - 1; x++) // Avoid first and last columns for corridors/parkours
         {
             for (int y = 0; y < gridHeight; y++)
@@ -61,12 +65,15 @@ public class RoomGrid : MonoBehaviour
     }
     void GenerateEnemyAndLootRooms()
     {
-        int baseEnemyRooms = 4; // Start with 4 enemy rooms
-        int baseLootRooms = 3;  // Start with 3 loot rooms
+        int dungeonLevel = dungeonManager.DungeonLevel;
+        int gridWidth = dungeonManager.GridWidth;
+        int gridHeight = dungeonManager.GridHeight;
+        int baseEnemyRooms = dungeonManager.EnemyRoomBaseCount;
+        int baseLootRooms = dungeonManager.LootRoomBaseCount;
         int totalRooms = gridWidth * gridHeight - 2; //minus the start and boss
         int extraRooms = Mathf.Max(0, totalRooms - 20); // Only count rooms beyond the first 25
-        int enemyCountRoom = baseEnemyRooms + (extraRooms / 5); // Increase by 1 per 5 extra rooms
-        int lootCountRoom = baseLootRooms + (extraRooms / 5);  // Same logic for loot
+        int enemyCountRoom = (baseEnemyRooms + dungeonLevel / 2)+ Mathf.FloorToInt((extraRooms / 5)); // Increase by 1 per 5 extra rooms
+        int lootCountRoom = (baseLootRooms + dungeonLevel / 3) + Mathf.FloorToInt((extraRooms / 5));  // Same logic for loot
 
         int enemyRoomsPlaced = 0;
         int lootRoomsPlaced = 0;
@@ -107,6 +114,8 @@ public class RoomGrid : MonoBehaviour
 
     void EnsureParkourInEachRow()
     {
+        int gridWidth = dungeonManager.GridWidth;
+        int gridHeight = dungeonManager.GridHeight;
         for (int y = 0; y < gridHeight; y++) // For each row
         {
             bool hasParkour = false;
@@ -145,6 +154,8 @@ public class RoomGrid : MonoBehaviour
 
     void InstantiateRooms()
     {
+        int gridWidth = dungeonManager.GridWidth;
+        int gridHeight = dungeonManager.GridHeight;
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y < gridHeight; y++)
@@ -207,6 +218,8 @@ public class RoomGrid : MonoBehaviour
     }
     private void AddDirectionBooleans()
     {
+        int gridWidth = dungeonManager.GridWidth;
+        int gridHeight = dungeonManager.GridHeight;
         //in this function i need to go around the grid, and for each room in the grid check if it has
         //left right top or bottom neighbour and if so switch the required boolean
         //public bool HasTopExit, HasBottomExit, HasLeftExit, HasRightExit;
