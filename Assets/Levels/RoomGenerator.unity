@@ -129,15 +129,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1123582788088246206, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1123582788088246206, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2246502290289215393, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_Name
       value: UI
+      objectReference: {fileID: 0}
+    - target: {fileID: 2246502290289215393, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8913935801423430548, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_Pivot.x
@@ -292,6 +296,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Main Camera
       objectReference: {fileID: 0}
+    - target: {fileID: 8805431730755322361, guid: bd1bc7be596946340a8f7fc814e9f6c6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -341,8 +349,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f38a11703a1ae74199a5263f47c7bf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridWidth: 7
-  gridHeight: 7
+  dungeonManager: {fileID: 0}
   roomSize: 12
   startRoomPos: {x: 0, y: 0}
   bossRoomPos: {x: 0, y: 0}

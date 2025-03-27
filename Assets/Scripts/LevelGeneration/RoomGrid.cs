@@ -25,28 +25,330 @@ public class RoomGrid : MonoBehaviour
     public void Initialize()
     {
         levelGrid = new Room[dungeonManager.GridWidth, dungeonManager.GridHeight];
+        GenerateStartAndBossRooms();
+        //NEW logic
+        GenerateDungeonPath();
+        ExpandWithSidePaths();
+        AssignRoomTypesDynamically();
+        ValidateConnectivity();
+
+        //GenerateDungeonPath();
+
+        //OLD logic
+        //GenerateEnemyAndLootRooms();
+        GenerateCorridorsAndParkours();
+        AddDirectionBooleans();
+        //// Place the remaining rooms (corridors and parkours) first
+        //EnsureParkourInEachRow();
+        // Instantiate the actual GameObjects
+        InstantiateRooms();
+        //SpawnPlayer();
+    }
+    
+
+    private void GenerateStartAndBossRooms()
+    {
         int gridWidth = dungeonManager.GridWidth;
         int gridHeight = dungeonManager.GridHeight;
         // Start room and boss room
         startRoomPos = new Vector2Int(0, Random.Range(1, gridHeight - 1));
         levelGrid[startRoomPos.x, startRoomPos.y] = new Room(RoomType.Start, startRoomPos);
+        levelGrid[startRoomPos.x, startRoomPos.y].HasRightExit = true;
         bossRoomPos = new Vector2Int(gridWidth - 1, Random.Range(0, gridHeight));
         while (bossRoomPos.y == startRoomPos.y) // Ensure the boss room is not in the same row as the start room
         {
             bossRoomPos = new Vector2Int(gridWidth - 1, Random.Range(0, gridHeight));
         }
         levelGrid[bossRoomPos.x, bossRoomPos.y] = new Room(RoomType.Boss, bossRoomPos);
-
-        // Place the remaining rooms (corridors and parkours) first
-        GenerateEnemyAndLootRooms();
-        GenerateCorridorsAndParkours();
-        EnsureParkourInEachRow();
-        AddDirectionBooleans();
-        // Instantiate the actual GameObjects
-        InstantiateRooms();
-        SpawnPlayer();
+        levelGrid[bossRoomPos.x, bossRoomPos.y].HasLeftExit = true;
     }
 
+    private void InitializeOneRoom(int x, int y)
+    {
+        Room room = levelGrid[x, y];
+        if (room == null) return;
+
+        GameObject prefab = GetPrefabForRoomType(room);
+        Vector3 position = new Vector3(x * roomSize, y * roomSize, 0);
+        Instantiate(prefab, position, Quaternion.identity);
+    }
+
+    void GenerateDungeonPath()
+    {
+        Stack<Vector2Int> stack = new Stack<Vector2Int>();
+        HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+
+        stack.Push(startRoomPos);
+        visited.Add(startRoomPos);
+
+        while (stack.Count > 0)
+        {
+            Vector2Int current = stack.Pop();
+            Room currentRoom = levelGrid[current.x, current.y];
+            List<Vector2Int> neighbors = GetNeighbors(currentRoom.GridPosition, visited);
+            Debug.Log(neighbors.Count);
+            if (neighbors.Count > 0)
+            {
+                stack.Push(current);
+
+                Vector2Int chosenNeighbor = neighbors[Random.Range(0, neighbors.Count)];
+                visited.Add(chosenNeighbor);
+
+                // Ensure connectivity
+                ConnectRooms(current, chosenNeighbor);
+
+                stack.Push(chosenNeighbor);
+                //InitializeOneRoom(chosenNeighbor.x , chosenNeighbor.y);
+            }
+        }
+    }
+
+    void ExpandWithSidePaths()
+    {
+        foreach (var room in levelGrid)
+        {
+            if (room == null || room.Type == RoomType.Start || room.Type == RoomType.Boss) continue;
+            if (Random.value < 0.3f)
+            {
+                List<Vector2Int> sidePaths = GetNeighbors(room.GridPosition);
+                if (sidePaths.Count > 0)
+                {
+                    Vector2Int chosenPath = sidePaths[Random.Range(0, sidePaths.Count)];
+                    ConnectRooms(room.GridPosition, chosenPath);
+                }
+            }
+        }
+    }
+
+    void ValidateConnectivity()
+    {
+        HashSet<Vector2Int> reachableRooms = new HashSet<Vector2Int>();
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        queue.Enqueue(startRoomPos);
+        reachableRooms.Add(startRoomPos);
+
+        while (queue.Count > 0)
+        {
+            Vector2Int current = queue.Dequeue();
+            foreach (Vector2Int neighbor in GetNeighbors(current))
+            {
+                if (!reachableRooms.Contains(neighbor))
+                {
+                    reachableRooms.Add(neighbor);
+                    queue.Enqueue(neighbor);
+                }
+            }
+        }
+
+        foreach (var room in levelGrid)
+        {
+            if (room != null && !reachableRooms.Contains(room.GridPosition))
+            {
+                room.Type = RoomType.Corridor;
+            }
+        }
+    }
+
+    private void AssignRoomTypesDynamically()
+    {
+        GenerateEnemyAndLootRooms();
+    }
+    void ConnectRooms(Vector2Int from, Vector2Int to)
+    {
+        if (levelGrid[from.x, from.y] == null)
+        {
+            levelGrid[from.x, from.y] = new Room(RoomType.Empty, from);
+        }
+        Room roomA = levelGrid[from.x, from.y];
+        if (levelGrid[to.x, to.y] == null)
+        {
+            levelGrid[to.x, to.y] = new Room(RoomType.Empty, to);
+        }
+        Room roomB = levelGrid[to.x, to.y];
+
+        if (from.x < to.x) // Right connection
+        {
+            roomA.HasRightExit = true;
+            roomB.HasLeftExit = true;
+        }
+        else if (from.x > to.x) // Left connection
+        {
+            roomA.HasLeftExit = true;
+            roomB.HasRightExit = true;
+        }
+        else if (from.y < to.y) // Up connection
+        {
+            roomA.HasTopExit = true;
+            roomB.HasBottomExit = true;
+        }
+        else if (from.y > to.y) // Down connection
+        {
+            roomA.HasBottomExit = true;
+            roomB.HasTopExit = true;
+        }
+    }
+    void EnsureParkourInEachRow()
+    {
+        for (int y = 0; y < dungeonManager.GridHeight; y++)
+        {
+            bool hasParkour = false;
+            List<Vector2Int> corridorPositions = new List<Vector2Int>();
+
+            for (int x = 1; x < dungeonManager.GridWidth - 1; x++)
+            {
+                if (levelGrid[x, y]?.Type == RoomType.Parkour)
+                    hasParkour = true;
+                else if (levelGrid[x, y]?.Type == RoomType.Corridor)
+                    corridorPositions.Add(new Vector2Int(x, y));
+            }
+
+            if (!hasParkour && corridorPositions.Count > 0)
+            {
+                Vector2Int chosenPosition = corridorPositions[Random.Range(0, corridorPositions.Count)];
+                levelGrid[chosenPosition.x, chosenPosition.y] = new Room(RoomType.Parkour, chosenPosition);
+            }
+        }
+    }
+
+    List<Vector2Int> GetNeighbors(Vector2Int pos, HashSet<Vector2Int> visited = null)
+    {
+        List<Vector2Int> neighbors = new List<Vector2Int>();
+        int x = pos.x, y = pos.y;
+
+        Vector2Int[] directions = { new Vector2Int(-1, 0), new Vector2Int(1, 0), new Vector2Int(0, -1), new Vector2Int(0, 1) };
+
+        foreach (var dir in directions)
+        {
+            Vector2Int newPos = pos + dir;
+            if (newPos.x >= 0 && newPos.x < dungeonManager.GridWidth && newPos.y >= 0 && newPos.y < dungeonManager.GridHeight)
+            {
+                if (visited == null || !visited.Contains(newPos))
+                {
+                    neighbors.Add(newPos);
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    private List<Vector2Int> GetNeighborsOld(Room current, HashSet<Vector2Int> visited = null)
+    {
+        List<Vector2Int> neighbors = new List<Vector2Int>();
+        int x = current.GridPosition.x;
+        int y = current.GridPosition.y;
+
+        bool checkVisited = visited != null; // Check if we should filter visited nodes
+        void TryAddNeighbor(int nx, int ny)
+        {
+            if (nx >= 0 && nx < dungeonManager.GridWidth && ny >= 0 && ny < dungeonManager.GridHeight)
+            {
+                Room neighborRoom = levelGrid[nx, ny];
+                if (neighborRoom != null) // Ensure both rooms have exits
+                {
+                    if (!checkVisited || !visited.Contains(new Vector2Int(nx, ny)))
+                    {
+                        neighbors.Add(neighborRoom.GridPosition);
+                    }
+                }
+            }
+        }
+
+        // Check and add valid neighbors
+        if (x - 1 >= 0)
+        {
+            Room neighborRoom = levelGrid[x - 1, y];
+            if (neighborRoom == null)
+            {
+                neighborRoom = new Room(RoomType.Empty, new Vector2Int(x - 1, y));
+                levelGrid[x - 1, y] = neighborRoom;
+            }
+            if (neighborRoom != null && neighborRoom.Type == RoomType.Empty)
+            {
+                ConnectRooms(current.GridPosition, new Vector2Int(x - 1, y));
+            }
+            TryAddNeighbor(x - 1, y); // Left
+        }
+        if (x + 1 < dungeonManager.GridWidth)
+        {
+            Room neighborRoom = levelGrid[x + 1, y];
+            if (neighborRoom == null)
+            {
+                neighborRoom = new Room(RoomType.Empty, new Vector2Int(x + 1, y)); 
+                levelGrid[x + 1, y] = neighborRoom;
+            }
+            if (neighborRoom != null && neighborRoom.Type == RoomType.Empty)
+            {
+                ConnectRooms(current.GridPosition, new Vector2Int(x + 1, y));
+            }
+            TryAddNeighbor(x + 1, y); // Right
+        }
+        if (y - 1 >= 0)
+        {
+            Room neighborRoom = levelGrid[x, y - 1];
+            if (neighborRoom == null)
+            {
+                neighborRoom = new Room(RoomType.Empty, new Vector2Int(x, y - 1));
+                levelGrid[x, y - 1] = neighborRoom;
+            }
+            if (neighborRoom != null && neighborRoom.Type == RoomType.Empty)
+            {
+                ConnectRooms(current.GridPosition, new Vector2Int(x, y - 1));
+            }
+            TryAddNeighbor(x, y - 1); // Bottom
+        }
+        if (y + 1 < dungeonManager.GridHeight)
+        {
+            Room neighborRoom = levelGrid[x, y + 1];
+            if (neighborRoom == null)
+            {
+                neighborRoom = new Room(RoomType.Empty, new Vector2Int(x, y + 1));
+                levelGrid[x, y + 1] = neighborRoom;
+            }
+            if (neighborRoom != null && neighborRoom.Type == RoomType.Empty)
+            {
+                ConnectRooms(current.GridPosition, new Vector2Int(x, y + 1));
+            }
+            TryAddNeighbor(x, y + 1); // Top
+        }
+
+        return neighbors;
+    }
+    private int GetTotalRoomCount()
+    {
+        int count = 0;
+        foreach (var room in levelGrid)
+        {
+            if (room != null && room.Type != RoomType.Empty)
+                count++;
+        }
+        return count;
+    }
+
+    bool IsDungeonConnected()
+    {
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+
+        queue.Enqueue(startRoomPos);
+        visited.Add(startRoomPos);
+
+        while (queue.Count > 0)
+        {
+            Vector2Int current = queue.Dequeue();
+            Room room = levelGrid[current.x, current.y];
+
+            foreach (Vector2Int neighbor in GetNeighbors(room.GridPosition))
+            {
+                if (!visited.Contains(neighbor))
+                {
+                    visited.Add(neighbor);
+                    queue.Enqueue(neighbor);
+                }
+            }
+        }
+
+        return visited.Count == GetTotalRoomCount();
+    }
     void GenerateCorridorsAndParkours()
     {
         int gridWidth = dungeonManager.GridWidth;
@@ -55,11 +357,13 @@ public class RoomGrid : MonoBehaviour
         {
             for (int y = 0; y < gridHeight; y++)
             {
-                if (levelGrid[x, y] != null) continue; // Skip already filled positions
-
-                // Decide randomly whether to place a corridor or parkour room
-                RoomType roomType = GetRandomRoomType();
-                levelGrid[x, y] = new Room(roomType, new Vector2Int(x, y));
+                if (levelGrid[x, y] == null || levelGrid[x, y].Type == RoomType.Empty) 
+                { 
+                    // Decide randomly whether to place a corridor or parkour room
+                    RoomType roomType = GetRandomRoomType();
+                    levelGrid[x, y] = new Room(roomType, new Vector2Int(x, y));
+                }
+                // Skip already filled positions
             }
         }
     }
@@ -83,19 +387,20 @@ public class RoomGrid : MonoBehaviour
         {
             int x = Random.Range(0, gridWidth);
             int y = Random.Range(0, gridHeight);
-            if (levelGrid[x, y] != null) continue; // Skip already filled positions
-
-            RoomType rotype = GetLootOrEnemyRoomType(enemyRoomsPlaced < enemyCountRoom, lootRoomsPlaced < lootCountRoom);
-
-            if (rotype == RoomType.Enemy && x + 1 < gridWidth && levelGrid[x + 1, y]?.Type == RoomType.Boss)
+            if (levelGrid[x, y] == null || levelGrid[x, y].Type == RoomType.Empty)
             {
-                continue; // Skip this placement and try again
-            }
+                RoomType rotype = GetLootOrEnemyRoomType(enemyRoomsPlaced < enemyCountRoom, lootRoomsPlaced < lootCountRoom);
 
-            levelGrid[x, y] = new Room(rotype, new Vector2Int(x, y));
+                if (rotype == RoomType.Enemy && x + 1 < gridWidth && levelGrid[x + 1, y]?.Type == RoomType.Boss)
+                {
+                    continue; // Skip this placement and try again
+                }
 
-            if (rotype == RoomType.Enemy) enemyRoomsPlaced++;
-            else lootRoomsPlaced++;
+                levelGrid[x, y] = new Room(rotype, new Vector2Int(x, y));
+
+                if (rotype == RoomType.Enemy) enemyRoomsPlaced++;
+                else lootRoomsPlaced++;
+            } // Skip already filled positions
         }
     }
 
@@ -112,7 +417,7 @@ public class RoomGrid : MonoBehaviour
             return RoomType.Loot;
     }
 
-    void EnsureParkourInEachRow()
+    void EnsureParkourInEachRowOld()
     {
         int gridWidth = dungeonManager.GridWidth;
         int gridHeight = dungeonManager.GridHeight;
@@ -223,8 +528,8 @@ public class RoomGrid : MonoBehaviour
         //in this function i need to go around the grid, and for each room in the grid check if it has
         //left right top or bottom neighbour and if so switch the required boolean
         //public bool HasTopExit, HasBottomExit, HasLeftExit, HasRightExit;
-        List<RoomType> corridorNeighbors = new List<RoomType>() { RoomType.Parkour };
-        List<RoomType> parkourNeighbors = new List<RoomType>() { RoomType.Corridor, RoomType.Parkour };
+        List<RoomType> corridorNeighbors = new List<RoomType>() { RoomType.Enemy, RoomType.Loot };
+        List<RoomType> parkourNeighbors = new List<RoomType>() { RoomType.Enemy, RoomType.Loot };
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y < gridHeight; y++)
@@ -243,13 +548,15 @@ public class RoomGrid : MonoBehaviour
                     room.HasRightExit = true;
                 if (
                         y > 0 && 
-                        levelGrid[x, y - 1] != null && 
+                        levelGrid[x, y - 1] != null
+                        &&
                         IsNeighbourLE(room, levelGrid[x, y - 1], room.Type == RoomType.Corridor ? corridorNeighbors : parkourNeighbors)
                     ) // Bottom neighbor
                     room.HasBottomExit = true;
                 if (
                         y < gridHeight - 1 && 
-                        levelGrid[x, y + 1] != null && 
+                        levelGrid[x, y + 1] != null
+                        &&
                         IsNeighbourLE(room, levelGrid[x, y + 1], room.Type == RoomType.Corridor ? corridorNeighbors : parkourNeighbors)
                     ) // Top neighbor
                     room.HasTopExit = true;
@@ -259,7 +566,7 @@ public class RoomGrid : MonoBehaviour
 
     private bool IsNeighbourLE(Room target, Room neighbor, List<RoomType> neighborRoomTypes)
     {
-        if ((target.Type == RoomType.Corridor || target.Type == RoomType.Parkour) && !neighborRoomTypes.Contains(neighbor.Type))
+        if ((target.Type == RoomType.Corridor || target.Type == RoomType.Parkour) && neighborRoomTypes.Contains(neighbor.Type))
         {
             return false;
         }

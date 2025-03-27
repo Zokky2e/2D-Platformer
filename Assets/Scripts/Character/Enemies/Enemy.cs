@@ -46,8 +46,8 @@ public class Enemy : MonoBehaviour, IEntity
     {
         if (!isTrap)
         {
-            if (player == null && !health || health.CurrentHealth <= 0) return;
-
+            if (player == null) return;
+            if (!health || health.CurrentHealth <= 0) return;
             float distanceToPlayer = Vector2.Distance(transform.position, player.position);
             if (distanceToPlayer <= detectionRange)
             {
@@ -65,7 +65,7 @@ public class Enemy : MonoBehaviour, IEntity
 
     private IEnumerator Patrol()
     {
-        while (!isChasing && patrolPoints.Length > 1)
+        while (!isChasing && patrolPoints.Length > 0)
         {
             Transform targetPoint = patrolPoints[currentPointIndex];
 

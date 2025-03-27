@@ -205,9 +205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isTrap: 0
-  patrolPoints:
-  - {fileID: 0}
-  - {fileID: 0}
+  patrolPoints: []
   attackDelay: 1.5
   attackSpeedAnimation: 0.5
   attackRange: 1.5
@@ -256,6 +254,7 @@ MonoBehaviour:
   bonusJumpHeight: 0
   bonusDamage: 0
   bonusArmor: 0
+  canUseBlock: 0
 --- !u!114 &1520711120491560709
 MonoBehaviour:
   m_ObjectHideFlags: 0
