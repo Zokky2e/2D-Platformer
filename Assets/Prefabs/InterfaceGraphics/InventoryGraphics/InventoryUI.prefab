@@ -81,5 +81,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 2016958396346898112}
   defaultWeaponSprite: {fileID: -385875042, guid: c68838cd724d5cc4a89b38f46c68a7d1, type: 3}
+  defaultShieldSprite: {fileID: 8337193673626998038, guid: 247317e5e362b92489f2c513aa2657d2, type: 3}
   defaultArmorSprite: {fileID: 3055368978828454822, guid: a367f43326a9d9a4aa4b7c39e8652c01, type: 3}
   defaultAccessorySprite: {fileID: 2018574791, guid: 2602867125c52164ca50bd624010b64b, type: 3}

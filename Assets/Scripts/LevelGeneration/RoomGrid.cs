@@ -42,7 +42,7 @@ public class RoomGrid : MonoBehaviour
         //EnsureParkourInEachRow();
         // Instantiate the actual GameObjects
         InstantiateRooms();
-        //SpawnPlayer();
+        SpawnPlayer();
     }
     
 

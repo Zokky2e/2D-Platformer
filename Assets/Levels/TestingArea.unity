@@ -3456,10 +3456,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: InventoryUI
       objectReference: {fileID: 0}
-    - target: {fileID: 5175600015252315317, guid: 1314a4d9bb3f4e04bbe1eda155addc87, type: 3}
-      propertyPath: defaultShieldSprite
-      value: 
-      objectReference: {fileID: 8337193673626998038, guid: 247317e5e362b92489f2c513aa2657d2, type: 3}
     - target: {fileID: 6147958288944939228, guid: 1314a4d9bb3f4e04bbe1eda155addc87, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -4027,46 +4023,6 @@ PrefabInstance:
     - target: {fileID: 4044292685152064668, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: items.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: 'items.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 42710ecb3f3771943ae3ace56ef2a7b6, type: 2}
-    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: 'items.Array.data[1]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 42710ecb3f3771943ae3ace56ef2a7b6, type: 2}
-    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: 'items.Array.data[2]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 662819631fc2f814e9b8e60dc9627a0d, type: 2}
-    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: 'items.Array.data[3]'
-      value: 
-      objectReference: {fileID: 11400000, guid: d893aec0f4a51f04386a1e01633ce996, type: 2}
-    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: 'items.Array.data[4]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 42710ecb3f3771943ae3ace56ef2a7b6, type: 2}
-    - target: {fileID: 9207923479673077358, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: EquippedArmor
-      value: 
-      objectReference: {fileID: 11400000, guid: 04388621188f41b4e8b30c400ee23f6a, type: 2}
-    - target: {fileID: 9207923479673077358, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: EquippedShield
-      value: 
-      objectReference: {fileID: 11400000, guid: e71bd6f22d56ffc4f823a8cf1aab8790, type: 2}
-    - target: {fileID: 9207923479673077358, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: EquippedWeapon
-      value: 
-      objectReference: {fileID: 11400000, guid: 78f3259f63380194097945b5d71c2bf5, type: 2}
-    - target: {fileID: 9207923479673077358, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
-      propertyPath: EquippedAccessory
-      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
