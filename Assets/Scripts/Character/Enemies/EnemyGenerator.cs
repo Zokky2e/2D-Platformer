@@ -3,6 +3,7 @@ using UnityEngine;
 public class EnemyGenerator : MonoBehaviour
 {
     public EnemyType[] enemies; // Assign in Inspector
+    public GameObject patrolPointPrefab; // Assign in Inspector
     [System.Serializable]
     public struct EnemyType
     {
@@ -33,7 +34,15 @@ public class EnemyGenerator : MonoBehaviour
             {
                 if (enemy.enemyPrefab != null)
                 {
-                    Instantiate(enemy.enemyPrefab, spawnPoint.position, Quaternion.identity);
+                    GameObject spawnedEnemy = Instantiate(enemy.enemyPrefab, spawnPoint.position, Quaternion.identity);
+                    GameObject patrolPoint = Instantiate(patrolPointPrefab, spawnPoint.position, Quaternion.identity);
+                    // Generate patrol points and assign them to the enemy
+                    Enemy enemyScript = spawnedEnemy.GetComponent<Enemy>();
+                    if (enemyScript != null)
+                    {
+                        enemyScript.patrolPoints = new Transform[] { patrolPoint.transform };
+
+                    }
                 }
                 return;
             }

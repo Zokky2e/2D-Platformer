@@ -134,6 +134,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
+      propertyPath: patrolPointPrefab
+      value: 
+      objectReference: {fileID: 1885266531794151859, guid: b9f79dc87c7974147825de32d55a4b32, type: 3}
+    - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.size
       value: 6
       objectReference: {fileID: 0}
