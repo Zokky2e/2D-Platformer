@@ -23,9 +23,9 @@ public class Enemy : MonoBehaviour, IEntity
     private SpriteRenderer spriteRenderer;
     private Health health;
     public CharacterStats stats;
+
     private bool isAttacking = false;
-    private bool canAttack = true;
-    private Transform player;
+    private Transform player; 
 
     public void Start()
     {
@@ -51,8 +51,8 @@ public class Enemy : MonoBehaviour, IEntity
             float distanceToPlayer = Vector2.Distance(transform.position, player.position);
             if (distanceToPlayer <= detectionRange)
             {
-                StopAllCoroutines();
                 isChasing = true;
+                StopCoroutine(Patrol());
                 ChasePlayer();
             }
             else if (isChasing)
@@ -93,22 +93,20 @@ public class Enemy : MonoBehaviour, IEntity
 
     private void ChasePlayer()
     {
-        if (player != null)
+        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+
+        if (distanceToPlayer > attackRange * 0.9f)
         {
-            float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-            // Stop moving if the enemy is within attack range
-            if (distanceToPlayer > attackRange * 0.6f)
+            animator.SetInteger("AnimState", 2);
+            MoveTowards(player.position);
+        }
+        else
+        {
+            animator.SetInteger("AnimState", 0); // Idle animation
+
+            if (!isAttacking)
             {
-                animator.SetInteger("AnimState", 2);
-                MoveTowards(player.position);
-            }
-            else
-            {
-                animator.SetInteger("AnimState", 0); // Idle animation when within range
-                if (canAttack && !isAttacking)
-                {
-                    StartCoroutine(AttackLoop(player.GetComponent<Health>()));
-                }
+                StartCoroutine(AttackRoutine());
             }
         }
     }
@@ -121,40 +119,38 @@ public class Enemy : MonoBehaviour, IEntity
             {
                 collision.GetComponent<Health>().TakeDamage(stats.TotalDamage);
             }
-            else if(!isAttacking && health.CurrentHealth > 0)
-            {
-                StartCoroutine(AttackLoop(collision.GetComponent<Health>()));
-            }
         }
     }
-
-    private IEnumerator AttackLoop(Health playerHealth)
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Player"))
+        {
+            isAttacking = false;
+        }
+    }
+    private IEnumerator AttackRoutine()
     {
         isAttacking = true;
 
-        while (playerHealth != null)
+        while (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
         {
-            float distanceToPlayer = Vector2.Distance(transform.position, playerHealth.transform.position);
-
-            if (distanceToPlayer > attackRange)
-            {
-                isAttacking = false; // Stop attacking when the player leaves range
-                break; // Stop attacking if player moves out of range
-            }
             animator.SetTrigger("Attack");
             yield return new WaitForSeconds(attackSpeedAnimation);
-
-            if (playerHealth != null && Vector2.Distance(transform.position, playerHealth.transform.position) <= attackRange)
-            {
-                playerHealth.TakeDamage(stats.TotalDamage);
-            }
-
             yield return new WaitForSeconds(attackDelay);
         }
 
-        isAttacking = false; // Stop attacking when the player leaves range
+        isAttacking = false;
     }
 
+
+    // Animation Event: This function should be called in the animation itself
+    public void DealDamage()
+    {
+        if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
+        {
+            player.GetComponent<Health>().TakeDamage(stats.TotalDamage);
+        }
+    }
     public float TakeDamage(float _damage)
     {
         animator.SetTrigger("Hurt");

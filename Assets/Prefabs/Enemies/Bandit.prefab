@@ -205,8 +205,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isTrap: 0
-  patrolPoints: []
-  attackDelay: 1.5
+  patrolPoints:
+  - {fileID: 0}
+  - {fileID: 0}
+  attackDelay: 5.5
   attackSpeedAnimation: 0.5
   attackRange: 1.5
   detectionRange: 4
