@@ -61,7 +61,10 @@ public class EquipmentUI : MonoBehaviour
 
     private void OnDisable()
     {
-        EquipmentSystem.Instance.OnEquipmentChanged -= UpdateUI;
+        if (EquipmentSystem.Instance != null) 
+        { 
+            EquipmentSystem.Instance.OnEquipmentChanged -= UpdateUI;
+        }
     }
 
     private void UpdateUI()
