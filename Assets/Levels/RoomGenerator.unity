@@ -129,11 +129,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1123582788088246206, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1123582788088246206, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2246502290289215393, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_Name
@@ -141,7 +141,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2246502290289215393, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8913935801423430548, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_Pivot.x
@@ -228,6 +228,57 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
+--- !u!1 &444412307
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 444412308}
+  - component: {fileID: 444412309}
+  m_Layer: 0
+  m_Name: DungeonGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &444412308
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444412307}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.842718, y: -6.2877727, z: -0.081804894}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &444412309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444412307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64f77fdc1a0f1f5439704b5fcd8b6477, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startTilePrefab: {fileID: 206132723792545150, guid: 0f876a2cd6ad99547b76d469c0495972, type: 3}
+  bossTilePrefab: {fileID: 3057992581648595024, guid: aab36be6232430849ac57cb5bbd593af, type: 3}
+  tilePrefabs:
+  - {fileID: 9202037706110919146, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+  - {fileID: 7861329001008505219, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+  - {fileID: 2522352220046467950, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+  activeNodes: []
 --- !u!1001 &1249404290
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -298,7 +349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8805431730755322361, guid: bd1bc7be596946340a8f7fc814e9f6c6, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -321,7 +372,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1333412465
 Transform:
   m_ObjectHideFlags: 0
@@ -381,3 +432,4 @@ SceneRoots:
   - {fileID: 1249404290}
   - {fileID: 233346894}
   - {fileID: 1333412465}
+  - {fileID: 444412308}
