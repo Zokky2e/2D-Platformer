@@ -1,5 +1,7 @@
+using System.Runtime.InteropServices.ComTypes;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
 
 public enum NPCAction
 {
@@ -26,6 +28,7 @@ public class NPC : MonoBehaviour
     [SerializeField] private GameObject traderMarkPrefab;
     private GameObject activeIndicator; // To store the currently active indicator
     private Interactable interactable; // Reference to interactable component
+    private NavMeshAgent agent;
     private void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>(); // Get the SpriteRenderer component
@@ -34,6 +37,26 @@ public class NPC : MonoBehaviour
         interactable = gameObject.AddComponent<Interactable>();
         interactable.onInteract = InteractWithNPC; // Assign interaction behavior
 
+        agent = this.GetComponent<NavMeshAgent>();
+        if (agent != null)
+        {
+            Debug.Log(agent.isOnNavMesh);
+            if (!agent.isOnNavMesh)
+            {
+                Debug.Log("Enemy was NOT on the NavMesh, forcing reposition...");
+                NavMeshHit hit;
+                if (NavMesh.SamplePosition(transform.position, out hit, 10f, NavMesh.AllAreas))
+                {
+                    transform.position = hit.position;
+                    agent.Warp(hit.position);
+                    Debug.Log("Enemy repositioned onto the NavMesh.");
+                }
+                else
+                {
+                    Debug.LogError("Still couldn't place the enemy on the NavMesh!");
+                }
+            }
+        }
         UpdateIndicator();
         UpdateInteractableState();
     }

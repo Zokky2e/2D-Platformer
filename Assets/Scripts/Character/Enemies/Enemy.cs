@@ -1,6 +1,7 @@
 using Assets.Scripts;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour, IEntity
 {
@@ -25,7 +26,7 @@ public class Enemy : MonoBehaviour, IEntity
     public CharacterStats stats;
 
     private bool isAttacking = false;
-    private Transform player; 
+    private Transform player;
 
     public void Start()
     {
@@ -41,6 +42,7 @@ public class Enemy : MonoBehaviour, IEntity
 
         if (!isTrap) 
             StartCoroutine(Patrol());
+
     }
     void Update()
     {
