@@ -17,33 +17,108 @@ public class DungeonGenerator : MonoBehaviour
         {
             if (node.isExit)
             {
+                node.shouldGoTo = NodeShouldGoTo.Right;
                 activeNodes.Add(node);
             }
         }
     }
 
+    bool CheckForShouldGoToNode(Vector2 exitNode, Vector2 entryNode, NodeShouldGoTo shouldGoTo)
+    {
+        switch (shouldGoTo) 
+        {
+            case NodeShouldGoTo.Left:
+                if (exitNode.x > entryNode.x) return true;
+                break;  
+            case NodeShouldGoTo.Right:
+                if (exitNode.x < entryNode.x) return true;
+                break;
+            case NodeShouldGoTo.Top:
+                if (exitNode.y < entryNode.y) return true;
+                break;
+            case NodeShouldGoTo.Bottom:
+                if (exitNode.y > entryNode.y) return true;
+                break;  
+            default:
+                return false;
+        }
+        return false;
+    }
+
+    void SetNodeShouldGoTo(Node exitNode, Node entryNode)
+    {
+        Vector2 desiredExitPos = (exitNode.transform.position + exitNode.pairedNode.transform.position) / 2f;
+        Vector2 desiredEntryPos = (entryNode.transform.position + entryNode.pairedNode.transform.position) / 2f;
+
+        if (desiredEntryPos.y == desiredExitPos.y)
+        {
+            if (desiredEntryPos.x < desiredExitPos.x) 
+            {
+                exitNode.shouldGoTo = NodeShouldGoTo.Left;
+            }
+            else
+            {
+                exitNode.shouldGoTo = NodeShouldGoTo.Right;
+            }
+        }
+        else
+        {
+            if (desiredEntryPos.y < desiredExitPos.y)
+            {
+                exitNode.shouldGoTo = NodeShouldGoTo.Top;
+            }
+            else
+            {
+                exitNode.shouldGoTo = NodeShouldGoTo.Bottom;
+            }
+        }
+
+    }
+
     void SpawnTile(Node exitNode, bool isBossTile = false)
     {
-        GameObject instatiateObject = isBossTile ? bossTilePrefab : tilePrefabs[Random.Range(0, tilePrefabs.Length)];
-        GameObject newTile = Instantiate(instatiateObject, exitNode.transform.position, Quaternion.identity);
-        Node[] nodes = newTile.GetComponentsInChildren<Node>();
+        GameObject instatiateObject = null;
+        GameObject newTile = null;
+        Node[] nodes = null;
 
         // Find the best entrance node (the one closest to exitNode)
         Node bestEntrance = null;
-        float shortestDistance = Mathf.Infinity;
-        foreach (Node node in nodes)
+        while (bestEntrance == null) 
         {
-            if (node.isEntrance && node.pairedNode != null)
+            instatiateObject = isBossTile ? bossTilePrefab : tilePrefabs[Random.Range(0, tilePrefabs.Length)];
+            newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
+            nodes = newTile.GetComponentsInChildren<Node>();
+            foreach (Node node in nodes)
             {
-                float distance = Vector2.Distance(exitNode.transform.position, node.transform.position);
-                float pairedDistance = Vector2.Distance(exitNode.pairedNode.transform.position, node.pairedNode.transform.position);
-
-                // Ensure both distances are minimal and they match correctly
-                if (distance + pairedDistance < shortestDistance)
+                if (node.isEntrance && node.pairedNode != null)
                 {
-                    shortestDistance = distance + pairedDistance;
-                    bestEntrance = node;
+                    Vector2 offsetMain = exitNode.transform.position - node.transform.position;
+                    Vector2 offsetPaired = exitNode.pairedNode.transform.position - node.pairedNode.transform.position;
+                    Vector2 desiredOffset = (offsetMain + offsetPaired) / 2f;
+                    // Temporarily move the tile to test alignment
+                    newTile.transform.position = desiredOffset;
+                    float epsilon = 0.01f;
+                    Vector2 testOffsetMain = exitNode.transform.position - node.transform.position;
+                    Vector2 testOffsetPaired = exitNode.pairedNode.transform.position - node.pairedNode.transform.position;
+
+                    //if (!CheckForShouldGoToNode(exitNode.transform.position, newTile.transform.position, exitNode.shouldGoTo)) 
+                    //{
+                    //    continue;
+                    //}
+                    if ((testOffsetMain - testOffsetPaired).sqrMagnitude < epsilon * epsilon)
+                    {
+                        bestEntrance = node;
+                        break;
+                    }
+                    // Reset position before trying next entrance
+                    newTile.transform.position = Vector3.zero;
+
                 }
+            }
+
+            if (bestEntrance == null)
+            {
+                Destroy(newTile); // If no match found, discard the tile
             }
         }
         if (bestEntrance != null && bestEntrance.pairedNode != null)
@@ -66,11 +141,15 @@ public class DungeonGenerator : MonoBehaviour
             activeNodes.Remove(exitNode.pairedNode);
         }
         // Add remaining exit nodes to active list
-        foreach (Node node in nodes)
+        if (nodes != null && nodes.Length > 0) 
         {
-            if (node.isExit && node != bestEntrance && node != bestEntrance.pairedNode)
+            foreach (Node node in nodes)
             {
-                activeNodes.Add(node);
+                if (node.isExit && node != bestEntrance && node != bestEntrance.pairedNode)
+                {
+                    SetNodeShouldGoTo(node, bestEntrance);
+                    activeNodes.Add(node);
+                }
             }
         }
     }
