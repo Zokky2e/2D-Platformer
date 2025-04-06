@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditorInternal;
+using SuperTiled2Unity;
 
 public class DungeonGenerator : MonoBehaviour
 {
@@ -22,57 +23,60 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
     }
-
-    bool CheckForShouldGoToNode(Vector2 exitNode, Vector2 entryNode, NodeShouldGoTo shouldGoTo)
+    Vector3 GetOffsetValue(Node exitNode)
     {
-        switch (shouldGoTo) 
+        SuperMap map = exitNode.GetComponentInParent<SuperMap>();
+        Vector3 parentPosition = map.transform.position;
+        int width = 12;
+        int height = 12;
+        if (map != null)
+        {
+            width = map.m_Width;
+            height = map.m_Height;
+        }
+        switch (exitNode.shouldGoTo)
         {
             case NodeShouldGoTo.Left:
-                if (exitNode.x > entryNode.x) return true;
-                break;  
+                return new Vector3(-width, 0) + parentPosition;
             case NodeShouldGoTo.Right:
-                if (exitNode.x < entryNode.x) return true;
-                break;
+                return new Vector3(width, 0) + parentPosition;
             case NodeShouldGoTo.Top:
-                if (exitNode.y < entryNode.y) return true;
-                break;
+                return new Vector3(0, height) + parentPosition;
             case NodeShouldGoTo.Bottom:
-                if (exitNode.y > entryNode.y) return true;
-                break;  
-            default:
-                return false;
+                return new Vector3(0, -height) + parentPosition;
         }
-        return false;
+        return Vector3.zero;
     }
 
-    void SetNodeShouldGoTo(Node exitNode, Node entryNode)
+    Vector3 GetTileCenter(GameObject tile)
     {
-        Vector2 desiredExitPos = (exitNode.transform.position + exitNode.pairedNode.transform.position) / 2f;
-        Vector2 desiredEntryPos = (entryNode.transform.position + entryNode.pairedNode.transform.position) / 2f;
+        Bounds bounds = new Bounds(tile.transform.position, Vector3.zero);
 
-        if (desiredEntryPos.y == desiredExitPos.y)
+        foreach (Renderer r in tile.GetComponentsInChildren<Renderer>())
         {
-            if (desiredEntryPos.x < desiredExitPos.x) 
+            bounds.Encapsulate(r.bounds);
+        }
+
+        return bounds.center;
+    }
+    void AssignNodeDirections(GameObject tile)
+    {
+        Node[] nodes = tile.GetComponentsInChildren<Node>();
+        Vector3 center = GetTileCenter(tile);
+
+        foreach (Node node in nodes)
+        {
+            Vector3 localPos = node.transform.position - center;
+
+            if (Mathf.Abs(localPos.x) > Mathf.Abs(localPos.y))
             {
-                exitNode.shouldGoTo = NodeShouldGoTo.Left;
+                node.shouldGoTo = localPos.x > 0 ? NodeShouldGoTo.Right : NodeShouldGoTo.Left;
             }
             else
             {
-                exitNode.shouldGoTo = NodeShouldGoTo.Right;
+                node.shouldGoTo = localPos.y > 0 ? NodeShouldGoTo.Top : NodeShouldGoTo.Bottom;
             }
         }
-        else
-        {
-            if (desiredEntryPos.y < desiredExitPos.y)
-            {
-                exitNode.shouldGoTo = NodeShouldGoTo.Top;
-            }
-            else
-            {
-                exitNode.shouldGoTo = NodeShouldGoTo.Bottom;
-            }
-        }
-
     }
 
     void SpawnTile(Node exitNode, bool isBossTile = false)
@@ -87,16 +91,14 @@ public class DungeonGenerator : MonoBehaviour
         {
             instatiateObject = isBossTile ? bossTilePrefab : tilePrefabs[Random.Range(0, tilePrefabs.Length)];
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
+            AssignNodeDirections(newTile);
             nodes = newTile.GetComponentsInChildren<Node>();
             foreach (Node node in nodes)
             {
                 if (node.isEntrance && node.pairedNode != null)
                 {
-                    Vector2 offsetMain = exitNode.transform.position - node.transform.position;
-                    Vector2 offsetPaired = exitNode.pairedNode.transform.position - node.pairedNode.transform.position;
-                    Vector2 desiredOffset = (offsetMain + offsetPaired) / 2f;
                     // Temporarily move the tile to test alignment
-                    newTile.transform.position = desiredOffset;
+                    newTile.transform.position = GetOffsetValue(exitNode);
                     float epsilon = 0.01f;
                     Vector2 testOffsetMain = exitNode.transform.position - node.transform.position;
                     Vector2 testOffsetPaired = exitNode.pairedNode.transform.position - node.pairedNode.transform.position;
@@ -105,14 +107,17 @@ public class DungeonGenerator : MonoBehaviour
                     //{
                     //    continue;
                     //}
-                    if ((testOffsetMain - testOffsetPaired).sqrMagnitude < epsilon * epsilon)
+                    if ((testOffsetMain).sqrMagnitude < epsilon * epsilon && (testOffsetPaired).sqrMagnitude < epsilon * epsilon)
                     {
                         bestEntrance = node;
+                        bestEntrance.isExit = false;
+                        bestEntrance.pairedNode.isExit = false;
+                        newTile.transform.position = GetOffsetValue(exitNode);
                         break;
                     }
                     // Reset position before trying next entrance
-                    newTile.transform.position = Vector3.zero;
 
+                    newTile.transform.position = Vector3.zero;
                 }
             }
 
@@ -147,7 +152,8 @@ public class DungeonGenerator : MonoBehaviour
             {
                 if (node.isExit && node != bestEntrance && node != bestEntrance.pairedNode)
                 {
-                    SetNodeShouldGoTo(node, bestEntrance);
+                    node.isExit = true;
+                    node.isEntrance = false;
                     activeNodes.Add(node);
                 }
             }

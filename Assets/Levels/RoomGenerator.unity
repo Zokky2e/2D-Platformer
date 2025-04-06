@@ -278,6 +278,7 @@ MonoBehaviour:
   - {fileID: 9202037706110919146, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
   - {fileID: 7861329001008505219, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
   - {fileID: 2522352220046467950, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+  - {fileID: 4255644615471165084, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
   activeNodes: []
 --- !u!1001 &1249404290
 PrefabInstance:
