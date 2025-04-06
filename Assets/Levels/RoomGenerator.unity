@@ -274,12 +274,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startTilePrefab: {fileID: 206132723792545150, guid: 0f876a2cd6ad99547b76d469c0495972, type: 3}
   bossTilePrefab: {fileID: 3057992581648595024, guid: aab36be6232430849ac57cb5bbd593af, type: 3}
-  tilePrefabs:
-  - {fileID: 9202037706110919146, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
-  - {fileID: 7861329001008505219, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
-  - {fileID: 2522352220046467950, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
-  - {fileID: 4255644615471165084, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+  emptyTilePrefab: {fileID: 4770344602950487489, guid: 78069742f6679614189ad705ee56f509, type: 3}
+  roomTilePrefabs:
+  - tilePrefab: {fileID: 9202037706110919146, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+    spawnChance: 10
+  - tilePrefab: {fileID: 2522352220046467950, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+    spawnChance: 2
+  - tilePrefab: {fileID: 259030599290562610, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+    spawnChance: 2
+  - tilePrefab: {fileID: 7861329001008505219, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+    spawnChance: 10
+  - tilePrefab: {fileID: 8312001930662153734, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+    spawnChance: 2
+  - tilePrefab: {fileID: 4255644615471165084, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+    spawnChance: 2
   activeNodes: []
+  numberOfTiles: 64
 --- !u!1001 &1249404290
 PrefabInstance:
   m_ObjectHideFlags: 0

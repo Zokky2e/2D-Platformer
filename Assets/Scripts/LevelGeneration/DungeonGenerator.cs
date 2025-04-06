@@ -2,14 +2,21 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEditorInternal;
 using SuperTiled2Unity;
-
 public class DungeonGenerator : MonoBehaviour
 {
+    [System.Serializable]
+    public struct DungeonRoomType
+    {
+        public GameObject tilePrefab;
+        public float spawnChance; // Probability %
+        //could extend with aditional logic
+    }
     public GameObject startTilePrefab;
     public GameObject bossTilePrefab;
-    public GameObject[] tilePrefabs; // Assign tile prefabs in Inspector
+    public GameObject emptyTilePrefab;
+    public DungeonRoomType[] roomTilePrefabs;
     public List<Node> activeNodes = new List<Node>(); // Open connection points
-
+    public int numberOfTiles = 10;
     void Start()
     {
         // Spawn the first tile at (0,0) and register its exits
@@ -78,8 +85,32 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
     }
+    GameObject ChooseRandomDungeonTile()
+    {
+        float totalChance = 0f;
 
-    void SpawnTile(Node exitNode, bool isBossTile = false)
+        foreach (var roomTile in roomTilePrefabs)
+        {
+            totalChance += roomTile.spawnChance;
+        }
+        float randomValue = Random.Range(0f, totalChance);
+        float currentChance = 0f;
+        foreach (var roomTile in roomTilePrefabs)
+        {
+            currentChance += roomTile.spawnChance;
+            if (randomValue <= currentChance)
+            {
+                if (roomTile.tilePrefab != null)
+                {
+                    return roomTile.tilePrefab;
+                }
+                return null;
+            }
+        }
+        return null;
+    }
+
+    void SpawnTile(Node exitNode, bool isBossTile = false, bool fillEmpty = false)
     {
         GameObject instatiateObject = null;
         GameObject newTile = null;
@@ -87,9 +118,14 @@ public class DungeonGenerator : MonoBehaviour
 
         // Find the best entrance node (the one closest to exitNode)
         Node bestEntrance = null;
-        while (bestEntrance == null) 
+        int checkTime = 0;
+        while (bestEntrance == null && checkTime < 10) 
         {
-            instatiateObject = isBossTile ? bossTilePrefab : tilePrefabs[Random.Range(0, tilePrefabs.Length)];
+            checkTime++;
+            if (fillEmpty)
+                instatiateObject = emptyTilePrefab;
+            else
+                instatiateObject = isBossTile ? bossTilePrefab : ChooseRandomDungeonTile();
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
             AssignNodeDirections(newTile);
             nodes = newTile.GetComponentsInChildren<Node>();
@@ -102,11 +138,6 @@ public class DungeonGenerator : MonoBehaviour
                     float epsilon = 0.01f;
                     Vector2 testOffsetMain = exitNode.transform.position - node.transform.position;
                     Vector2 testOffsetPaired = exitNode.pairedNode.transform.position - node.pairedNode.transform.position;
-
-                    //if (!CheckForShouldGoToNode(exitNode.transform.position, newTile.transform.position, exitNode.shouldGoTo)) 
-                    //{
-                    //    continue;
-                    //}
                     if ((testOffsetMain).sqrMagnitude < epsilon * epsilon && (testOffsetPaired).sqrMagnitude < epsilon * epsilon)
                     {
                         bestEntrance = node;
@@ -120,10 +151,21 @@ public class DungeonGenerator : MonoBehaviour
                     newTile.transform.position = Vector3.zero;
                 }
             }
-
+            if (fillEmpty)
+            {
+                newTile.transform.position = GetOffsetValue(exitNode);
+                // Remove used exit from active list
+                activeNodes.Remove(exitNode);
+                activeNodes.Remove(exitNode.pairedNode);
+                break;
+            }
             if (bestEntrance == null)
             {
                 Destroy(newTile); // If no match found, discard the tile
+            }
+            if (checkTime == 10)
+            {
+                return;
             }
         }
         if (bestEntrance != null && bestEntrance.pairedNode != null)
@@ -162,14 +204,19 @@ public class DungeonGenerator : MonoBehaviour
 
     public void ExpandToMaxDungeon()
     {
-        for (int i = 0; i <= 10; i++)
+        for (int i = 0; i <= numberOfTiles; i++)
         {
 
             if (activeNodes.Count > 0)
             {
                 Node nodeToExpand = activeNodes[0]; // Use the first available exit node
-                SpawnTile(nodeToExpand, i == 10);
+                SpawnTile(nodeToExpand, i == numberOfTiles);
             }
+        }
+        while (activeNodes.Count > 0)
+        {
+            Node nodeToExpand = activeNodes[0];
+            SpawnTile(nodeToExpand, false, true);
         }
     }
 
