@@ -2,6 +2,9 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEditorInternal;
 using SuperTiled2Unity;
+using System;
+using TMPro;
+using Unity.VisualScripting;
 public class DungeonGenerator : MonoBehaviour
 {
     [System.Serializable]
@@ -16,19 +19,28 @@ public class DungeonGenerator : MonoBehaviour
     public GameObject emptyTilePrefab;
     public DungeonRoomType[] roomTilePrefabs;
     public List<Node> activeNodes = new List<Node>(); // Open connection points
+    public List<Tuple<int, int>> occupiedTiles;
     public int numberOfTiles = 10;
     void Start()
     {
+        occupiedTiles = new List<Tuple<int, int>>();
         // Spawn the first tile at (0,0) and register its exits
         GameObject firstTile = Instantiate(startTilePrefab, Vector2.zero, Quaternion.identity);
+        Tuple<int, int> firstTileLocation = new Tuple<int, int>(0, 0);
+        occupiedTiles.Add(firstTileLocation);
         foreach (Node node in firstTile.GetComponentsInChildren<Node>())
         {
             if (node.isExit)
             {
                 node.shouldGoTo = NodeShouldGoTo.Right;
+                node.tileLocation = firstTileLocation;
                 activeNodes.Add(node);
             }
         }
+        SuperMap map = firstTile.GetComponentInParent<SuperMap>();
+        GameObject secondTile = Instantiate(emptyTilePrefab, new Vector3(-map.m_Width, 0) + map.transform.position, Quaternion.identity);
+        Tuple<int, int> secondTileLocation = new Tuple<int, int>(-1, 0);
+        occupiedTiles.Add(secondTileLocation);
     }
     Vector3 GetOffsetValue(Node exitNode)
     {
@@ -53,6 +65,25 @@ public class DungeonGenerator : MonoBehaviour
                 return new Vector3(0, -height) + parentPosition;
         }
         return Vector3.zero;
+    }
+
+    Tuple<int, int> GetNextLocation(Node exitNode)
+    {
+        Debug.Log(exitNode.tileLocation.Item1);
+        Debug.Log(exitNode.tileLocation.Item2);
+        Debug.Log(exitNode.shouldGoTo);
+        switch (exitNode.shouldGoTo)
+        {
+            case NodeShouldGoTo.Left:
+                return new Tuple<int, int>(exitNode.tileLocation.Item1 - 1, exitNode.tileLocation.Item2);
+            case NodeShouldGoTo.Right:
+                return new Tuple<int, int>(exitNode.tileLocation.Item1 + 1, exitNode.tileLocation.Item2);
+            case NodeShouldGoTo.Top:
+                return new Tuple<int, int>(exitNode.tileLocation.Item1, exitNode.tileLocation.Item2 + 1);
+            case NodeShouldGoTo.Bottom:
+                return new Tuple<int, int>(exitNode.tileLocation.Item1, exitNode.tileLocation.Item2 - 1);
+        }
+        return new Tuple<int, int>(0, 0);
     }
 
     Vector3 GetTileCenter(GameObject tile)
@@ -93,7 +124,7 @@ public class DungeonGenerator : MonoBehaviour
         {
             totalChance += roomTile.spawnChance;
         }
-        float randomValue = Random.Range(0f, totalChance);
+        float randomValue = UnityEngine.Random.Range(0f, totalChance);
         float currentChance = 0f;
         foreach (var roomTile in roomTilePrefabs)
         {
@@ -127,8 +158,22 @@ public class DungeonGenerator : MonoBehaviour
             else
                 instatiateObject = isBossTile ? bossTilePrefab : ChooseRandomDungeonTile();
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
+            Tuple<int, int> newTileLocation = GetNextLocation(exitNode);
+
+            Debug.Log(newTileLocation.Item1);
+            Debug.Log(newTileLocation.Item2);
+            if (occupiedTiles.Contains(newTileLocation))
+            {
+                activeNodes.Remove(exitNode);
+                activeNodes.Remove(exitNode.pairedNode);
+                break;
+            }
             AssignNodeDirections(newTile);
             nodes = newTile.GetComponentsInChildren<Node>();
+            foreach (Node node in nodes)
+            {
+                node.tileLocation = newTileLocation;
+            }
             foreach (Node node in nodes)
             {
                 if (node.isEntrance && node.pairedNode != null)
@@ -151,7 +196,7 @@ public class DungeonGenerator : MonoBehaviour
                     newTile.transform.position = Vector3.zero;
                 }
             }
-            if (fillEmpty)
+            if (fillEmpty && !occupiedTiles.Contains(newTileLocation) && newTileLocation != new Tuple<int, int>(0, 0))
             {
                 newTile.transform.position = GetOffsetValue(exitNode);
                 // Remove used exit from active list
@@ -168,13 +213,18 @@ public class DungeonGenerator : MonoBehaviour
                 return;
             }
         }
+        if (newTile != null && newTile.transform.position == Vector3.zero) 
+        {
+            Destroy(newTile); // If tile should spawn on vector3.zero
+            return;
+        }
         if (bestEntrance != null && bestEntrance.pairedNode != null)
         {
             // Calculate offset for both entrance and its paired node
             Vector2 offsetMain = exitNode.transform.position - bestEntrance.transform.position;
             Vector2 offsetPaired = exitNode.pairedNode.transform.position - bestEntrance.pairedNode.transform.position;
 
-            newTile.transform.position += (Vector3)((offsetMain + offsetPaired) / 2f);
+            //newTile.transform.position += (Vector3)((offsetMain + offsetPaired) / 2f);
 
             // Connect the nodes
             exitNode.connectedNodes.Add(bestEntrance);
@@ -186,6 +236,9 @@ public class DungeonGenerator : MonoBehaviour
             // Remove used exit from active list
             activeNodes.Remove(exitNode);
             activeNodes.Remove(exitNode.pairedNode);
+
+            // Add newTileLocation to occupiedTiles
+            occupiedTiles.Add(bestEntrance.tileLocation);
         }
         // Add remaining exit nodes to active list
         if (nodes != null && nodes.Length > 0) 
