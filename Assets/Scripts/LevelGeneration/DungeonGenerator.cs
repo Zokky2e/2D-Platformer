@@ -21,8 +21,13 @@ public class DungeonGenerator : MonoBehaviour
     public List<Node> activeNodes = new List<Node>(); // Open connection points
     public List<Tuple<int, int>> occupiedTiles;
     public int numberOfTiles = 10;
+    public DungeonManager dungeonManager;
+    private bool hasBossRoom;
     void Start()
     {
+        hasBossRoom = false;
+        dungeonManager = DungeonManager.Instance;
+        dungeonManager.RegenerateDungeon();
         occupiedTiles = new List<Tuple<int, int>>();
         // Spawn the first tile at (0,0) and register its exits
         GameObject firstTile = Instantiate(startTilePrefab, Vector2.zero, Quaternion.identity);
@@ -41,6 +46,9 @@ public class DungeonGenerator : MonoBehaviour
         GameObject secondTile = Instantiate(emptyTilePrefab, new Vector3(-map.m_Width, 0) + map.transform.position, Quaternion.identity);
         Tuple<int, int> secondTileLocation = new Tuple<int, int>(-1, 0);
         occupiedTiles.Add(secondTileLocation);
+        numberOfTiles = dungeonManager.DungeonSize;
+        ExpandToMaxDungeon();
+        SpawnPlayer();
     }
     Vector3 GetOffsetValue(Node exitNode)
     {
@@ -154,9 +162,15 @@ public class DungeonGenerator : MonoBehaviour
         {
             checkTime++;
             if (fillEmpty)
-                instatiateObject = emptyTilePrefab;
+                if (!hasBossRoom && exitNode.shouldGoTo == NodeShouldGoTo.Right)
+                {
+                    hasBossRoom = true;
+                    instatiateObject = bossTilePrefab;
+                }
+                else
+                    instatiateObject = emptyTilePrefab;
             else
-                instatiateObject = isBossTile ? bossTilePrefab : ChooseRandomDungeonTile();
+                    instatiateObject = ChooseRandomDungeonTile();
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
             Tuple<int, int> newTileLocation = GetNextLocation(exitNode);
 
@@ -280,5 +294,22 @@ public class DungeonGenerator : MonoBehaviour
             Node nodeToExpand = activeNodes[0]; // Use the first available exit node
             SpawnTile(nodeToExpand);
         }
+    }
+
+    private void SpawnPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            Debug.LogError("Player not found in the scene!");
+            return;
+        }
+        GameObject entryPoint = GameObject.Find("EntryPoint");
+        if (entryPoint == null)
+        {
+            Debug.LogError("EntryPoint not found in the scene!");
+            return;
+        }
+        player.transform.position = entryPoint.transform.position;
     }
 }

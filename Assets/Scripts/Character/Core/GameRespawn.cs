@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 public class GameRespawn : Singleton<GameRespawn>
 {
-    public float threshold = -10f;
+    public float threshold = -200f;
     private Transform playerRespawn;
     private Vector3 startingPosition;
     private Health playerHealth;
@@ -16,11 +16,9 @@ public class GameRespawn : Singleton<GameRespawn>
         startingPosition = transform.position;
         playerRespawn = null;
     }
-
-    //i will have gameobjects on my levels which are clickable and they should get set here as the respawn point
+    
     public void SetPlayerRespawn(Transform newRespawnPoint)
     {
-
         playerRespawn = newRespawnPoint;
     }
 
