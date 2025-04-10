@@ -1,10 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEditorInternal;
 using SuperTiled2Unity;
 using System;
-using TMPro;
-using Unity.VisualScripting;
 public class DungeonGenerator : MonoBehaviour
 {
     [System.Serializable]
@@ -21,8 +18,14 @@ public class DungeonGenerator : MonoBehaviour
     public List<Node> activeNodes = new List<Node>(); // Open connection points
     public List<Tuple<int, int>> occupiedTiles;
     public int numberOfTiles = 10;
-    public DungeonManager dungeonManager;
+    private DungeonManager dungeonManager;
     private bool hasBossRoom;
+
+    [SerializeField]
+    private CameraFollow camera;
+    private Vector2 lowestPoint = new Vector2(-2, -2);
+    private Vector2 highestPoint = new Vector2(12, 12);
+
     void Start()
     {
         hasBossRoom = false;
@@ -50,6 +53,17 @@ public class DungeonGenerator : MonoBehaviour
         ExpandToMaxDungeon();
         SpawnPlayer();
     }
+
+    void CheckForNewCameraBounds(Vector3 tilePosition)
+    {
+        lowestPoint.x   =   tilePosition.x < lowestPoint.x     ? tilePosition.x -2 : lowestPoint.x;
+        lowestPoint.y   =   tilePosition.y < lowestPoint.y     ? tilePosition.y -12 : lowestPoint.y;
+        highestPoint.x  =   tilePosition.x > highestPoint.x    ? tilePosition.x +12 : highestPoint.x;
+        highestPoint.y  =   tilePosition.y > highestPoint.y    ? tilePosition.y +2 : highestPoint.y;
+        camera.minBounds =  lowestPoint;
+        camera.maxBounds =  new Vector2(highestPoint.x + 2, highestPoint.y);
+    }
+
     Vector3 GetOffsetValue(Node exitNode)
     {
         SuperMap map = exitNode.GetComponentInParent<SuperMap>();
@@ -213,6 +227,7 @@ public class DungeonGenerator : MonoBehaviour
             if (fillEmpty && !occupiedTiles.Contains(newTileLocation) && newTileLocation != new Tuple<int, int>(0, 0))
             {
                 newTile.transform.position = GetOffsetValue(exitNode);
+                CheckForNewCameraBounds(newTile.transform.position);
                 // Remove used exit from active list
                 activeNodes.Remove(exitNode);
                 activeNodes.Remove(exitNode.pairedNode);
@@ -253,6 +268,8 @@ public class DungeonGenerator : MonoBehaviour
 
             // Add newTileLocation to occupiedTiles
             occupiedTiles.Add(bestEntrance.tileLocation);
+
+            CheckForNewCameraBounds(newTile.transform.position);
         }
         // Add remaining exit nodes to active list
         if (nodes != null && nodes.Length > 0) 

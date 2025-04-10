@@ -1073,7 +1073,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4279549117022852764, guid: bd1bc7be596946340a8f7fc814e9f6c6, type: 3}
       propertyPath: minBounds.y
-      value: -14
+      value: -14.5
       objectReference: {fileID: 0}
     - target: {fileID: 4295190898732836402, guid: bd1bc7be596946340a8f7fc814e9f6c6, type: 3}
       propertyPath: m_LocalPosition.x
