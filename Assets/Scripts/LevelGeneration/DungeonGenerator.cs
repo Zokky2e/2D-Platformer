@@ -23,7 +23,7 @@ public class DungeonGenerator : MonoBehaviour
 
     [SerializeField]
     private CameraFollow camera;
-    private Vector2 lowestPoint = new Vector2(-2, -2);
+    private Vector2 lowestPoint = new Vector2(-11, -11);
     private Vector2 highestPoint = new Vector2(12, 12);
 
     void Start()
@@ -60,8 +60,8 @@ public class DungeonGenerator : MonoBehaviour
         lowestPoint.y   =   tilePosition.y < lowestPoint.y     ? tilePosition.y -12 : lowestPoint.y;
         highestPoint.x  =   tilePosition.x > highestPoint.x    ? tilePosition.x +12 : highestPoint.x;
         highestPoint.y  =   tilePosition.y > highestPoint.y    ? tilePosition.y +2 : highestPoint.y;
-        camera.minBounds =  lowestPoint;
-        camera.maxBounds =  new Vector2(highestPoint.x + 2, highestPoint.y);
+        camera.minBounds = new Vector2(lowestPoint.x, lowestPoint.y - 2);
+        camera.maxBounds =  new Vector2(highestPoint.x + 14, highestPoint.y);
     }
 
     Vector3 GetOffsetValue(Node exitNode)

@@ -11,7 +11,11 @@ public class PauseMenu : Singleton<PauseMenu>
     protected override void Awake()
     {
         base.Awake();
-        Instance.CheckForPause();
+    }
+
+    public void Start()
+    {
+        Resume();
     }
 
     private void Update()
