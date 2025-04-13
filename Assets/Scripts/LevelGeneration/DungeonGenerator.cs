@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using SuperTiled2Unity;
 using System;
+using System.Linq;
 public class DungeonGenerator : MonoBehaviour
 {
     [System.Serializable]
@@ -282,6 +283,10 @@ public class DungeonGenerator : MonoBehaviour
                     node.isEntrance = false;
                     activeNodes.Add(node);
                 }
+            }
+            if (activeNodes.Count > 0) 
+            {
+                activeNodes = activeNodes.OrderByDescending(n => (int)n.shouldGoTo).ToList();
             }
         }
     }
