@@ -129,11 +129,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1123582788088246206, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1123582788088246206, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2246502290289215393, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_Name
@@ -141,7 +141,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2246502290289215393, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8913935801423430548, guid: f6ee6dacb2242dc4cba5fc138ad14b28, type: 3}
       propertyPath: m_Pivot.x
@@ -238,6 +238,7 @@ GameObject:
   m_Component:
   - component: {fileID: 444412308}
   - component: {fileID: 444412309}
+  - component: {fileID: 444412310}
   m_Layer: 0
   m_Name: DungeonGenerator
   m_TagString: Untagged
@@ -272,25 +273,205 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64f77fdc1a0f1f5439704b5fcd8b6477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startTilePrefab: {fileID: 206132723792545150, guid: 0f876a2cd6ad99547b76d469c0495972, type: 3}
-  bossTilePrefab: {fileID: 3057992581648595024, guid: aab36be6232430849ac57cb5bbd593af, type: 3}
-  emptyTilePrefab: {fileID: 4770344602950487489, guid: 78069742f6679614189ad705ee56f509, type: 3}
-  roomTilePrefabs:
-  - tilePrefab: {fileID: 9202037706110919146, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
-    spawnChance: 10
-  - tilePrefab: {fileID: 2522352220046467950, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
-    spawnChance: 2
-  - tilePrefab: {fileID: 259030599290562610, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
-    spawnChance: 2
-  - tilePrefab: {fileID: 7861329001008505219, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
-    spawnChance: 10
-  - tilePrefab: {fileID: 8312001930662153734, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
-    spawnChance: 2
-  - tilePrefab: {fileID: 4255644615471165084, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
-    spawnChance: 2
+  startTilePrefab: {fileID: 7146289435848451776, guid: 0f876a2cd6ad99547b76d469c0495972, type: 3}
+  bossTilePrefab: {fileID: 749201884552189187, guid: aab36be6232430849ac57cb5bbd593af, type: 3}
+  emptyTilePrefab: {fileID: 177296647261123539, guid: 78069742f6679614189ad705ee56f509, type: 3}
   activeNodes: []
   numberOfTiles: 64
   camera: {fileID: 1249404291}
+--- !u!114 &444412310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444412307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 826f4cbe7703b8940b3aeb93a9e1bcaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ruleEntries:
+  - roomType: 1
+    directions:
+    - direction: 3
+      roomOptions:
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 5
+  - roomType: 2
+    directions:
+    - direction: 3
+      roomOptions:
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 10
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 5
+    - direction: 2
+      roomOptions:
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 10
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 5
+  - roomType: 3
+    directions:
+    - direction: 3
+      roomOptions:
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 10
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 5
+    - direction: 2
+      roomOptions:
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 10
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 5
+  - roomType: 4
+    directions:
+    - direction: 3
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 5
+    - direction: 2
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 5
+  - roomType: 5
+    directions:
+    - direction: 3
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+    - direction: 2
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+    - direction: 0
+      roomOptions:
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 99
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 1
+    - direction: 1
+      roomOptions:
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 99
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 1
+  - roomType: 6
+    directions:
+    - direction: 3
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+    - direction: 2
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+    - direction: 0
+      roomOptions:
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 50
+      - tilePrefab: {fileID: 993571160357084965, guid: 26b7151a7f741bc44973215ab8851127, type: 3}
+        spawnChance: 50
+  - roomType: 7
+    directions:
+    - direction: 3
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+    - direction: 2
+      roomOptions:
+      - tilePrefab: {fileID: 473800246245985729, guid: cdcd7503ce35d6245bc2de6d43a9e302, type: 3}
+        spawnChance: 25
+      - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
+        spawnChance: 5
+      - tilePrefab: {fileID: 5067898018242877581, guid: 4ccde16b57984fc4dbadb00bed5b078c, type: 3}
+        spawnChance: 25
+    - direction: 1
+      roomOptions:
+      - tilePrefab: {fileID: 259408643753869715, guid: 46f4784a271c1184d8bf45572b9130e3, type: 3}
+        spawnChance: 50
+      - tilePrefab: {fileID: 5883318305492313497, guid: fe2344107607d5541b9c7a71bc383114, type: 3}
+        spawnChance: 50
 --- !u!1001 &1249404290
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -365,7 +546,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8805431730755322361, guid: bd1bc7be596946340a8f7fc814e9f6c6, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

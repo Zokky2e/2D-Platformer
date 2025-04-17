@@ -14,7 +14,6 @@ public class Node : MonoBehaviour
     public bool isExit = false; // Mark as exit
     public Node pairedNode;
     public NodeShouldGoTo shouldGoTo;
-    public Tuple<int, int> tileLocation;
 
     private void OnTriggerEnter2D(Collider2D other)
     {

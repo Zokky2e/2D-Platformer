@@ -3,19 +3,13 @@ using System.Collections.Generic;
 using SuperTiled2Unity;
 using System;
 using System.Linq;
+using UnityEditorInternal;
 public class DungeonGenerator : MonoBehaviour
 {
-    [System.Serializable]
-    public struct DungeonRoomType
-    {
-        public GameObject tilePrefab;
-        public float spawnChance; // Probability %
-        //could extend with aditional logic
-    }
-    public GameObject startTilePrefab;
-    public GameObject bossTilePrefab;
-    public GameObject emptyTilePrefab;
-    public DungeonRoomType[] roomTilePrefabs;
+    
+    public Room startTilePrefab;
+    public Room bossTilePrefab;
+    public Room emptyTilePrefab;
     public List<Node> activeNodes = new List<Node>(); // Open connection points
     public List<Tuple<int, int>> occupiedTiles;
     public int numberOfTiles = 10;
@@ -26,15 +20,17 @@ public class DungeonGenerator : MonoBehaviour
     private CameraFollow camera;
     private Vector2 lowestPoint = new Vector2(-11, -11);
     private Vector2 highestPoint = new Vector2(12, 12);
+    private RoomGeneration roomGeneration;
 
     void Start()
     {
         hasBossRoom = false;
         dungeonManager = DungeonManager.Instance;
+        roomGeneration = RoomGeneration.Instance;
         dungeonManager.RegenerateDungeon();
         occupiedTiles = new List<Tuple<int, int>>();
         // Spawn the first tile at (0,0) and register its exits
-        GameObject firstTile = Instantiate(startTilePrefab, Vector2.zero, Quaternion.identity);
+        Room firstTile = Instantiate(startTilePrefab, Vector2.zero, Quaternion.identity);
         Tuple<int, int> firstTileLocation = new Tuple<int, int>(0, 0);
         occupiedTiles.Add(firstTileLocation);
         foreach (Node node in firstTile.GetComponentsInChildren<Node>())
@@ -42,13 +38,14 @@ public class DungeonGenerator : MonoBehaviour
             if (node.isExit)
             {
                 node.shouldGoTo = NodeShouldGoTo.Right;
-                node.tileLocation = firstTileLocation;
+                firstTile.location = firstTileLocation;
                 activeNodes.Add(node);
             }
         }
         SuperMap map = firstTile.GetComponentInParent<SuperMap>();
-        GameObject secondTile = Instantiate(emptyTilePrefab, new Vector3(-map.m_Width, 0) + map.transform.position, Quaternion.identity);
+        Room secondTile = Instantiate(emptyTilePrefab, new Vector3(-map.m_Width, 0) + map.transform.position, Quaternion.identity);
         Tuple<int, int> secondTileLocation = new Tuple<int, int>(-1, 0);
+        secondTile.location = secondTileLocation;
         occupiedTiles.Add(secondTileLocation);
         numberOfTiles = dungeonManager.DungeonSize;
         ExpandToMaxDungeon();
@@ -92,24 +89,29 @@ public class DungeonGenerator : MonoBehaviour
 
     Tuple<int, int> GetNextLocation(Node exitNode)
     {
-        Debug.Log(exitNode.tileLocation.Item1);
-        Debug.Log(exitNode.tileLocation.Item2);
-        Debug.Log(exitNode.shouldGoTo);
+        Room room = exitNode.GetComponentInParent<Room>();
+        if (room == null)
+        {
+            Debug.LogError("Node is not a child of a Room!");
+            return new Tuple<int, int>(0, 0);
+        }
+        var tileLoc = room.location;
         switch (exitNode.shouldGoTo)
         {
             case NodeShouldGoTo.Left:
-                return new Tuple<int, int>(exitNode.tileLocation.Item1 - 1, exitNode.tileLocation.Item2);
+                return new Tuple<int, int>(room.location.Item1 - 1, room.location.Item2);
             case NodeShouldGoTo.Right:
-                return new Tuple<int, int>(exitNode.tileLocation.Item1 + 1, exitNode.tileLocation.Item2);
+                return new Tuple<int, int>(room.location.Item1 + 1, room.location.Item2);
             case NodeShouldGoTo.Top:
-                return new Tuple<int, int>(exitNode.tileLocation.Item1, exitNode.tileLocation.Item2 + 1);
+                return new Tuple<int, int>(room.location.Item1, room.location.Item2 + 1);
             case NodeShouldGoTo.Bottom:
-                return new Tuple<int, int>(exitNode.tileLocation.Item1, exitNode.tileLocation.Item2 - 1);
+                return new Tuple<int, int>(room.location.Item1, room.location.Item2 - 1);
+            default:
+                return tileLoc;
         }
-        return new Tuple<int, int>(0, 0);
     }
 
-    Vector3 GetTileCenter(GameObject tile)
+    Vector3 GetTileCenter(Room tile)
     {
         Bounds bounds = new Bounds(tile.transform.position, Vector3.zero);
 
@@ -120,7 +122,7 @@ public class DungeonGenerator : MonoBehaviour
 
         return bounds.center;
     }
-    void AssignNodeDirections(GameObject tile)
+    void AssignNodeDirections(Room tile)
     {
         Node[] nodes = tile.GetComponentsInChildren<Node>();
         Vector3 center = GetTileCenter(tile);
@@ -139,35 +141,31 @@ public class DungeonGenerator : MonoBehaviour
             }
         }
     }
-    GameObject ChooseRandomDungeonTile()
+    Room ChooseRandomDungeonTile(Room room, Node node)
     {
         float totalChance = 0f;
 
-        foreach (var roomTile in roomTilePrefabs)
+        foreach (DungeonRoomType roomTile in roomGeneration.rules[room.Type][node.shouldGoTo])
         {
             totalChance += roomTile.spawnChance;
         }
         float randomValue = UnityEngine.Random.Range(0f, totalChance);
         float currentChance = 0f;
-        foreach (var roomTile in roomTilePrefabs)
+        foreach (DungeonRoomType roomTile in roomGeneration.rules[room.Type][node.shouldGoTo])
         {
             currentChance += roomTile.spawnChance;
             if (randomValue <= currentChance)
             {
-                if (roomTile.tilePrefab != null)
-                {
-                    return roomTile.tilePrefab;
-                }
-                return null;
+                return roomTile.tilePrefab;
             }
         }
         return null;
     }
 
-    void SpawnTile(Node exitNode, bool isBossTile = false, bool fillEmpty = false)
+    void SpawnTile(Room lastRoom, Node exitNode, bool isBossTile = false, bool fillEmpty = false)
     {
-        GameObject instatiateObject = null;
-        GameObject newTile = null;
+        Room instatiateObject = null;
+        Room newTile = null;
         Node[] nodes = null;
 
         // Find the best entrance node (the one closest to exitNode)
@@ -185,12 +183,10 @@ public class DungeonGenerator : MonoBehaviour
                 else
                     instatiateObject = emptyTilePrefab;
             else
-                    instatiateObject = ChooseRandomDungeonTile();
+                    instatiateObject = ChooseRandomDungeonTile(lastRoom, exitNode);
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
             Tuple<int, int> newTileLocation = GetNextLocation(exitNode);
 
-            Debug.Log(newTileLocation.Item1);
-            Debug.Log(newTileLocation.Item2);
             if (occupiedTiles.Contains(newTileLocation))
             {
                 activeNodes.Remove(exitNode);
@@ -201,7 +197,7 @@ public class DungeonGenerator : MonoBehaviour
             nodes = newTile.GetComponentsInChildren<Node>();
             foreach (Node node in nodes)
             {
-                node.tileLocation = newTileLocation;
+                newTile.location = newTileLocation;
             }
             foreach (Node node in nodes)
             {
@@ -236,6 +232,7 @@ public class DungeonGenerator : MonoBehaviour
             }
             if (bestEntrance == null)
             {
+                Debug.Log("Failed to create");
                 Destroy(newTile); // If no match found, discard the tile
             }
             if (checkTime == 10)
@@ -268,7 +265,7 @@ public class DungeonGenerator : MonoBehaviour
             activeNodes.Remove(exitNode.pairedNode);
 
             // Add newTileLocation to occupiedTiles
-            occupiedTiles.Add(bestEntrance.tileLocation);
+            occupiedTiles.Add(newTile.location);
 
             CheckForNewCameraBounds(newTile.transform.position);
         }
@@ -286,35 +283,40 @@ public class DungeonGenerator : MonoBehaviour
             }
             if (activeNodes.Count > 0) 
             {
-                activeNodes = activeNodes.OrderByDescending(n => (int)n.shouldGoTo).ToList();
+                activeNodes = activeNodes.OrderBy(n => (int)n.shouldGoTo).ToList();
             }
         }
     }
 
     public void ExpandToMaxDungeon()
     {
+        Room lastRoom = null;
         for (int i = 0; i <= numberOfTiles; i++)
         {
 
             if (activeNodes.Count > 0)
             {
                 Node nodeToExpand = activeNodes[0]; // Use the first available exit node
-                SpawnTile(nodeToExpand, i == numberOfTiles);
+                lastRoom = nodeToExpand.GetComponentInParent<Room>();
+                SpawnTile(lastRoom, nodeToExpand, i == numberOfTiles);
             }
         }
         while (activeNodes.Count > 0)
         {
             Node nodeToExpand = activeNodes[0];
-            SpawnTile(nodeToExpand, false, true);
+            lastRoom = nodeToExpand.GetComponentInParent<Room>();
+            SpawnTile(lastRoom, nodeToExpand, false, true);
         }
     }
 
     public void ExpandDungeon()
     {
+        Room lastRoom = null;
         if (activeNodes.Count > 0)
         {
             Node nodeToExpand = activeNodes[0]; // Use the first available exit node
-            SpawnTile(nodeToExpand);
+            lastRoom = nodeToExpand.GetComponentInParent<Room>();
+            SpawnTile(lastRoom, nodeToExpand);
         }
     }
 

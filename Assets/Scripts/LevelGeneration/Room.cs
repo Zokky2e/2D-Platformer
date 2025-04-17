@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public enum RoomType
 {
@@ -6,20 +7,16 @@ public enum RoomType
     Start,
     Enemy,
     Loot,
-    Corridor,
-    Parkour,
+    CorridorLR,
+    ParkourLTRB,
+    ParkourLTR,
+    ParkourLRB,
     Boss,
     End
 }
-public class Room
+public class Room : MonoBehaviour
 {
-    public RoomType Type { get; set; } = RoomType.Empty;
-    public Vector2Int GridPosition { get; set; }
-    public bool HasTopExit, HasBottomExit, HasLeftExit, HasRightExit;
+    public RoomType Type;
+    public Tuple<int, int> location;
 
-    public Room(RoomType type, Vector2Int position)
-    {
-        Type = type;
-        GridPosition = position;
-    }
 }
