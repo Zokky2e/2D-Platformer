@@ -294,7 +294,7 @@ MonoBehaviour:
   ruleEntries:
   - roomType: 1
     directions:
-    - direction: 3
+    - direction: 2
       roomOptions:
       - tilePrefab: {fileID: 5323770582876345601, guid: 8db356c98d979094b888131f23a7d99f, type: 3}
         spawnChance: 5

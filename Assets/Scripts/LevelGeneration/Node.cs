@@ -4,7 +4,7 @@ using System;
 
 public enum NodeShouldGoTo
 {
-    Top, Bottom, Left, Right 
+    Top, Bottom, Right, Left 
 }
 
 public class Node : MonoBehaviour

@@ -4,6 +4,7 @@ using SuperTiled2Unity;
 using System;
 using System.Linq;
 using UnityEditorInternal;
+using UnityEngine.UIElements;
 public class DungeonGenerator : MonoBehaviour
 {
     
@@ -48,7 +49,7 @@ public class DungeonGenerator : MonoBehaviour
         secondTile.location = secondTileLocation;
         occupiedTiles.Add(secondTileLocation);
         numberOfTiles = dungeonManager.DungeonSize;
-        ExpandToMaxDungeon();
+        //ExpandToMaxDungeon();
         SpawnPlayer();
     }
 
@@ -62,9 +63,9 @@ public class DungeonGenerator : MonoBehaviour
         camera.maxBounds =  new Vector2(highestPoint.x + 14, highestPoint.y);
     }
 
-    Vector3 GetOffsetValue(Node exitNode)
+    Vector3 GetOffsetValue(Room tile, Node exitNode)
     {
-        SuperMap map = exitNode.GetComponentInParent<SuperMap>();
+        SuperMap map = tile.GetComponentInParent<SuperMap>();
         Vector3 parentPosition = map.transform.position;
         int width = 12;
         int height = 12;
@@ -83,18 +84,13 @@ public class DungeonGenerator : MonoBehaviour
                 return new Vector3(0, height) + parentPosition;
             case NodeShouldGoTo.Bottom:
                 return new Vector3(0, -height) + parentPosition;
+            default:
+                return Vector3.zero;
         }
-        return Vector3.zero;
     }
 
-    Tuple<int, int> GetNextLocation(Node exitNode)
+    Tuple<int, int> GetNextLocation(Room room, Node exitNode)
     {
-        Room room = exitNode.GetComponentInParent<Room>();
-        if (room == null)
-        {
-            Debug.LogError("Node is not a child of a Room!");
-            return new Tuple<int, int>(0, 0);
-        }
         var tileLoc = room.location;
         switch (exitNode.shouldGoTo)
         {
@@ -171,9 +167,17 @@ public class DungeonGenerator : MonoBehaviour
         // Find the best entrance node (the one closest to exitNode)
         Node bestEntrance = null;
         int checkTime = 0;
+        bool skipTile = false;
         while (bestEntrance == null && checkTime < 10) 
         {
             checkTime++;
+            Tuple<int, int> newTileLocation = GetNextLocation(lastRoom, exitNode);
+            Vector3 offsetPosition = GetOffsetValue(lastRoom, exitNode);
+            if (offsetPosition == Vector3.zero)
+            {
+                skipTile = true;
+                continue;
+            }
             if (fillEmpty)
                 if (!hasBossRoom && exitNode.shouldGoTo == NodeShouldGoTo.Right)
                 {
@@ -185,35 +189,34 @@ public class DungeonGenerator : MonoBehaviour
             else
                     instatiateObject = ChooseRandomDungeonTile(lastRoom, exitNode);
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
-            Tuple<int, int> newTileLocation = GetNextLocation(exitNode);
 
             if (occupiedTiles.Contains(newTileLocation))
             {
                 activeNodes.Remove(exitNode);
                 activeNodes.Remove(exitNode.pairedNode);
+                skipTile = true;
                 break;
             }
             AssignNodeDirections(newTile);
             nodes = newTile.GetComponentsInChildren<Node>();
-            foreach (Node node in nodes)
-            {
-                newTile.location = newTileLocation;
-            }
+            newTile.location = newTileLocation;
+            skipTile = false;
             foreach (Node node in nodes)
             {
                 if (node.isEntrance && node.pairedNode != null)
                 {
                     // Temporarily move the tile to test alignment
-                    newTile.transform.position = GetOffsetValue(exitNode);
+                    newTile.transform.position = offsetPosition;
                     float epsilon = 0.01f;
                     Vector2 testOffsetMain = exitNode.transform.position - node.transform.position;
                     Vector2 testOffsetPaired = exitNode.pairedNode.transform.position - node.pairedNode.transform.position;
                     if ((testOffsetMain).sqrMagnitude < epsilon * epsilon && (testOffsetPaired).sqrMagnitude < epsilon * epsilon)
                     {
+                        newTile.transform.position = Vector3.zero;
                         bestEntrance = node;
                         bestEntrance.isExit = false;
                         bestEntrance.pairedNode.isExit = false;
-                        newTile.transform.position = GetOffsetValue(exitNode);
+                        newTile.transform.position = offsetPosition;
                         break;
                     }
                     // Reset position before trying next entrance
@@ -221,9 +224,22 @@ public class DungeonGenerator : MonoBehaviour
                     newTile.transform.position = Vector3.zero;
                 }
             }
+            if (checkTime == 10)
+            {
+                newTile = null;
+                DestroyImmediate(newTile);
+                return;
+            }
+            else if (skipTile) 
+            {
+                newTile = null;
+                DestroyImmediate(newTile);
+                continue;
+            }
+
             if (fillEmpty && !occupiedTiles.Contains(newTileLocation) && newTileLocation != new Tuple<int, int>(0, 0))
             {
-                newTile.transform.position = GetOffsetValue(exitNode);
+                newTile.transform.position = offsetPosition;
                 CheckForNewCameraBounds(newTile.transform.position);
                 // Remove used exit from active list
                 activeNodes.Remove(exitNode);
@@ -235,24 +251,9 @@ public class DungeonGenerator : MonoBehaviour
                 Debug.Log("Failed to create");
                 Destroy(newTile); // If no match found, discard the tile
             }
-            if (checkTime == 10)
-            {
-                return;
-            }
-        }
-        if (newTile != null && newTile.transform.position == Vector3.zero) 
-        {
-            Destroy(newTile); // If tile should spawn on vector3.zero
-            return;
         }
         if (bestEntrance != null && bestEntrance.pairedNode != null)
         {
-            // Calculate offset for both entrance and its paired node
-            Vector2 offsetMain = exitNode.transform.position - bestEntrance.transform.position;
-            Vector2 offsetPaired = exitNode.pairedNode.transform.position - bestEntrance.pairedNode.transform.position;
-
-            //newTile.transform.position += (Vector3)((offsetMain + offsetPaired) / 2f);
-
             // Connect the nodes
             exitNode.connectedNodes.Add(bestEntrance);
             bestEntrance.connectedNodes.Add(exitNode);
@@ -260,15 +261,21 @@ public class DungeonGenerator : MonoBehaviour
             exitNode.pairedNode.connectedNodes.Add(bestEntrance.pairedNode);
             bestEntrance.pairedNode.connectedNodes.Add(exitNode.pairedNode);
 
-            // Remove used exit from active list
-            activeNodes.Remove(exitNode);
-            activeNodes.Remove(exitNode.pairedNode);
-
             // Add newTileLocation to occupiedTiles
             occupiedTiles.Add(newTile.location);
 
             CheckForNewCameraBounds(newTile.transform.position);
         }
+        if (skipTile) 
+        { 
+            newTile = null;
+            DestroyImmediate(newTile);
+        }
+
+        // Remove used exit from active list
+        activeNodes.Remove(exitNode);
+        activeNodes.Remove(exitNode.pairedNode);
+
         // Add remaining exit nodes to active list
         if (nodes != null && nodes.Length > 0) 
         {
