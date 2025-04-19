@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using SuperTiled2Unity;
 using System;
 using System.Linq;
-using UnityEditorInternal;
-using UnityEngine.UIElements;
 public class DungeonGenerator : MonoBehaviour
 {
     
@@ -49,7 +47,7 @@ public class DungeonGenerator : MonoBehaviour
         secondTile.location = secondTileLocation;
         occupiedTiles.Add(secondTileLocation);
         numberOfTiles = dungeonManager.DungeonSize;
-        //ExpandToMaxDungeon();
+        ExpandToMaxDungeon();
         SpawnPlayer();
     }
 
@@ -173,7 +171,7 @@ public class DungeonGenerator : MonoBehaviour
             checkTime++;
             Tuple<int, int> newTileLocation = GetNextLocation(lastRoom, exitNode);
             Vector3 offsetPosition = GetOffsetValue(lastRoom, exitNode);
-            if (offsetPosition == Vector3.zero)
+            if (offsetPosition == Vector3.zero || occupiedTiles.Contains(newTileLocation))
             {
                 skipTile = true;
                 continue;
@@ -279,6 +277,7 @@ public class DungeonGenerator : MonoBehaviour
         // Add remaining exit nodes to active list
         if (nodes != null && nodes.Length > 0) 
         {
+            nodes = nodes.OrderBy(n => (int)n.shouldGoTo).ToArray();
             foreach (Node node in nodes)
             {
                 if (node.isExit && node != bestEntrance && node != bestEntrance.pairedNode)
@@ -287,10 +286,6 @@ public class DungeonGenerator : MonoBehaviour
                     node.isEntrance = false;
                     activeNodes.Add(node);
                 }
-            }
-            if (activeNodes.Count > 0) 
-            {
-                activeNodes = activeNodes.OrderBy(n => (int)n.shouldGoTo).ToList();
             }
         }
     }
