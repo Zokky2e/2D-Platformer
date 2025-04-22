@@ -237,8 +237,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 444412308}
-  - component: {fileID: 444412309}
   - component: {fileID: 444412310}
+  - component: {fileID: 444412309}
   m_Layer: 0
   m_Name: DungeonGenerator
   m_TagString: Untagged

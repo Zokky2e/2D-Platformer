@@ -23,9 +23,18 @@ public class DungeonGenerator : MonoBehaviour
 
     void Start()
     {
+    }
+
+    private void Awake()
+    {
         hasBossRoom = false;
         dungeonManager = DungeonManager.Instance;
         roomGeneration = RoomGeneration.Instance;
+        GenerateDungeon();
+    }
+
+    void GenerateDungeon()
+    {
         dungeonManager.RegenerateDungeon();
         occupiedTiles = new List<Tuple<int, int>>();
         // Spawn the first tile at (0,0) and register its exits
