@@ -19,6 +19,7 @@ public class DungeonGenerator : MonoBehaviour
     private CameraFollow camera;
     private Vector2 lowestPoint = new Vector2(-11, -11);
     private Vector2 highestPoint = new Vector2(12, 12);
+    [SerializeField]
     private RoomGeneration roomGeneration;
 
     void Start()
@@ -29,7 +30,7 @@ public class DungeonGenerator : MonoBehaviour
     {
         hasBossRoom = false;
         dungeonManager = DungeonManager.Instance;
-        roomGeneration = RoomGeneration.Instance;
+        roomGeneration.InitializeRules();
         GenerateDungeon();
     }
 

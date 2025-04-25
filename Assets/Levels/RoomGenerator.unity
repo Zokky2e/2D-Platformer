@@ -279,6 +279,7 @@ MonoBehaviour:
   activeNodes: []
   numberOfTiles: 128
   camera: {fileID: 1249404291}
+  roomGeneration: {fileID: 444412310}
 --- !u!114 &444412310
 MonoBehaviour:
   m_ObjectHideFlags: 0

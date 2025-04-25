@@ -22,14 +22,17 @@ public class DungeonDirectionEntry
     public NodeShouldGoTo direction;
     public List<DungeonRoomType> roomOptions;
 }
-public class RoomGeneration : Singleton<RoomGeneration>
+public class RoomGeneration : MonoBehaviour
 {
     [Header("Dungeon Rules")]
     public List<DungeonRuleEntry> ruleEntries;
     public Dictionary<RoomType, Dictionary<NodeShouldGoTo, DungeonRoomType[]>> rules;
-    private new void Awake()
+    protected void Start()
     {
-        base.Awake();
+    }
+
+    public void InitializeRules()
+    {
         rules = new Dictionary<RoomType, Dictionary<NodeShouldGoTo, DungeonRoomType[]>>();
 
         foreach (var entry in ruleEntries)

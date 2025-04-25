@@ -1,0 +1,289 @@
+﻿{
+  "items": [
+    {
+      "id": "sword_crimson",
+      "name": "Crimson Blade",
+      "description": "Bleeds the target for 5 damage over 3s.",
+      "type": "Weapon",
+      "spriteName": "weapon_crimson_blade",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "potion_heal_minor",
+      "name": "Minor Healing Potion",
+      "description": "Restores 20 HP instantly.",
+      "type": "Consumable",
+      "spriteName": "potion_heal_minor",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": [
+        {
+          "effectType": "Heal",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "bow_elven",
+      "name": "Elven Longbow",
+      "description": "Poisons enemies for 4 over 5s.",
+      "type": "Weapon",
+      "spriteName": "weapon_elven_bow",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "amulet_lifeglow",
+      "name": "Amulet of Lifeglow",
+      "description": "Increases max HP by 15.",
+      "type": "Accessory",
+      "spriteName": "accessory_amulet_lifeglow",
+      "characterStatsEffects": [
+        {
+          "effectType": "MaxHealth",
+          "value": 15
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "shield_oak",
+      "name": "Oakwood Shield",
+      "description": "Grants 10 shield.",
+      "type": "Armor",
+      "spriteName": "armor_shield_oak",
+      "characterStatsEffects": [
+        {
+          "effectType": "Shield",
+          "value": 10
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "staff_frost",
+      "name": "Staff of Frostbite",
+      "description": "Poisons enemies on hit.",
+      "type": "Weapon",
+      "spriteName": "weapon_staff_frost",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "potion_mana",
+      "name": "Mana Vial",
+      "description": "Applies a buff that increases mana regen.",
+      "type": "Consumable",
+      "spriteName": "potion_mana",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [
+        {
+          "effectType": "Buff",
+          "value": 10
+        }
+      ],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "dagger_venom",
+      "name": "Venomfang Dagger",
+      "description": "Poisons enemies for 4 over 6s.",
+      "type": "Weapon",
+      "spriteName": "weapon_dagger_venom",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "ring_guardian",
+      "name": "Guardian Ring",
+      "description": "Passively grants 12 shield.",
+      "type": "Accessory",
+      "spriteName": "accessory_ring_guardian",
+      "characterStatsEffects": [
+        {
+          "effectType": "Shield",
+          "value": 12
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "potion_heal_major",
+      "name": "Major Healing Potion",
+      "description": "Restores 50 HP instantly.",
+      "type": "Consumable",
+      "spriteName": "potion_heal_major",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": [
+        {
+          "effectType": "Heal",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "sword_ember",
+      "name": "Emberfang",
+      "description": "Burns enemies on hit for 6 damage over 4s.",
+      "type": "Weapon",
+      "spriteName": "weapon_sword_ember",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "helmet_iron",
+      "name": "Iron Helm",
+      "description": "Increases max HP by 5.",
+      "type": "Armor",
+      "spriteName": "armor_helmet_iron",
+      "characterStatsEffects": [
+        {
+          "effectType": "MaxHealth",
+          "value": 5
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "robe_arcane",
+      "name": "Arcane Robe",
+      "description": "Applies a passive buff to magic power.",
+      "type": "Armor",
+      "spriteName": "armor_robe_arcane",
+      "characterStatsEffects": [
+        {
+          "effectType": "Buff",
+          "value": 10
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "axe_giant",
+      "name": "Giant’s Cleaver",
+      "description": "Causes heavy bleeding on hit.",
+      "type": "Weapon",
+      "spriteName": "weapon_axe_giant",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "potion_invincibility",
+      "name": "Potion of Invincibility",
+      "description": "Grants a huge shield temporarily.",
+      "type": "Consumable",
+      "spriteName": "potion_invincibility",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [
+        {
+          "effectType": "Shield",
+          "value": 999
+        }
+      ],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "gloves_thief",
+      "name": "Thief's Gloves",
+      "description": "Minor passive buff to agility.",
+      "type": "Armor",
+      "spriteName": "armor_gloves_thief",
+      "characterStatsEffects": [
+        {
+          "effectType": "Buff",
+          "value": 5
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "wand_spark",
+      "name": "Spark Wand",
+      "description": "Increases damage slightly for a short time.",
+      "type": "Weapon",
+      "spriteName": "weapon_wand_spark",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [
+        {
+          "effectType": "DamageBoost",
+          "value": 3
+        }
+      ],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "ring_wisdom",
+      "name": "Ring of Wisdom",
+      "description": "Passively buffs intellect.",
+      "type": "Accessory",
+      "spriteName": "accessory_ring_wisdom",
+      "characterStatsEffects": [
+        {
+          "effectType": "Buff",
+          "value": 10
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "spear_vortex",
+      "name": "Vortex Spear",
+      "description": "Applies a light bleed.",
+      "type": "Weapon",
+      "spriteName": "weapon_spear_vortex",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": "cloak_shadows",
+      "name": "Cloak of Shadows",
+      "description": "Passively boosts stealth abilities.",
+      "type": "Armor",
+      "spriteName": "armor_cloak_shadows",
+      "characterStatsEffects": [
+        {
+          "effectType": "Buff",
+          "value": 15
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    }
+  ]
+}
