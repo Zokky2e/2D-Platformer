@@ -142,6 +142,7 @@ public class NPC : MonoBehaviour
             DialogSystem.Instance.ShowDialog(npcName, npcDialog);
             //TEST PURPOSES
             InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemByName("Iron Helm"));
+            InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemById(0));
             //TEST
         }
         else if (currentAction == NPCAction.Information)

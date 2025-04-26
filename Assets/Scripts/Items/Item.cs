@@ -13,6 +13,8 @@ public enum ItemType
 [System.Serializable]
 public abstract class Item : ScriptableObject
 {
+    protected int _id;
+
     [SerializeField] protected string _name;
 
     [TextArea(3, 5)][SerializeField] protected string _description;
@@ -22,6 +24,7 @@ public abstract class Item : ScriptableObject
     [SerializeField] protected ItemType _type;
 
     public Sprite Sprite => _sprite;
+    public int Id => _id;
     public string Name => _name;
     public string FixedDescription => _description;
     [HideInInspector] public string Description = "";

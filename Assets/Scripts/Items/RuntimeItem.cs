@@ -7,6 +7,7 @@ public class RuntimeItem : Item
     public void SetData(ItemData data)
     {
         List<Sprite> allSprites = new();
+        _id = data.id;
         _name = data.name;
         _description = data.description;
         _type = data.type;
@@ -56,6 +57,16 @@ public class RuntimeItem : Item
                     var damageEffect = ScriptableObject.CreateInstance<DamageEffect>();
                     damageEffect.bonusDamage = data.value;
                     list.Add(damageEffect);
+                    break;
+                case "BleedDamage":
+                    var bleedDamage = ScriptableObject.CreateInstance<BleedDamageEffect>();
+                    bleedDamage.bleedDamage = data.value;
+                    list.Add(bleedDamage);
+                    break;
+                case "BleedDuration":
+                    var bleedDuration = ScriptableObject.CreateInstance<BleedDurationEffect>();
+                    bleedDuration.bleedDuration = data.value;
+                    list.Add(bleedDuration);
                     break;
                     // Add more CharacterStats-based effects here
             }

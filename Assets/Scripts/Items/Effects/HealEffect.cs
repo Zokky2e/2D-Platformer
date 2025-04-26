@@ -8,7 +8,7 @@ public class HealEffect : ItemEffect<Health>
     public override string AdjustDescription(string description)
     {
         string sign = healAmount >= 0 ? "+" : "";
-        description = description.Replace("{healAmount}", sign + healAmount.ToString());
+        description = description.Replace("{bonusHeal}", sign + healAmount.ToString());
         return description;
     }
 

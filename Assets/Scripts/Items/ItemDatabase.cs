@@ -22,4 +22,9 @@ public class ItemDatabase : Singleton<ItemDatabase>
     {
         return AllItems.FirstOrDefault(i => i.Name == name);
     }
+
+    public Item GetItemById(int id)
+    {
+        return AllItems.FirstOrDefault(i => i.Id == id);
+    }
 }
