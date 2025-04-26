@@ -140,6 +140,9 @@ public class NPC : MonoBehaviour
         {
             Debug.Log("NPC: Here is your quest!");
             DialogSystem.Instance.ShowDialog(npcName, npcDialog);
+            //TEST PURPOSES
+            InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemByName("Iron Helm"));
+            //TEST
         }
         else if (currentAction == NPCAction.Information)
         {

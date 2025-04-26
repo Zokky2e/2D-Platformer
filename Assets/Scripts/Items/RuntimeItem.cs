@@ -1,14 +1,38 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class RuntimeItem : Item
 {
     public void SetData(ItemData data)
     {
+        List<Sprite> allSprites = new();
         _name = data.name;
         _description = data.description;
         _type = data.type;
-        _sprite = Resources.Load<Sprite>($"Sprites/{data.spriteName}");
+        if (data.spriteName.Contains("armor"))
+        {
+            allSprites = Resources.LoadAll<Sprite>("Sprites/basic_armor").ToList();
+        }
+        else if(data.spriteName.Contains("clothing"))
+        {
+            allSprites = Resources.LoadAll<Sprite>("Sprites/basic_clothing").ToList();
+        }
+
+        if (allSprites.Count > 0) 
+        {
+            foreach (Sprite sprite in allSprites) 
+            {
+                if (sprite.name == data.spriteName)
+                {
+                    _sprite = sprite;
+                }
+            }
+        }
+        else
+        {
+            _sprite = Resources.Load<Sprite>($"Sprites/{data.spriteName}");
+        }
 
         characterStatsEffects = ConvertCharacterStatsEffects(data.characterStatsEffects);
         healthEffects = ConvertHealthEffects(data.healthEffects);
@@ -24,11 +48,15 @@ public class RuntimeItem : Item
             switch (data.effectType)
             {
                 case "Armor":
-                    var effect = ScriptableObject.CreateInstance<ArmorEffect>();
-                    effect.bonusArmor = data.value;
-                    list.Add(effect);
+                    var armorEffect = ScriptableObject.CreateInstance<ArmorEffect>();
+                    armorEffect.bonusArmor = data.value;
+                    list.Add(armorEffect);
                     break;
-
+                case "Damage":
+                    var damageEffect = ScriptableObject.CreateInstance<DamageEffect>();
+                    damageEffect.bonusDamage = data.value;
+                    list.Add(damageEffect);
+                    break;
                     // Add more CharacterStats-based effects here
             }
         }

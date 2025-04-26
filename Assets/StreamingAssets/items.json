@@ -6,8 +6,18 @@
       "description": "Bleeds the target for 5 damage over 3s.",
       "type": "Weapon",
       "spriteName": "weapon_crimson_blade",
-      "characterStatsEffects": [],
-      "healthEffects": [],
+      "characterStatsEffects": [
+        {
+          "effectType": "Damage",
+          "value": 15
+        }
+      ],
+      "healthEffects": [
+        {
+          "effectType": "Health",
+          "value": 10
+        }
+      ],
       "onActivateCharacterStatsEffects": [],
       "onActivateHealthEffects": []
     },
@@ -146,7 +156,12 @@
       "description": "Burns enemies on hit for 6 damage over 4s.",
       "type": "Weapon",
       "spriteName": "weapon_sword_ember",
-      "characterStatsEffects": [],
+      "characterStatsEffects": [
+        {
+          "effectType": "Damage",
+          "value": 25
+        }
+      ],
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [],
       "onActivateHealthEffects": []
@@ -154,16 +169,16 @@
     {
       "id": "helmet_iron",
       "name": "Iron Helm",
-      "description": "Increases max HP by 5.",
+      "description": "Increases max HP by {bonusHealth}",
       "type": "Armor",
-      "spriteName": "armor_helmet_iron",
+      "spriteName": "basic_armor_3",
       "characterStatsEffects": [
-        {
-          "effectType": "MaxHealth",
-          "value": 5
-        }
       ],
-      "healthEffects": [],
+      "healthEffects": [
+        {
+          "effectType": "Health",
+          "value": 5
+        }],
       "onActivateCharacterStatsEffects": [],
       "onActivateHealthEffects": []
     },
@@ -172,7 +187,7 @@
       "name": "Arcane Robe",
       "description": "Applies a passive buff to magic power.",
       "type": "Armor",
-      "spriteName": "armor_robe_arcane",
+      "spriteName": "basic_clothing_41",
       "characterStatsEffects": [
         {
           "effectType": "Buff",
@@ -215,7 +230,7 @@
       "name": "Thief's Gloves",
       "description": "Minor passive buff to agility.",
       "type": "Armor",
-      "spriteName": "armor_gloves_thief",
+      "spriteName": "basic_armor_63",
       "characterStatsEffects": [
         {
           "effectType": "Buff",

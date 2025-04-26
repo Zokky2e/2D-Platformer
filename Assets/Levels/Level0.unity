@@ -306,8 +306,8 @@ PrefabInstance:
       value: " Hello traveler! This world is full of danger. \nYou must be careful
         and learn to fight. Many have fallen trying to defeat the Dark Lord.  \nIf
         you wish to succeed, you must train hard and never lose hope. Let me guide
-        you on your journey ahead!\nI will be available for trading and upgrades
-        any time you see me."
+        you on your journey ahead! For start you will need this iron helmet!\nI will
+        be available for trading and upgrades any time you see me."
       objectReference: {fileID: 0}
     - target: {fileID: 523265943747306821, guid: baf5e965eb7e33c438fda5edbd3d5708, type: 3}
       propertyPath: currentAction
