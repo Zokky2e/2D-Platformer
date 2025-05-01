@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.UI;
 using UnityEngine;
 
 public class RuntimeItem : Item
@@ -18,6 +19,10 @@ public class RuntimeItem : Item
         else if(data.spriteName.Contains("clothing"))
         {
             allSprites = Resources.LoadAll<Sprite>("Sprites/basic_clothing").ToList();
+        }
+        else if (data.spriteName.Contains("potion_red"))
+        {
+            allSprites = Resources.LoadAll<Sprite>("Sprites/potion_red").ToList();
         }
 
         if (allSprites.Count > 0) 
@@ -85,6 +90,11 @@ public class RuntimeItem : Item
                     var effect = ScriptableObject.CreateInstance<HealthEffect>();
                     effect.bonusHealth = data.value;
                     list.Add(effect);
+                    break;
+                case "Heal":
+                    var healEffect = ScriptableObject.CreateInstance<HealEffect>();
+                    healEffect.healAmount = data.value;
+                    list.Add(healEffect);
                     break;
 
                     // Add more Health-based effects here

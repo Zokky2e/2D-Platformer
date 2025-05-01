@@ -11,6 +11,7 @@ public class InventorySystem : Singleton<InventorySystem>
     {
         player = FindAnyObjectByType<Hero>();
         base.Awake();
+        
     }
 
     public void AddItem(Item newItem)

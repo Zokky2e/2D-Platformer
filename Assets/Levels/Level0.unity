@@ -378,6 +378,10 @@ PrefabInstance:
       propertyPath: Healthbar
       value: 
       objectReference: {fileID: 3182631}
+    - target: {fileID: 2900218875308588589, guid: a4b4a6d32bcb19248a754d6602ffc7e4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.112
+      objectReference: {fileID: 0}
     - target: {fileID: 4026093511709978543, guid: a4b4a6d32bcb19248a754d6602ffc7e4, type: 3}
       propertyPath: threshold
       value: -200
@@ -1466,6 +1470,38 @@ PrefabInstance:
     - target: {fileID: 4044292685152064668, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: items.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: 'items.Array.data[0]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: 'items.Array.data[1]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: 'items.Array.data[2]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7592118077778144341, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: 'items.Array.data[3]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207923479673077358, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: EquippedArmor
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207923479673077358, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: EquippedShield
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207923479673077358, guid: 311ba2689c181cf4d8abdb0b7891e177, type: 3}
+      propertyPath: EquippedWeapon
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

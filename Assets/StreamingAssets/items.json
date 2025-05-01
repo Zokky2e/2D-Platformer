@@ -1,6 +1,68 @@
 ﻿{
   "items": [
     {
+      "id": 69,
+      "name": "Basic Metal Shield",
+      "description": "{bonusArmor} Armor\n\nA sturdy shield.",
+      "type": "Shield",
+      "spriteName": "shield",
+      "characterStatsEffects": [
+        {
+          "effectType": "Armor",
+          "value": 5
+        },
+        {
+          "effectType": "Block",
+          "value": 5
+        }
+      ],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": 420,
+      "name": "Broadsword",
+      "description": "{bonusDamage} Damage\n {bonusHealth} Health\n\nBasket-hilted sword fitted for a knight.",
+      "type": "Weapon",
+      "spriteName": "sword",
+      "characterStatsEffects": [
+        {
+          "effectType": "Damage",
+          "value": 5
+        }
+      ],
+      "healthEffects": [
+        {
+          "effectType": "Health",
+          "value": 10
+        }
+      ],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
+      "id": 1337,
+      "name": "Lether Armor",
+      "description": "{bonusArmor} Armor\n{bonusHealth} Health\n\nBasic lether clothing for travelling.",
+      "type": "Armor",
+      "spriteName": "basic_clothing_10",
+      "characterStatsEffects": [
+        {
+          "effectType": "Armor",
+          "value": 20
+        }
+      ],
+      "healthEffects": [
+        {
+          "effectType": "Health",
+          "value": 10
+        }
+      ],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
+    },
+    {
       "id": 0,
       "name": "Crimson Blade",
       "description": "{bonusDamage} Damage\n{bleedDamage} Bleed Damage\n{bleedDuration}s Bleed Duration\n\nA blade that thirsts for blood.",
@@ -32,7 +94,7 @@
     {
       "id": 1,
       "name": "Minor Healing Potion",
-      "description": "{bonusHeal} Heal\n\nA small vial brimming with vitality.",
+      "description": "{healAmount} Heal\n\nA small vial brimming with vitality.",
       "type": "Consumable",
       "spriteName": "potion_heal_minor",
       "characterStatsEffects": [],
@@ -152,7 +214,7 @@
     {
       "id": 9,
       "name": "Major Healing Potion",
-      "description": "{bonusHeal} Heal\n\nA potent brew that mends even the gravest wounds.",
+      "description": "{healAmount} Heal\n\nA potent brew that mends even the gravest wounds.",
       "type": "Consumable",
       "spriteName": "potion_heal_major",
       "characterStatsEffects": [],
@@ -302,6 +364,54 @@
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [],
       "onActivateHealthEffects": []
+    },
+    {
+      "id": 18,
+      "name": "Instant Heal Potion I",
+      "description": "Magical Potion that instantly heals the consumer for {healAmount} health points.",
+      "type": "Consumable",
+      "spriteName": "potion_red_1",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": [
+        {
+          "effectType": "Heal",
+          "value": 25
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Instant Heal Potion II",
+      "description": "Magical Potion that instantly heals the consumer for {healAmount} health points.",
+      "type": "Consumable",
+      "spriteName": "potion_red_2",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": [
+        {
+          "effectType": "Heal",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Instant Heal Potion III",
+      "description": "Magical Potion that instantly heals the consumer for {healAmount} health points.",
+      "type": "Consumable",
+      "spriteName": "potion_red_3",
+      "characterStatsEffects": [],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": [
+        {
+          "effectType": "Heal",
+          "value": 75
+        }
+      ]
     }
   ]
 }
