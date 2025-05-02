@@ -151,13 +151,9 @@ public class Hero : MonoBehaviour, IEntity {
         m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
         state = new IdleState();
         state.startState(this);
-        EquipmentSystem.Instance.EquipItem(ItemDatabase.Instance.GetItemById(69));
-        EquipmentSystem.Instance.EquipItem(ItemDatabase.Instance.GetItemById(420));
-        EquipmentSystem.Instance.EquipItem(ItemDatabase.Instance.GetItemById(1337));
-        InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemById(18));
-        InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemById(18));
-        InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemById(19));
-        InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemById(20));
+        //Add default items to player
+        ItemSystem.Instance.AddToPlayerInventory(new[] {18, 18, 19, 20 });
+        ItemSystem.Instance.AddAndEquipOnPlayer(new[] {69, 420, 1337});
     }
     void Update()
     {

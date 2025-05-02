@@ -26,7 +26,11 @@ public class NPC : MonoBehaviour
     [SerializeField] private GameObject traderMarkPrefab;
     private GameObject activeIndicator; // To store the currently active indicator
     private Interactable interactable; // Reference to interactable component
-    private NavMeshAgent agent;
+
+    //NPC Behaviors
+    public NPCInteractionBehavior AttentionBehavior;
+    public NPCInteractionBehavior InformationBehavior;
+    public NPCInteractionBehavior TradeBehavior;
     private void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>(); // Get the SpriteRenderer component
@@ -34,27 +38,6 @@ public class NPC : MonoBehaviour
         
         interactable = gameObject.AddComponent<Interactable>();
         interactable.onInteract = InteractWithNPC; // Assign interaction behavior
-
-        agent = this.GetComponent<NavMeshAgent>();
-        if (agent != null)
-        {
-            Debug.Log(agent.isOnNavMesh);
-            if (!agent.isOnNavMesh)
-            {
-                Debug.Log("Enemy was NOT on the NavMesh, forcing reposition...");
-                NavMeshHit hit;
-                if (NavMesh.SamplePosition(transform.position, out hit, 10f, NavMesh.AllAreas))
-                {
-                    transform.position = hit.position;
-                    agent.Warp(hit.position);
-                    Debug.Log("Enemy repositioned onto the NavMesh.");
-                }
-                else
-                {
-                    Debug.LogError("Still couldn't place the enemy on the NavMesh!");
-                }
-            }
-        }
         UpdateIndicator();
         UpdateInteractableState();
     }
@@ -136,23 +119,29 @@ public class NPC : MonoBehaviour
     }
     private void InteractWithNPC()
     {
-        if (currentAction == NPCAction.Attention)
+        switch (currentAction)
         {
-            Debug.Log("NPC: Here is your quest!");
-            DialogSystem.Instance.ShowDialog(npcName, npcDialog);
-            //TEST PURPOSES
-            InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemByName("Iron Helm"));
-            InventorySystem.Instance.AddItem(ItemDatabase.Instance.GetItemById(0));
-            //TEST
-        }
-        else if (currentAction == NPCAction.Information)
-        {
-            Debug.Log("NPC: I have some information for you.");
-            DialogSystem.Instance.ShowDialog(npcName, npcDialog);
-        }
-        else if (currentAction == NPCAction.Trade)
-        {
-            Debug.Log("NPC: I have something to trade!");
+            case NPCAction.Attention:
+                DialogSystem.Instance.ShowDialog(npcName, npcDialog);
+                if (AttentionBehavior != null)
+                {
+                    AttentionBehavior.Execute(this);
+                }
+                break;
+            case NPCAction.Information:
+                DialogSystem.Instance.ShowDialog(npcName, npcDialog);
+                if (InformationBehavior != null)
+                {
+                    InformationBehavior.Execute(this);
+                }
+                break;
+            case NPCAction.Trade:
+
+                if (TradeBehavior != null)
+                {
+                    TradeBehavior.Execute(this);
+                }
+                break;
         }
         if (isTrader)
         {

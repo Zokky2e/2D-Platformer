@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UnityEngine;
+
 public class InventorySystem : Singleton<InventorySystem>
 {
     public List<Item> items = new List<Item>(); // List of items

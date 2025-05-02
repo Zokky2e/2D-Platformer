@@ -412,6 +412,21 @@
           "value": 75
         }
       ]
+    },
+    {
+      "id": 21,
+      "name": "Merchents Amulet",
+      "description": "Town merchant says this amulet holds power in it, increasing damage output by {bonusDamage}.",
+      "type": "accessory",
+      "spriteName": "amulet_merchant",
+      "characterStatsEffects": [
+        {
+          "effectType": "Damage",
+          "value": 5
+        }],
+      "healthEffects": [],
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": []
     }
   ]
 }

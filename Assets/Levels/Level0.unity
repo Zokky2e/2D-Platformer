@@ -306,8 +306,8 @@ PrefabInstance:
       value: " Hello traveler! This world is full of danger. \nYou must be careful
         and learn to fight. Many have fallen trying to defeat the Dark Lord.  \nIf
         you wish to succeed, you must train hard and never lose hope. Let me guide
-        you on your journey ahead! For start you will need this iron helmet!\nI will
-        be available for trading and upgrades any time you see me."
+        you on your journey ahead! For start you will need this  special amulet!\nI
+        will be available for trading and upgrades any time you see me."
       objectReference: {fileID: 0}
     - target: {fileID: 523265943747306821, guid: baf5e965eb7e33c438fda5edbd3d5708, type: 3}
       propertyPath: currentAction
@@ -317,6 +317,10 @@ PrefabInstance:
       propertyPath: traderMarkPrefab
       value: 
       objectReference: {fileID: 4429294331248188459, guid: 614daeabff6057c45a4d8fc18164e623, type: 3}
+    - target: {fileID: 523265943747306821, guid: baf5e965eb7e33c438fda5edbd3d5708, type: 3}
+      propertyPath: AttentionBehavior
+      value: 
+      objectReference: {fileID: 11400000, guid: d646911cfb9c67f48917a62c2ed81759, type: 2}
     - target: {fileID: 1277091858556164736, guid: baf5e965eb7e33c438fda5edbd3d5708, type: 3}
       propertyPath: m_Name
       value: Merchant

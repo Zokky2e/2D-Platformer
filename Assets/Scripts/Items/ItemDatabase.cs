@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 public class ItemDatabase : Singleton<ItemDatabase>
 {
@@ -21,6 +20,11 @@ public class ItemDatabase : Singleton<ItemDatabase>
     public Item GetItemByName(string name)
     {
         return AllItems.FirstOrDefault(i => i.Name == name);
+    }
+
+    public List<Item> GetItemsByIds(int[] ids)
+    {
+        return AllItems.FindAll(item => ids.Contains(item.Id));
     }
 
     public Item GetItemById(int id)

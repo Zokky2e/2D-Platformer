@@ -1,7 +1,6 @@
 using Assets.Scripts;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour, IEntity
 {
