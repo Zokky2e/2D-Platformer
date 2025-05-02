@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "NPC/BehaviorsNPC/Behaviors/Give Item/Composite")]
+[CreateAssetMenu(menuName = "NPC/Behaviors/Composite")]
 public class CompositeNPCBehavior : NPCInteractionBehavior
 {
     public List<NPCInteractionBehavior> behaviors;

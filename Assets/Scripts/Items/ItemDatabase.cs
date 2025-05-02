@@ -24,7 +24,12 @@ public class ItemDatabase : Singleton<ItemDatabase>
 
     public List<Item> GetItemsByIds(int[] ids)
     {
-        return AllItems.FindAll(item => ids.Contains(item.Id));
+        List<Item> items = new List<Item>();
+        foreach (int id in ids) 
+        {
+            items.Add(GetItemById(id));
+        }
+        return items;
     }
 
     public Item GetItemById(int id)

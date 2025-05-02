@@ -57,6 +57,10 @@ public class RuntimeItem : Item
                     armorEffect.bonusArmor = data.value;
                     list.Add(armorEffect);
                     break;
+                case "Block":
+                    var blockEffect = ScriptableObject.CreateInstance<BlockEffect>();
+                    list.Add(blockEffect);
+                    break;
                 case "Damage":
                     var damageEffect = ScriptableObject.CreateInstance<DamageEffect>();
                     damageEffect.bonusDamage = data.value;

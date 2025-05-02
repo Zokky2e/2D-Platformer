@@ -9,7 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ea1e62e6391f0147ac07cf1ee7f9c05, type: 3}
-  m_Name: MerchantIntroBehavior
+  m_Script: {fileID: 11500000, guid: d9f8b966204d31c42884583ca471b7ea, type: 3}
+  m_Name: MerchentTrade_Composite
   m_EditorClassIdentifier: 
-  itemIdsToGive: 15000000
+  behaviors:
+  - {fileID: 11400000, guid: e1a9ad86326964c4a9b97c3dd266ca4b, type: 2}

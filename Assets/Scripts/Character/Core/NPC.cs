@@ -19,7 +19,6 @@ public class NPC : MonoBehaviour
     public bool isTrader = false;
     public NPCAction currentAction = NPCAction.None;
     public string npcName = "NPC Name";
-    [TextArea(3, 5)] public string npcDialog = "Hello, adventurer!";
     [Header("Indicators")]
     [SerializeField] private GameObject exclamationMarkPrefab;
     [SerializeField] private GameObject questionMarkPrefab;
@@ -122,14 +121,12 @@ public class NPC : MonoBehaviour
         switch (currentAction)
         {
             case NPCAction.Attention:
-                DialogSystem.Instance.ShowDialog(npcName, npcDialog);
                 if (AttentionBehavior != null)
                 {
                     AttentionBehavior.Execute(this);
                 }
                 break;
             case NPCAction.Information:
-                DialogSystem.Instance.ShowDialog(npcName, npcDialog);
                 if (InformationBehavior != null)
                 {
                     InformationBehavior.Execute(this);

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b595474f315988a4d88462c05f23e6a0, type: 3}
+  m_Name: MerchentIntro_Dialog
+  m_EditorClassIdentifier: 
+  dialogText: "Hello traveler! This world is full of danger. \nYou must be careful
+    and learn to fight. Many have fallen trying to defeat the Dark Lord.  \nIf you
+    wish to succeed, you must train hard and never lose hope. Let me guide you on
+    your journey ahead! For start you will need this special amulet!\nI will be available
+    for trading and upgrades any time you see me."
