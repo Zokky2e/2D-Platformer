@@ -347,5 +347,6 @@ public class DungeonGenerator : MonoBehaviour
             return;
         }
         player.transform.position = entryPoint.transform.position;
+        WorldStateManager.Instance.Save();
     }
 }

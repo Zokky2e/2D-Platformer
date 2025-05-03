@@ -42,5 +42,6 @@ public class LevelTransition : MonoBehaviour
         }
 
         SceneManager.sceneLoaded -= OnSceneLoaded; // Unsubscribe after setting position
+        WorldStateManager.Instance.Save();
     }
 }

@@ -19,6 +19,7 @@ public class NPC : MonoBehaviour
     public bool isTrader = false;
     public NPCAction currentAction = NPCAction.None;
     public string npcName = "NPC Name";
+
     [Header("Indicators")]
     [SerializeField] private GameObject exclamationMarkPrefab;
     [SerializeField] private GameObject questionMarkPrefab;
@@ -26,7 +27,8 @@ public class NPC : MonoBehaviour
     private GameObject activeIndicator; // To store the currently active indicator
     private Interactable interactable; // Reference to interactable component
 
-    //NPC Behaviors
+    [Header("Behaviors")]
+    public NPCInteractionBehavior onSpawnBehavior;
     public NPCInteractionBehavior AttentionBehavior;
     public NPCInteractionBehavior InformationBehavior;
     public NPCInteractionBehavior TradeBehavior;
@@ -35,6 +37,8 @@ public class NPC : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>(); // Get the SpriteRenderer component
         health = GetComponent<Health>();
         
+        if (onSpawnBehavior != null)
+            onSpawnBehavior.Execute(this);
         interactable = gameObject.AddComponent<Interactable>();
         interactable.onInteract = InteractWithNPC; // Assign interaction behavior
         UpdateIndicator();
@@ -142,8 +146,7 @@ public class NPC : MonoBehaviour
         }
         if (isTrader)
         {
-            currentAction = NPCAction.Trade;
-            UpdateIndicator();
+            SetAction(NPCAction.Trade);
         }
     }
 }

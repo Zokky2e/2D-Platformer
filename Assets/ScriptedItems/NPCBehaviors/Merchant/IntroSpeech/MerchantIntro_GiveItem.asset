@@ -12,4 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ea1e62e6391f0147ac07cf1ee7f9c05, type: 3}
   m_Name: MerchantIntro_GiveItem
   m_EditorClassIdentifier: 
+  NPCSHasGivenItemString: Merchant_Amulet_Given
+  HasGivenItem: 0
   itemIdsToGive: 15000000

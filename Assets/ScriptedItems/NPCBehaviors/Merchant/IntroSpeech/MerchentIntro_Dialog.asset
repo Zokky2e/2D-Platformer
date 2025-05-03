@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b595474f315988a4d88462c05f23e6a0, type: 3}
   m_Name: MerchentIntro_Dialog
   m_EditorClassIdentifier: 
+  NPCHasShownDialogString: Merchant_Intro_Dialog_Shown
+  HasShownDialog: 0
   dialogText: "Hello traveler! This world is full of danger. \nYou must be careful
     and learn to fight. Many have fallen trying to defeat the Dark Lord.  \nIf you
     wish to succeed, you must train hard and never lose hope. Let me guide you on

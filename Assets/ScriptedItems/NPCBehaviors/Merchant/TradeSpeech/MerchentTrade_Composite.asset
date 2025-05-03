@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: MerchentTrade_Composite
   m_EditorClassIdentifier: 
   behaviors:
-  - {fileID: 11400000, guid: e1a9ad86326964c4a9b97c3dd266ca4b, type: 2}
+  - {fileID: 11400000, guid: 50e8716e14fbff04184eb44eb3fca819, type: 2}
