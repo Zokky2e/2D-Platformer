@@ -23,12 +23,18 @@ public abstract class Item : ScriptableObject
 
     [SerializeField] protected ItemType _type;
 
+    [SerializeField] protected int _price;
+
+    [SerializeField] protected bool _isSellable;
+
     public Sprite Sprite => _sprite;
     public int Id => _id;
     public string Name => _name;
     public string FixedDescription => _description;
     [HideInInspector] public string Description = "";
     public ItemType Type => _type;
+    public int Price => _price;
+    public bool IsSellable => _isSellable;
 
     // Explicitly specify the type argument for the generic ItemEffect<T>
     public List<ItemEffect<CharacterStats>> characterStatsEffects = new List<ItemEffect<CharacterStats>>();

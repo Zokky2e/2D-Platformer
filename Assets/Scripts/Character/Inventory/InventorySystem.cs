@@ -3,6 +3,7 @@ using System.Collections.Generic;
 public class InventorySystem : Singleton<InventorySystem>
 {
     public List<Item> items = new List<Item>(); // List of items
+    public int gold = 50;
     public delegate void OnInventoryChanged();
     private Hero player;
     public event OnInventoryChanged onInventoryChanged;
@@ -11,7 +12,6 @@ public class InventorySystem : Singleton<InventorySystem>
     {
         player = FindAnyObjectByType<Hero>();
         base.Awake();
-        
     }
 
     public void AddItem(Item newItem)
@@ -24,6 +24,12 @@ public class InventorySystem : Singleton<InventorySystem>
     {
         items.Remove(item);
         onInventoryChanged?.Invoke(); // Update UI when item is removed
+    }
+
+    public void UpdateGold(int gold)
+    {
+        gold += gold;  //positive to add, negative to remove
+        onInventoryChanged?.Invoke(); // Update UI when gold edited
     }
 
     public void UseItem(Item item) 

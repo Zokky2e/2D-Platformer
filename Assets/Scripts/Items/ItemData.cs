@@ -8,6 +8,8 @@ public class ItemData
     public string description;
     public ItemType type;
     public string spriteName;
+    public int price;
+    public bool isSellable;
 
     public List<EffectData> characterStatsEffects = new();
     public List<EffectData> healthEffects = new();

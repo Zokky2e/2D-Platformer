@@ -17,6 +17,7 @@ public class EquipmentUI : MonoBehaviour
     public Sprite defaultAccessorySprite;
     private VisualElement tooltip;
     private Label tooltipName;
+    private Label tooltipGold;
     private Label tooltipDescription;
 
     private void OnEnable()
@@ -115,6 +116,7 @@ public class EquipmentUI : MonoBehaviour
         slot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
         item.AdjustDescription(); // Ensure description updates dynamically
         tooltipName.text = item.Name;
+        tooltipGold.text = item.Price.ToString() + " G";
         tooltipDescription.text = item.Description;
         tooltip.style.visibility = Visibility.Visible;
         UpdateTooltipPosition(evt.mousePosition);
@@ -165,6 +167,15 @@ public class EquipmentUI : MonoBehaviour
         tooltipName.style.overflow = Overflow.Hidden;
         tooltipName.style.textOverflow = TextOverflow.Clip;
 
+        // Create the item gold label
+        tooltipGold = new Label();
+        tooltipGold.style.fontSize = 22;
+        tooltipGold.style.color = Color.yellow;
+        tooltipGold.style.marginBottom = 5; // Space between name and description
+        tooltipGold.style.whiteSpace = WhiteSpace.Normal;
+        tooltipGold.style.overflow = Overflow.Hidden;
+        tooltipGold.style.textOverflow = TextOverflow.Clip;
+
         // Create the item description label
         tooltipDescription = new Label();
         tooltipDescription.style.fontSize = 22;
@@ -175,6 +186,7 @@ public class EquipmentUI : MonoBehaviour
 
         // Add labels to the tooltip container
         tooltip.Add(tooltipName);
+        tooltip.Add(tooltipGold);
         tooltip.Add(tooltipDescription);
 
         equipmentContainer.Add(tooltip); // Add tooltip to the inventory UI

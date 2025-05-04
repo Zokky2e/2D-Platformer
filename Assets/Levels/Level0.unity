@@ -318,6 +318,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 523265943747306821, guid: baf5e965eb7e33c438fda5edbd3d5708, type: 3}
+      propertyPath: onSpawnBehavior
+      value: 
+      objectReference: {fileID: 11400000, guid: b69231a82d5ebbf479783ef26dc32f0f, type: 2}
+    - target: {fileID: 523265943747306821, guid: baf5e965eb7e33c438fda5edbd3d5708, type: 3}
       propertyPath: traderMarkPrefab
       value: 
       objectReference: {fileID: 4429294331248188459, guid: 614daeabff6057c45a4d8fc18164e623, type: 3}
@@ -1811,6 +1815,51 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8192390647208958536, guid: 6a0cc6ddc9064614a8f3bd05b8ae312e, type: 3}
   m_PrefabInstance: {fileID: 2029744198}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2082105716
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2082105718}
+  - component: {fileID: 2082105717}
+  m_Layer: 0
+  m_Name: WorldStateManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2082105717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082105716}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 863a44c034c23894d9253847dee58639, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  saveFileName: worldstate.json
+--- !u!4 &2082105718
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082105716}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 839.70264, y: 269.6881, z: -5.025737}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1827,3 +1876,4 @@ SceneRoots:
   - {fileID: 441839722}
   - {fileID: 1811343222}
   - {fileID: 1837303964}
+  - {fileID: 2082105718}

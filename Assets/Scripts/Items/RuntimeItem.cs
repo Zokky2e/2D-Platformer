@@ -6,16 +6,28 @@ public class RuntimeItem : Item
 {
     public void SetData(ItemData data)
     {
-        List<Sprite> allSprites = new();
         _id = data.id;
         _name = data.name;
         _description = data.description;
         _type = data.type;
+        _price = data.price;
+        _isSellable = data.isSellable;
+        SetSprite(data);
+
+        characterStatsEffects = ConvertCharacterStatsEffects(data.characterStatsEffects);
+        healthEffects = ConvertHealthEffects(data.healthEffects);
+        onActivateCharacterStatsEffects = ConvertCharacterStatsEffects(data.onActivateCharacterStatsEffects);
+        onActivateHealthEffects = ConvertHealthEffects(data.onActivateHealthEffects);
+    }
+
+    private void SetSprite(ItemData data)
+    {
+        List<Sprite> allSprites = new();
         if (data.spriteName.Contains("armor"))
         {
             allSprites = Resources.LoadAll<Sprite>("Sprites/basic_armor").ToList();
         }
-        else if(data.spriteName.Contains("clothing"))
+        else if (data.spriteName.Contains("clothing"))
         {
             allSprites = Resources.LoadAll<Sprite>("Sprites/basic_clothing").ToList();
         }
@@ -24,9 +36,9 @@ public class RuntimeItem : Item
             allSprites = Resources.LoadAll<Sprite>("Sprites/potion_red").ToList();
         }
 
-        if (allSprites.Count > 0) 
+        if (allSprites.Count > 0)
         {
-            foreach (Sprite sprite in allSprites) 
+            foreach (Sprite sprite in allSprites)
             {
                 if (sprite.name == data.spriteName)
                 {
@@ -38,11 +50,6 @@ public class RuntimeItem : Item
         {
             _sprite = Resources.Load<Sprite>($"Sprites/{data.spriteName}");
         }
-
-        characterStatsEffects = ConvertCharacterStatsEffects(data.characterStatsEffects);
-        healthEffects = ConvertHealthEffects(data.healthEffects);
-        onActivateCharacterStatsEffects = ConvertCharacterStatsEffects(data.onActivateCharacterStatsEffects);
-        onActivateHealthEffects = ConvertHealthEffects(data.onActivateHealthEffects);
     }
 
     private List<ItemEffect<CharacterStats>> ConvertCharacterStatsEffects(List<EffectData> effectDataList)

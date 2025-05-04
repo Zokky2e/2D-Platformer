@@ -10,9 +10,11 @@ public class InventoryUI : MonoBehaviour
     private VisualElement inventoryContainer;
     public EquipmentUI equipmentUI;
     private ScrollView items;
+    private Label gold;
     private Button closeButton;
     private VisualElement tooltip;
     private Label tooltipName;
+    private Label tooltipGold;
     private Label tooltipDescription;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
@@ -64,6 +66,7 @@ public class InventoryUI : MonoBehaviour
         inventoryContainer = root.Q<VisualElement>("InventoryContainer");
         items = inventoryContainer.Q<ScrollView>("Items");
         closeButton = root.Q<Button>("ExitButton");
+        gold = root.Q<Label>("Gold");
         inventoryPanel.style.display = DisplayStyle.None;
         closeButton.clicked += ToggleInventory;
         SetupTooltip(); // Initialize tooltip setups
@@ -87,7 +90,7 @@ public class InventoryUI : MonoBehaviour
     {
         //inventoryContainer.Clear(); //Clear inventory
         items.Clear(); // Clear old items
-
+        gold.text = InventorySystem.Instance.gold.ToString();
         UpdateInventoryItemsUI();
     }
 
@@ -150,6 +153,7 @@ public class InventoryUI : MonoBehaviour
                     item.AdjustDescription();
                     tooltipDescription.text = item.Description; // Show item description
                     tooltip.style.visibility = Visibility.Visible;
+                    tooltipGold.text = item.Price.ToString() + " G";
                     UpdateTooltipPosition(evt.mousePosition); // Update tooltip position
                 });
                 // Remove highlight when leaving
@@ -206,6 +210,15 @@ public class InventoryUI : MonoBehaviour
         tooltipName.style.overflow = Overflow.Hidden;
         tooltipName.style.textOverflow = TextOverflow.Clip;
 
+        // Create the item gold label
+        tooltipGold = new Label();
+        tooltipGold.style.fontSize = 22;
+        tooltipGold.style.color = Color.yellow;
+        tooltipGold.style.marginBottom = 5; // Space between name and description
+        tooltipGold.style.whiteSpace = WhiteSpace.Normal;
+        tooltipGold.style.overflow = Overflow.Hidden;
+        tooltipGold.style.textOverflow = TextOverflow.Clip;
+
         // Create the item description label
         tooltipDescription = new Label();
         tooltipDescription.style.fontSize = 22;
@@ -216,6 +229,7 @@ public class InventoryUI : MonoBehaviour
 
         // Add labels to the tooltip container
         tooltip.Add(tooltipName);
+        tooltip.Add(tooltipGold);
         tooltip.Add(tooltipDescription);
 
         inventoryContainer.Add(tooltip); // Add tooltip to the inventory UI
