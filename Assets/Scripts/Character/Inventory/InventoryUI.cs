@@ -4,6 +4,7 @@ using UnityEngine.UIElements;
 
 public class InventoryUI : MonoBehaviour
 {
+    private bool isOpen = false;
     public UIDocument uiDocument;
     private InventorySystem inventory;
     private VisualElement inventoryPanel;
@@ -36,7 +37,12 @@ public class InventoryUI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I))
+        if (!PauseMenu.GameIsPaused && !isOpen && Input.GetKeyDown(KeyCode.I))
+        {
+            ToggleInventory();
+        }
+
+        if (isOpen && Input.GetKeyDown(KeyCode.Escape)) 
         {
             ToggleInventory();
         }
@@ -75,11 +81,12 @@ public class InventoryUI : MonoBehaviour
 
     private void ToggleInventory()
     {
-        bool isOpening = inventoryPanel.style.display == DisplayStyle.None;
+        isOpen = inventoryPanel.style.display == DisplayStyle.None;
 
-        inventoryPanel.style.display = isOpening ? DisplayStyle.Flex : DisplayStyle.None;
+        inventoryPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
 
-        Time.timeScale = isOpening ? 0f : 1f;
+        Time.timeScale = isOpen ? 0f : 1f;
+        PauseMenu.GameIsPaused = isOpen;
     }
     private void OnDisable()
     {
