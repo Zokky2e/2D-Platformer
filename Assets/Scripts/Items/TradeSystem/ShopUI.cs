@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -13,11 +15,14 @@ public class ShopUI : MonoBehaviour
     private VisualElement shopPanel;
     private VisualElement shopContainer;
     private Label gold;
+    private Label shopKeeper;
     private Button closeButton;
     private VisualElement tooltip;
     private Label tooltipName;
     private Label tooltipGold;
     private Label tooltipDescription;
+    public string shopKeeperName;
+    private Item selectedItem;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
     {
@@ -61,7 +66,6 @@ public class ShopUI : MonoBehaviour
             UpdateInventoryUI(); // Listen for changes
         };
 
-
         var root = uiDocument.rootVisualElement;
         shopPanel = root;
         shopContainer = root.Q<VisualElement>("ShopContainer");
@@ -69,6 +73,7 @@ public class ShopUI : MonoBehaviour
         shopItems = shopContainer.Q<ScrollView>("ShopItems");
         closeButton = root.Q<Button>("ExitButton");
         gold = root.Q<Label>("Gold");
+        shopKeeper = root.Q<Label>("ShopKeeper");
         shopPanel.style.display = DisplayStyle.None;
         closeButton.clicked += ToggleShopInventory;
         SetupTooltip(); // Initialize tooltip setups
@@ -81,6 +86,9 @@ public class ShopUI : MonoBehaviour
 
         shopPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
 
+        if(isOpen)
+            UpdateInventoryUI();
+        shopKeeper.text = shopKeeperName;
         Time.timeScale = isOpen ? 0f : 1f;
         PauseMenu.GameIsPaused = isOpen;
         StartCoroutine(DelayUIFlagClear());
@@ -99,27 +107,27 @@ public class ShopUI : MonoBehaviour
 
     private void UpdateInventoryUI()
     {
-        shopContainer.Clear(); //Clear shop
-
         //player section
-        //playerItems.Clear(); // Clear old items
+        playerItems.Clear(); // Clear old items
         gold.text = InventorySystem.Instance.gold.ToString();
-        //UpdateInventoryItemsUI();
+        playerItems.Add(UpdateItemsUI(playerInventory.items, true)); 
 
         //shop section
-        //shopItems.Clear();
-        //UpdateShopItemsUI();
+        if (shopInventory?.items?.Count > 0)
+        {
+            shopItems.Clear();
+            shopItems.Add(UpdateItemsUI(shopInventory.items));
+        }
     }
 
-    private void UpdateInventoryItemsUI()
+    private ScrollView UpdateItemsUI(List<Item> items, bool isPlayerInventory = false)
     {
         int columns = 4; // Number of columns in the grid
         int rows = 4;
-        int totalSlots = Mathf.Max(playerInventory.items.Count, columns * rows);
+        int totalSlots = Mathf.Max(items.Count, columns * rows);
 
         // Create scrollable inventory grid
         ScrollView gridScrollView = new ScrollView(ScrollViewMode.Vertical);
-        gridScrollView.style.height = Length.Percent(30); // Full height of inventory panel
         gridScrollView.style.width = Length.Percent(100);
         gridScrollView.style.overflow = Overflow.Hidden; // Prevents content overflow
         gridScrollView.verticalScrollerVisibility = ScrollerVisibility.Auto;
@@ -141,7 +149,6 @@ public class ShopUI : MonoBehaviour
 
         for (int i = 0; i < totalSlots; i++)
         {
-            // Create container for item (sprite + text)
             VisualElement itemSlot = new VisualElement();
             itemSlot.style.flexDirection = FlexDirection.Column;
             itemSlot.style.alignItems = Align.Center;
@@ -158,9 +165,9 @@ public class ShopUI : MonoBehaviour
             itemImage.style.height = 120;
             itemImage.style.alignSelf = Align.Center; // Center image
 
-            if (i < playerInventory.items.Count)
+            if (i < items.Count)
             {
-                Item item = playerInventory.items[i];
+                Item item = items[i];
                 itemImage.style.backgroundImage = new StyleBackground(item.Sprite); // Assign sprite
 
                 itemSlot.RegisterCallback<MouseEnterEvent>(evt =>
@@ -170,7 +177,8 @@ public class ShopUI : MonoBehaviour
                     item.AdjustDescription();
                     tooltipDescription.text = item.Description; // Show item description
                     tooltip.style.visibility = Visibility.Visible;
-                    tooltipGold.text = item.Price.ToString() + " G";
+                    string goldValue = isPlayerInventory ? "Sell: " + MathF.Floor((item.Price * 0.6f)).ToString() : "Buy: " + item.Price.ToString();
+                    tooltipGold.text = goldValue + " G";
                     UpdateTooltipPosition(evt.mousePosition); // Update tooltip position
                 });
                 // Remove highlight when leaving
@@ -187,9 +195,17 @@ public class ShopUI : MonoBehaviour
                 // Add click event to use the item
                 itemSlot.RegisterCallback<ClickEvent>(evt =>
                 {
-                    itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
+                    if (selectedItem == item)
+                    {
+                        itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
+                        selectedItem = null;
+                    }
+                    else
+                    {
+                        selectedItem = item;
+                        itemSlot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
+                    }
                     tooltip.style.visibility = Visibility.Hidden;
-                    OnItemClick(item);
                 });
             }
 
@@ -200,7 +216,7 @@ public class ShopUI : MonoBehaviour
             gridContainer.Add(itemSlot);
         }
         gridScrollView.Add(gridContainer);
-        playerItems.Add(gridContainer);
+        return gridScrollView;
     }
 
     private void SetupTooltip()
@@ -283,5 +299,10 @@ public class ShopUI : MonoBehaviour
     {
         //select item, if in player inventory have a button for sell
         //if in shop inventory have a button for buy
+    }
+
+    public void SetShopInventory(ShopInventory shopInventory)
+    {
+        this.shopInventory = shopInventory;
     }
 }

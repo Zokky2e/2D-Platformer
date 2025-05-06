@@ -139,7 +139,6 @@ public class InventoryUI : MonoBehaviour
 
         for (int i = 0; i < totalSlots; i++)
         {
-            // Create container for item (sprite + text)
             VisualElement itemSlot = new VisualElement();
             itemSlot.style.flexDirection = FlexDirection.Column;
             itemSlot.style.alignItems = Align.Center;

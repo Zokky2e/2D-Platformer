@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5af6070a3ef54e5489f7a95d5bf485e2, type: 3}
   m_Name: Merchant_Shop_Inventory
   m_EditorClassIdentifier: 
-  items:
+  itemsData:
   - itemId: 18
     quantity: -1
   - itemId: 19
     quantity: -1
   - itemId: 20
     quantity: -1
+  items: []

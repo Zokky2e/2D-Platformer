@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "NPC/Behaviors/Open Shop")]
@@ -9,11 +10,14 @@ public class OpenShopBehavior : NPCInteractionBehavior
 
     public override IEnumerator Execute(NPC npc)
     {
-        if (shopInventory != null && shopInventory.items?.Count > 0) 
+        if (shopInventory != null && shopInventory.itemsData?.Count > 0) 
         {
+            shopInventory.SetItems();
             ShopUI shopUI = FindAnyObjectByType<ShopUI>();
             if (shopUI != null) 
             {
+                shopUI.shopKeeperName = npc.npcName;
+                shopUI.SetShopInventory(shopInventory);
                 shopUI.ToggleShopInventory();
             }
         }
