@@ -2,7 +2,8 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic; 
+using System.Collections.Generic;
+using System;
 
 public class DialogSystem : Singleton<DialogSystem>
 {
@@ -17,6 +18,7 @@ public class DialogSystem : Singleton<DialogSystem>
     private bool dialogActive = false;
     private List<string> dialogPages = new List<string>(); // Stores all pages of dialog
     private int currentPage = 0; // Tracks which page is being shown
+    private Action onDialogClose;
 
     public bool DialogActive
     {
@@ -31,7 +33,7 @@ public class DialogSystem : Singleton<DialogSystem>
         dialogBox.SetActive(false);
     }
 
-    public void ShowDialog(string npcName, string dialog)
+    public void ShowDialog(string npcName, string dialog, Action onComplete)
     {
         dialogBox.SetActive(true);
         nameText.text = npcName;
@@ -39,6 +41,7 @@ public class DialogSystem : Singleton<DialogSystem>
         currentPage = 0;
         StartTyping();
         dialogActive = true;
+        onDialogClose = onComplete;
     }
     private List<string> SplitDialogIntoPages(string dialog)
     {
@@ -97,5 +100,9 @@ public class DialogSystem : Singleton<DialogSystem>
     {
         dialogBox.SetActive(false);
         dialogActive = false;
+        if (onDialogClose != null)
+        {
+            onDialogClose.Invoke();
+        }
     }
 }

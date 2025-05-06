@@ -1,16 +1,17 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class InventoryUI : MonoBehaviour
+public class ShopUI : MonoBehaviour
 {
     private bool isOpen = false;
     public UIDocument uiDocument;
-    private InventorySystem inventory;
-    private VisualElement inventoryPanel;
-    private VisualElement inventoryContainer;
-    public EquipmentUI equipmentUI;
-    private ScrollView items;
+    private InventorySystem playerInventory;
+    private ShopInventory shopInventory;
+    private ScrollView playerItems;
+    private ScrollView shopItems;
+    private VisualElement shopPanel;
+    private VisualElement shopContainer;
     private Label gold;
     private Button closeButton;
     private VisualElement tooltip;
@@ -30,21 +31,15 @@ public class InventoryUI : MonoBehaviour
     }
     void Start()
     {
-        equipmentUI = GetComponentInChildren<EquipmentUI>();
         Label tooltip = new Label(); // Tooltip for item descriptions
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!PauseMenu.GameIsPaused && !isOpen && Input.GetKeyDown(KeyCode.I))
+        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
         {
-            ToggleInventory();
-        }
-
-        if (isOpen && Input.GetKeyDown(KeyCode.Escape)) 
-        {
-            ToggleInventory();
+            ToggleShopInventory();
         }
 
     }
@@ -60,30 +55,31 @@ public class InventoryUI : MonoBehaviour
         {
             yield return null; // Wait for next frame
         }
-        inventory = InventorySystem.Instance; // Find inventory
-        inventory.onInventoryChanged += () =>
+        playerInventory = InventorySystem.Instance; // Find inventory
+        playerInventory.onInventoryChanged += () =>
         {
             UpdateInventoryUI(); // Listen for changes
         };
-            
+
 
         var root = uiDocument.rootVisualElement;
-        inventoryPanel = root;
-        inventoryContainer = root.Q<VisualElement>("InventoryContainer");
-        items = inventoryContainer.Q<ScrollView>("Items");
+        shopPanel = root;
+        shopContainer = root.Q<VisualElement>("ShopContainer");
+        playerItems = shopContainer.Q<ScrollView>("PlayerItems");
+        shopItems = shopContainer.Q<ScrollView>("ShopItems");
         closeButton = root.Q<Button>("ExitButton");
         gold = root.Q<Label>("Gold");
-        inventoryPanel.style.display = DisplayStyle.None;
-        closeButton.clicked += ToggleInventory;
+        shopPanel.style.display = DisplayStyle.None;
+        closeButton.clicked += ToggleShopInventory;
         SetupTooltip(); // Initialize tooltip setups
         UpdateInventoryUI();
     }
 
-    private void ToggleInventory()
+    public void ToggleShopInventory()
     {
-        isOpen = inventoryPanel.style.display == DisplayStyle.None;
+        isOpen = shopPanel.style.display == DisplayStyle.None;
 
-        inventoryPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
+        shopPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
 
         Time.timeScale = isOpen ? 0f : 1f;
         PauseMenu.GameIsPaused = isOpen;
@@ -98,22 +94,28 @@ public class InventoryUI : MonoBehaviour
 
     private void OnDisable()
     {
-        inventory.onInventoryChanged -= UpdateInventoryUI;
+        playerInventory.onInventoryChanged -= UpdateInventoryUI;
     }
 
     private void UpdateInventoryUI()
     {
-        //inventoryContainer.Clear(); //Clear inventory
-        items.Clear(); // Clear old items
+        shopContainer.Clear(); //Clear shop
+
+        //player section
+        //playerItems.Clear(); // Clear old items
         gold.text = InventorySystem.Instance.gold.ToString();
-        UpdateInventoryItemsUI();
+        //UpdateInventoryItemsUI();
+
+        //shop section
+        //shopItems.Clear();
+        //UpdateShopItemsUI();
     }
 
     private void UpdateInventoryItemsUI()
     {
         int columns = 4; // Number of columns in the grid
         int rows = 4;
-        int totalSlots = Mathf.Max(inventory.items.Count, columns * rows);
+        int totalSlots = Mathf.Max(playerInventory.items.Count, columns * rows);
 
         // Create scrollable inventory grid
         ScrollView gridScrollView = new ScrollView(ScrollViewMode.Vertical);
@@ -156,9 +158,9 @@ public class InventoryUI : MonoBehaviour
             itemImage.style.height = 120;
             itemImage.style.alignSelf = Align.Center; // Center image
 
-            if (i < inventory.items.Count)
+            if (i < playerInventory.items.Count)
             {
-                Item item = inventory.items[i];
+                Item item = playerInventory.items[i];
                 itemImage.style.backgroundImage = new StyleBackground(item.Sprite); // Assign sprite
 
                 itemSlot.RegisterCallback<MouseEnterEvent>(evt =>
@@ -187,7 +189,7 @@ public class InventoryUI : MonoBehaviour
                 {
                     itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
                     tooltip.style.visibility = Visibility.Hidden;
-                    OnItemClick(item); 
+                    OnItemClick(item);
                 });
             }
 
@@ -198,7 +200,7 @@ public class InventoryUI : MonoBehaviour
             gridContainer.Add(itemSlot);
         }
         gridScrollView.Add(gridContainer);
-        items.Add(gridContainer);
+        playerItems.Add(gridContainer);
     }
 
     private void SetupTooltip()
@@ -247,7 +249,7 @@ public class InventoryUI : MonoBehaviour
         tooltip.Add(tooltipGold);
         tooltip.Add(tooltipDescription);
 
-        inventoryContainer.Add(tooltip); // Add tooltip to the inventory UI
+        shopContainer.Add(tooltip); // Add tooltip to the inventory UI
     }
     private void UpdateTooltipPosition(Vector2 mousePosition)
     {
@@ -279,17 +281,7 @@ public class InventoryUI : MonoBehaviour
 
     public void OnItemClick(Item item)
     {
-        if (item.Type != ItemType.Consumable)
-        {
-            EquipmentSystem.Instance.EquipItem(item);
-        }
-        else
-        {
-            UseItem(item);
-        }
-    }
-    private void UseItem(Item item)
-    {
-        inventory.UseItem(item);
+        //select item, if in player inventory have a button for sell
+        //if in shop inventory have a button for buy
     }
 }

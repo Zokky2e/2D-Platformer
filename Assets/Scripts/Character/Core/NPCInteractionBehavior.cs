@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public abstract class NPCInteractionBehavior : ScriptableObject
 {
-    public abstract void Execute(NPC npc);
+    public abstract IEnumerator Execute(NPC npc);
 }

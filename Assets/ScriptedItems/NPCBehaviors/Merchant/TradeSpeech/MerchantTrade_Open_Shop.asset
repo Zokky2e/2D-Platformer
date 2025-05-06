@@ -9,9 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9f8b966204d31c42884583ca471b7ea, type: 3}
-  m_Name: MerchentTrade_Composite
+  m_Script: {fileID: 11500000, guid: 82b509bf9d14ea94dabfb1b64e5b7655, type: 3}
+  m_Name: MerchantTrade_Open_Shop
   m_EditorClassIdentifier: 
-  behaviors:
-  - {fileID: 11400000, guid: 50e8716e14fbff04184eb44eb3fca819, type: 2}
-  - {fileID: 11400000, guid: 5042c0dba96dfad42a0276cd86635512, type: 2}
+  shopInventory: {fileID: 11400000, guid: 10cee565f56715b459b7206c8dfa2aa1, type: 2}

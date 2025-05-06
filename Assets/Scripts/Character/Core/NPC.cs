@@ -127,20 +127,20 @@ public class NPC : MonoBehaviour
             case NPCAction.Attention:
                 if (AttentionBehavior != null)
                 {
-                    AttentionBehavior.Execute(this);
+                    StartCoroutine(AttentionBehavior.Execute(this));
                 }
                 break;
             case NPCAction.Information:
                 if (InformationBehavior != null)
                 {
-                    InformationBehavior.Execute(this);
+                    StartCoroutine(InformationBehavior.Execute(this));
                 }
                 break;
             case NPCAction.Trade:
 
                 if (TradeBehavior != null)
                 {
-                    TradeBehavior.Execute(this);
+                    StartCoroutine(TradeBehavior.Execute(this));
                 }
                 break;
         }

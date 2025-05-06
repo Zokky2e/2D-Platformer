@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "NPC/Behaviors/Give Item")]
@@ -8,7 +9,7 @@ public class GiveItemBehavior : NPCInteractionBehavior
     public bool HasGivenItem = false;
     public List<int> itemIdsToGive; // Just item IDs, quantity is always 1
 
-    public override void Execute(NPC npc)
+    public override IEnumerator Execute(NPC npc)
     {
         HasGivenItem = WorldStateManager.Instance.GetBool(NPCSHasGivenItemString);
         if (!HasGivenItem)
@@ -16,5 +17,6 @@ public class GiveItemBehavior : NPCInteractionBehavior
             ItemSystem.Instance.AddToPlayerInventory(itemIdsToGive.ToArray());
             WorldStateManager.Instance.SetBool(NPCSHasGivenItemString, true);
         }
+        yield return null;
     }
 }
