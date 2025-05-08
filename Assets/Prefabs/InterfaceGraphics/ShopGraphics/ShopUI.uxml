@@ -27,7 +27,7 @@
                     <ui:Label text="Shop" style="font-size: 32px; color: rgb(255, 255, 255); margin-top: 0; margin-right: 16px; margin-bottom: 0; margin-left: 16px;" />
                     <ui:ScrollView name="ShopItems" style="margin-right: 16px; margin-left: 16px; min-height: auto;" />
                 </ui:VisualElement>
-                <ui:Button text="Buy" name="BuyButton" style="align-self: flex-end; justify-content: space-around; align-items: auto; align-content: auto; bottom: 0; right: 0; position: absolute; margin-top: 16px; margin-right: 16px; margin-bottom: 16px; margin-left: 16px; font-size: 32px; -unity-font-style: bold; background-color: rgb(255, 255, 255); -unity-background-image-tint-color: rgb(255, 255, 255); min-height: 75px;" />
+                <ui:Button text="Buy" name="BuyButton" style="align-self: flex-end; justify-content: space-around; align-items: auto; align-content: auto; bottom: 0; right: 0; position: absolute; margin-top: 16px; margin-right: 16px; margin-bottom: 16px; margin-left: 16px; font-size: 32px; -unity-font-style: bold; background-color: rgb(255, 255, 255); -unity-background-image-tint-color: rgb(255, 255, 255); min-height: 75px; color: rgb(27, 27, 27);" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

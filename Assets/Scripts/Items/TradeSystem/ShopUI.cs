@@ -17,12 +17,15 @@ public class ShopUI : MonoBehaviour
     private Label gold;
     private Label shopKeeper;
     private Button closeButton;
+    private Button sellButton;
+    private Button buyButton;
     private VisualElement tooltip;
     private Label tooltipName;
     private Label tooltipGold;
     private Label tooltipDescription;
     public string shopKeeperName;
-    private Item selectedItem;
+    private (bool isPlayerInventory , int itemId) selectedItem = (false, -1);
+    private VisualElement selectedItemSlot;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
     {
@@ -72,10 +75,16 @@ public class ShopUI : MonoBehaviour
         playerItems = shopContainer.Q<ScrollView>("PlayerItems");
         shopItems = shopContainer.Q<ScrollView>("ShopItems");
         closeButton = root.Q<Button>("ExitButton");
+        sellButton = root.Q<Button>("SellButton");
+        buyButton = root.Q<Button>("BuyButton");
+        sellButton.SetEnabled(false);
+        buyButton.SetEnabled(false);
         gold = root.Q<Label>("Gold");
         shopKeeper = root.Q<Label>("ShopKeeper");
         shopPanel.style.display = DisplayStyle.None;
         closeButton.clicked += ToggleShopInventory;
+        sellButton.clicked += OnSellButtonClicked;
+        buyButton.clicked += OnBuyButtonClicked;
         SetupTooltip(); // Initialize tooltip setups
         UpdateInventoryUI();
     }
@@ -149,6 +158,7 @@ public class ShopUI : MonoBehaviour
 
         for (int i = 0; i < totalSlots; i++)
         {
+            int currentIndex = i;
             VisualElement itemSlot = new VisualElement();
             itemSlot.style.flexDirection = FlexDirection.Column;
             itemSlot.style.alignItems = Align.Center;
@@ -167,7 +177,7 @@ public class ShopUI : MonoBehaviour
 
             if (i < items.Count)
             {
-                Item item = items[i];
+                Item item = items[currentIndex]; // use the captured index
                 itemImage.style.backgroundImage = new StyleBackground(item.Sprite); // Assign sprite
 
                 itemSlot.RegisterCallback<MouseEnterEvent>(evt =>
@@ -184,7 +194,11 @@ public class ShopUI : MonoBehaviour
                 // Remove highlight when leaving
                 itemSlot.RegisterCallback<MouseLeaveEvent>(evt =>
                 {
-                    itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Light transparent slot background
+                    if ((isPlayerInventory, currentIndex) == selectedItem)
+                        itemSlot.style.backgroundColor = new Color(0.5f, 1, 1, 0.3f); // Lighten background on hover
+                    else
+                        itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Light transparent slot background
+
                     tooltip.style.visibility = Visibility.Hidden;
                 });
                 // Move tooltip with mouse
@@ -195,16 +209,8 @@ public class ShopUI : MonoBehaviour
                 // Add click event to use the item
                 itemSlot.RegisterCallback<ClickEvent>(evt =>
                 {
-                    if (selectedItem == item)
-                    {
-                        itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
-                        selectedItem = null;
-                    }
-                    else
-                    {
-                        selectedItem = item;
-                        itemSlot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
-                    }
+                    OnItemSlotClick(isPlayerInventory, itemSlot, currentIndex); // i need to send the current index value but it ends up sending the last index value
+                    SetEnabledButtons();
                     tooltip.style.visibility = Visibility.Hidden;
                 });
             }
@@ -218,7 +224,24 @@ public class ShopUI : MonoBehaviour
         gridScrollView.Add(gridContainer);
         return gridScrollView;
     }
-
+    private void OnItemSlotClick(bool isPlayerInventory, VisualElement itemSlot, int index)
+    {
+        //debugging here shows index is always 16 which is the last i value possible but i need the index to be the value at method register
+        if ((isPlayerInventory, index) == selectedItem && selectedItem.itemId != -1)
+        {
+            itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
+            selectedItem = (false, -1);
+            selectedItemSlot = null;
+        }
+        else
+        {
+            if (selectedItemSlot != null)
+                selectedItemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
+            selectedItemSlot = itemSlot;
+            selectedItem = (isPlayerInventory, index);
+            itemSlot.style.backgroundColor = new Color(0.5f, 1, 1, 0.3f); // Lighten background on hover
+        }
+    }
     private void SetupTooltip()
     {
         tooltip = new Label();
@@ -295,10 +318,41 @@ public class ShopUI : MonoBehaviour
         tooltip.style.top = newY;
     }
 
-    public void OnItemClick(Item item)
+    private void SetEnabledButtons()
+    {
+        if (selectedItem.itemId != -1)
+        {
+            if (selectedItem.isPlayerInventory)
+            {
+                sellButton.SetEnabled(playerInventory.items[selectedItem.itemId].IsSellable);
+                buyButton.SetEnabled(false);
+            }
+            else
+            {
+                sellButton.SetEnabled(false);
+                buyButton.SetEnabled(true);
+            }
+        }
+        else
+        {
+            sellButton.SetEnabled(false);
+            buyButton.SetEnabled(false);
+
+        }
+    }
+
+    public void OnSellButtonClicked()
     {
         //select item, if in player inventory have a button for sell
         //if in shop inventory have a button for buy
+        Debug.Log($"Selling {playerInventory.items[selectedItem.itemId].Name}");
+    }
+    
+    public void OnBuyButtonClicked()
+    {
+        //select item, if in player inventory have a button for sell
+        //if in shop inventory have a button for buy
+        Debug.Log($"Buying {shopInventory.items[selectedItem.itemId].Name}");
     }
 
     public void SetShopInventory(ShopInventory shopInventory)
