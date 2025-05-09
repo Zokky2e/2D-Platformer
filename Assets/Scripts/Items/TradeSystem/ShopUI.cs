@@ -187,7 +187,7 @@ public class ShopUI : MonoBehaviour
                     item.AdjustDescription();
                     tooltipDescription.text = item.Description; // Show item description
                     tooltip.style.visibility = Visibility.Visible;
-                    string goldValue = isPlayerInventory ? "Sell: " + MathF.Floor((item.Price * 0.6f)).ToString() : "Buy: " + item.Price.ToString();
+                    string goldValue = isPlayerInventory ? "Sell: " + ((int)MathF.Floor((item.Price * 0.6f))).ToString() : "Buy: " + item.Price.ToString();
                     tooltipGold.text = goldValue + " G";
                     UpdateTooltipPosition(evt.mousePosition); // Update tooltip position
                 });
@@ -343,16 +343,24 @@ public class ShopUI : MonoBehaviour
 
     public void OnSellButtonClicked()
     {
+        var shopSystem = ShopSystem.Instance;
         //select item, if in player inventory have a button for sell
         //if in shop inventory have a button for buy
         Debug.Log($"Selling {playerInventory.items[selectedItem.itemId].Name}");
+        bool isSold = shopSystem.SellItem(selectedItem.itemId);
+        if (isSold) selectedItem = (false, -1); 
+        SetEnabledButtons();
     }
     
     public void OnBuyButtonClicked()
     {
+        var shopSystem = ShopSystem.Instance;
         //select item, if in player inventory have a button for sell
         //if in shop inventory have a button for buy
         Debug.Log($"Buying {shopInventory.items[selectedItem.itemId].Name}");
+        bool isBought = shopSystem.BuyItem(ref shopInventory, selectedItem.itemId);
+        if (isBought) selectedItem = (false, -1); 
+        SetEnabledButtons();
     }
 
     public void SetShopInventory(ShopInventory shopInventory)
