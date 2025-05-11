@@ -5,7 +5,7 @@ public class Interactable : MonoBehaviour
 {
     [Header("Interaction Settings")]
     public GameObject interactionPromptPrefab; // Prefab for the "E" indicator
-    private GameObject interactionPromptInstance; // Instance of the "E" prompt
+    private GameObject interactionPromptInstance; // Instance of the "E" 
     private bool isInteractable = true;
     
     public Action onInteract; // Action to perform on interaction

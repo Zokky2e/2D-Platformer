@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cainos.PixelArtPlatformer_VillageProps;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +7,7 @@ public class LootChest : MonoBehaviour
 {
     private Interactable interactable; // Reference to interactable component
 
+    public Chest Chest;
     public LootInventory LootInventory;
 
     public List<Item> Loot;
@@ -20,5 +22,10 @@ public class LootChest : MonoBehaviour
 
     private void OpenChest()
     {
+        Chest.IsOpened = !Chest.IsOpened;
+        foreach (Item item in Loot)
+        {
+            Debug.Log(item.Name);
+        }
     }
 }
