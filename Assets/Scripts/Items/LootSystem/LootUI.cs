@@ -4,32 +4,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class ShopUI : MonoBehaviour
+public class LootUI : MonoBehaviour
 {
     private bool isOpen = false;
     public UIDocument uiDocument;
+    private LootChest lootChest;
     private InventorySystem playerInventory;
-    private ShopInventory shopInventory;
-    private ScrollView playerItems;
-    private ScrollView shopItems;
-    private VisualElement shopPanel;
-    private VisualElement shopContainer;
-    private Label gold;
-    private Label shopKeeper;
+    private ScrollView loot;
+    private VisualElement lootPanel;
+    private VisualElement lootContainer;
     private Button closeButton;
-    private Button sellButton;
-    private Button buyButton;
     private VisualElement tooltip;
     private Label tooltipName;
     private Label tooltipGold;
     private Label tooltipDescription;
-    public string shopKeeperName;
-    private (bool isPlayerInventory , int itemId) selectedItem = (false, -1);
+    private int selectedItem = -1;
     private VisualElement selectedItemSlot;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
     {
-        if (this.GetComponent<ShopUI>() != null && this.GetComponent<ShopUI>() != this)
+        if (this.GetComponent<InventoryUI>() != null && this.GetComponent<InventoryUI>() != this)
         {
             Destroy(gameObject);
             return;
@@ -47,7 +41,7 @@ public class ShopUI : MonoBehaviour
     {
         if (isOpen && Input.GetKeyDown(KeyCode.Escape))
         {
-            ToggleShopInventory();
+            ToggleLootInventory();
         }
 
     }
@@ -70,34 +64,26 @@ public class ShopUI : MonoBehaviour
         };
 
         var root = uiDocument.rootVisualElement;
-        shopPanel = root;
-        shopContainer = root.Q<VisualElement>("ShopContainer");
-        playerItems = shopContainer.Q<ScrollView>("PlayerItems");
-        shopItems = shopContainer.Q<ScrollView>("ShopItems");
+        lootPanel = root;
+        lootContainer = root.Q<VisualElement>("LootContainer");
+        loot = lootContainer.Q<ScrollView>("LootItems");
         closeButton = root.Q<Button>("ExitButton");
-        sellButton = root.Q<Button>("SellButton");
-        buyButton = root.Q<Button>("BuyButton");
-        sellButton.SetEnabled(false);
-        buyButton.SetEnabled(false);
-        gold = root.Q<Label>("Gold");
-        shopKeeper = root.Q<Label>("ShopKeeper");
-        shopPanel.style.display = DisplayStyle.None;
-        closeButton.clicked += ToggleShopInventory;
-        sellButton.clicked += OnSellButtonClicked;
-        buyButton.clicked += OnBuyButtonClicked;
+        lootPanel.style.display = DisplayStyle.None;
+        closeButton.clicked += ToggleLootInventory;
         SetupTooltip(); // Initialize tooltip setups
         UpdateInventoryUI();
     }
 
-    public void ToggleShopInventory()
+    public void ToggleLootInventory()
     {
-        isOpen = shopPanel.style.display == DisplayStyle.None;
+        isOpen = lootPanel.style.display == DisplayStyle.None;
 
-        shopPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
+        lootPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
 
-        if(isOpen)
+        if (isOpen)
             UpdateInventoryUI();
-        shopKeeper.text = shopKeeperName;
+        else
+            lootChest.CloseChest();
         Time.timeScale = isOpen ? 0f : 1f;
         PauseMenu.GameIsPaused = isOpen;
         StartCoroutine(DelayUIFlagClear());
@@ -116,23 +102,19 @@ public class ShopUI : MonoBehaviour
 
     private void UpdateInventoryUI()
     {
-        //player section
-        playerItems.Clear(); // Clear old items
-        gold.text = InventorySystem.Instance.gold.ToString();
-        playerItems.Add(UpdateItemsUI(playerInventory.items, true)); 
 
         //shop section
-        if (shopInventory?.items?.Count > 0)
+        if (lootChest?.Loot?.Count > 0)
         {
-            shopItems.Clear();
-            shopItems.Add(UpdateItemsUI(shopInventory.items));
+            loot.Clear();
+            loot.Add(UpdateItemsUI(lootChest.Loot));
         }
     }
 
-    private ScrollView UpdateItemsUI(List<Item> items, bool isPlayerInventory = false)
+    private ScrollView UpdateItemsUI(List<Item> items)
     {
-        int columns = 4; // Number of columns in the grid
-        int rows = 4;
+        int columns = 2; // Number of columns in the grid
+        int rows = 2;
         int totalSlots = Mathf.Max(items.Count, columns * rows);
 
         // Create scrollable inventory grid
@@ -187,14 +169,14 @@ public class ShopUI : MonoBehaviour
                     item.AdjustDescription();
                     tooltipDescription.text = item.Description; // Show item description
                     tooltip.style.visibility = Visibility.Visible;
-                    string goldValue = isPlayerInventory ? "Sell: " + ((int)MathF.Floor((item.Price * 0.6f))).ToString() : "Buy: " + item.Price.ToString();
+                    string goldValue = "Sell: " + ((int)MathF.Floor((item.Price * 0.6f))).ToString();
                     tooltipGold.text = goldValue + " G";
                     UpdateTooltipPosition(evt.mousePosition); // Update tooltip position
                 });
                 // Remove highlight when leaving
                 itemSlot.RegisterCallback<MouseLeaveEvent>(evt =>
                 {
-                    if ((isPlayerInventory, currentIndex) == selectedItem)
+                    if (currentIndex == selectedItem)
                         itemSlot.style.backgroundColor = new Color(0.5f, 1, 1, 0.3f); // Lighten background on hover
                     else
                         itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Light transparent slot background
@@ -209,8 +191,7 @@ public class ShopUI : MonoBehaviour
                 // Add click event to use the item
                 itemSlot.RegisterCallback<ClickEvent>(evt =>
                 {
-                    OnItemSlotClick(isPlayerInventory, itemSlot, currentIndex); // i need to send the current index value but it ends up sending the last index value
-                    SetEnabledButtons();
+                    OnItemSlotClick(itemSlot, currentIndex); // i need to send the current index value but it ends up sending the last index value
                     tooltip.style.visibility = Visibility.Hidden;
                 });
             }
@@ -224,13 +205,13 @@ public class ShopUI : MonoBehaviour
         gridScrollView.Add(gridContainer);
         return gridScrollView;
     }
-    private void OnItemSlotClick(bool isPlayerInventory, VisualElement itemSlot, int index)
+    private void OnItemSlotClick(VisualElement itemSlot, int index)
     {
         //debugging here shows index is always 16 which is the last i value possible but i need the index to be the value at method register
-        if ((isPlayerInventory, index) == selectedItem && selectedItem.itemId != -1)
+        if (index == selectedItem && selectedItem != -1)
         {
             itemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
-            selectedItem = (false, -1);
+            selectedItem =  -1;
             selectedItemSlot = null;
         }
         else
@@ -238,7 +219,7 @@ public class ShopUI : MonoBehaviour
             if (selectedItemSlot != null)
                 selectedItemSlot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
             selectedItemSlot = itemSlot;
-            selectedItem = (isPlayerInventory, index);
+            selectedItem = index;
             itemSlot.style.backgroundColor = new Color(0.5f, 1, 1, 0.3f); // Lighten background on hover
         }
     }
@@ -288,29 +269,29 @@ public class ShopUI : MonoBehaviour
         tooltip.Add(tooltipGold);
         tooltip.Add(tooltipDescription);
 
-        shopContainer.Add(tooltip); // Add tooltip to the inventory UI
+        lootContainer.Add(tooltip); // Add tooltip to the inventory UI
     }
     private void UpdateTooltipPosition(Vector2 mousePosition)
     {
         float tooltipWidth = tooltip.resolvedStyle.width;
         float tooltipHeight = tooltip.resolvedStyle.height;
-        float screenWidth = Screen.width;
-        float screenHeight = Screen.height;
-        float offset = 40f;
+        float screenWidth = lootPanel.resolvedStyle.width;
+        float screenHeight = lootPanel.resolvedStyle.height;
+        float offset = 40;
         // Default position (to the right of the cursor)
-        float newX = mousePosition.x - offset;
-        float newY = mousePosition.y - offset * 2;
+        float newX = mousePosition.x - screenWidth / 4;
+        float newY = mousePosition.y - screenHeight / 2 + offset * 4;
 
         // Check right boundary
         if (newX + tooltipWidth > screenWidth)
         {
-            newX = mousePosition.x - tooltipWidth - offset * 3; // Move to the left
+            newX = mousePosition.x - tooltipWidth; // Move to the left
         }
 
         // Check bottom boundary
         if (newY + tooltipHeight > screenHeight)
         {
-            newY = mousePosition.y - tooltipHeight - offset * 3; // Move up
+            newY = mousePosition.y - tooltipHeight; // Move up
         }
 
         // Apply position
@@ -318,53 +299,8 @@ public class ShopUI : MonoBehaviour
         tooltip.style.top = newY;
     }
 
-    private void SetEnabledButtons()
+    public void SetLootChest(LootChest lootChest)
     {
-        if (selectedItem.itemId != -1)
-        {
-            if (selectedItem.isPlayerInventory)
-            {
-                sellButton.SetEnabled(playerInventory.items[selectedItem.itemId].IsSellable);
-                buyButton.SetEnabled(false);
-            }
-            else
-            {
-                sellButton.SetEnabled(false);
-                buyButton.SetEnabled(true);
-            }
-        }
-        else
-        {
-            sellButton.SetEnabled(false);
-            buyButton.SetEnabled(false);
-
-        }
-    }
-
-    public void OnSellButtonClicked()
-    {
-        var shopSystem = ShopSystem.Instance;
-        //select item, if in player inventory have a button for sell
-        //if in shop inventory have a button for buy
-        Debug.Log($"Selling {playerInventory.items[selectedItem.itemId].Name}");
-        bool isSold = shopSystem.SellItem(selectedItem.itemId);
-        if (isSold) selectedItem = (false, -1); 
-        SetEnabledButtons();
-    }
-    
-    public void OnBuyButtonClicked()
-    {
-        var shopSystem = ShopSystem.Instance;
-        //select item, if in player inventory have a button for sell
-        //if in shop inventory have a button for buy
-        Debug.Log($"Buying {shopInventory.items[selectedItem.itemId].Name}");
-        bool isBought = shopSystem.BuyItem(ref shopInventory, selectedItem.itemId);
-        if (isBought) selectedItem = (false, -1); 
-        SetEnabledButtons();
-    }
-
-    public void SetShopInventory(ShopInventory shopInventory)
-    {
-        this.shopInventory = shopInventory;
+        this.lootChest = lootChest;
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Cainos.PixelArtPlatformer_VillageProps;
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,13 +19,33 @@ public class LootChest : MonoBehaviour
         Loot = LootInventory.GetLoot();
     }
 
+    public void CloseChest()
+    {
+        Chest.IsOpened = false;
+    }
 
     private void OpenChest()
     {
-        Chest.IsOpened = !Chest.IsOpened;
-        foreach (Item item in Loot)
+        Chest.IsOpened = true;
+        StartCoroutine(OpenChestCoroutine());
+    }
+
+    private IEnumerator OpenChestCoroutine()
+    {
+        if (Chest.IsOpened) 
         {
-            Debug.Log(item.Name);
+            yield return null;
         }
+        if (Loot != null && Loot.Count > 0)
+        {
+            yield return new WaitForSeconds(0.5f);
+            LootUI lootUI = FindAnyObjectByType<LootUI>();
+            if (lootUI != null)
+            {
+                lootUI.SetLootChest(this);
+                lootUI.ToggleLootInventory();
+            }
+        }
+        yield break;
     }
 }
