@@ -132,7 +132,8 @@ public class Enemy : MonoBehaviour, IEntity
         {
             if (isTrap)
             {
-                collision.GetComponent<Health>().TakeDamage(stats.TotalDamage);
+                if (collision.GetComponent<Health>().TakeDamage(stats.TotalDamage))
+                    stats.ApplyOnHitEffects(collision.gameObject);
             }
         }
     }
@@ -163,7 +164,8 @@ public class Enemy : MonoBehaviour, IEntity
     {
         if (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
         {
-            player.GetComponent<Health>().TakeDamage(stats.TotalDamage);
+            if (player.GetComponent<Health>().TakeDamage(stats.TotalDamage))
+                stats.ApplyOnHitEffects(player.gameObject); // Set on-hit values on the enemy's CharacterStats to use
         }
     }
     public float TakeDamage(float _damage)

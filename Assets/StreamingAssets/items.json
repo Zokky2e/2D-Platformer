@@ -116,6 +116,14 @@
         {
           "effectType": "Damage",
           "value": 12
+        },
+        {
+          "effectType": "PoisonDamage",
+          "value": 3
+        },
+        {
+          "effectType": "PoisonDuration",
+          "value": 5
         }
       ],
       "healthEffects": [],
@@ -161,6 +169,14 @@
         {
           "effectType": "Damage",
           "value": 10
+        },
+        {
+          "effectType": "PoisonDamage",
+          "value": 3
+        },
+        {
+          "effectType": "PoisonDuration",
+          "value": 4
         }
       ],
       "healthEffects": [],
@@ -193,6 +209,14 @@
         {
           "effectType": "Damage",
           "value": 8
+        },
+        {
+          "effectType": "PoisonDamage",
+          "value": 4
+        },
+        {
+          "effectType": "PoisonDuration",
+          "value": 6
         }
       ],
       "healthEffects": [],
@@ -236,6 +260,14 @@
         {
           "effectType": "Damage",
           "value": 25
+        },
+        {
+          "effectType": "BurnDamage",
+          "value": 6
+        },
+        {
+          "effectType": "BurnDuration",
+          "value": 3
         }
       ],
       "healthEffects": [],
@@ -294,6 +326,14 @@
         {
           "effectType": "Damage",
           "value": 30
+        },
+        {
+          "effectType": "BleedDamage",
+          "value": 5
+        },
+        {
+          "effectType": "BleedDuration",
+          "value": 4
         }
       ],
       "healthEffects": [],

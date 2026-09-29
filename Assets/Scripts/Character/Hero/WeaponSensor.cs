@@ -16,7 +16,9 @@ class WeaponSensor : MonoBehaviour
         {
             if (player.GetCurrentHeroState() == HeroStates.Attack && !isEnemyHit)
             {
-                collision.GetComponent<Health>()?.TakeDamage(player.stats.TotalDamage);
+                Health target = collision.GetComponent<Health>();
+                if (target != null && target.TakeDamage(player.stats.TotalDamage))
+                    player.stats.ApplyOnHitEffects(collision.gameObject); // Bleed/poison/burn from equipment
                 isEnemyHit = true;
             }
             if (player.GetCurrentHeroState() != HeroStates.Attack)

@@ -112,16 +112,22 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - Animator parameters used: `AnimState`, `Grounded`, `AirSpeedY`, `WallSlide`, `Jump`, `Roll`, `Attack1-3`, `Block`, `IdleBlock`, `Hurt`, `Death`, `Revive`, `noBlood`.
 
 ### Stats, health and damage
-- `CharacterStats` holds base plus bonus values for move speed, jump height, damage and armor, and a `canUseBlock` flag. `TotalJumpHeight` is **unused**; jumping uses `Hero.m_jumpForce`.
+- `CharacterStats` holds base plus bonus values for move speed, jump height, damage and armor, a `canUseBlock` flag, and **on-hit status effects**: `bleed`/`poison`/`burn` `Damage` (per second) and `Duration` (seconds), mostly set by equipment. `TotalJumpHeight` is **unused**; jumping uses `Hero.m_jumpForce`.
 - Armor formula: `damage * (1 - armor / (armor + 50))`, floored (`CalculateDamage`).
-- `Health` has `baseHealth + bonusHealth = MaxHealth`, `CurrentHealth`, and delegates to `IEntity` (`Hero` or `Enemy`) for `IsBlocking`, `TakeDamage` (returns the final damage) and `Die`. I-frames with a red flash and ignored Player/Enemy layer collision **only run when the configured player layer is layer 6** (hard-coded check).
+- `Health` has `baseHealth + bonusHealth = MaxHealth`, `CurrentHealth`, and delegates to `IEntity` (`Hero` or `Enemy`) for `IsBlocking`, `TakeDamage` (returns the final damage) and `Die`. It has three damage paths:
+  - `Health.TakeDamage(float)` **returns whether the hit landed**. A hit doesn't land if it was blocked or rolled through, fully absorbed by armor, landed during i-frames, or the target was already dead.
+  - `TakeStatusDamage` is used for damage over time. It ignores armor, blocking and i-frames, and plays no hurt animation.
+  - `Kill()` is instant death, used for falling out of the level.
+
+  All three end in `ReduceHealth`, which calls `IEntity.Die()` and the virtual `OnDied()` exactly once. `PersistentPlayerHealth` overrides `OnDied` to start the death sequence. I-frames with a red flash and ignored Player/Enemy layer collision **only run when the configured player layer is layer 6** (hard-coded check).
 - Hero `TakeDamage` returns 0 while in Block or Roll.
 - Player defaults: 100 HP, speed 4, damage 15, armor 5. With the starting kit that becomes 120 HP, 20 damage and 30 armor.
 - HUD `Healthbar` reads `PersistentPlayerHealth.Instance` and draws a breakpoint marker every 25 HP (`createBreakpoints`, which is re-run when max HP changes).
-- Death: `PersistentPlayerHealth` waits 2 s, then force-opens the pause menu, whose Respawn button calls `GameRespawn.RespawnPlayer` (fade, full heal, teleport to the checkpoint or the start position). Falling below `GameRespawn.threshold` (−200 in Level0, −15 on the prefab) deals 999 damage.
+- Death: `PersistentPlayerHealth` waits 2 s, then force-opens the pause menu, whose Respawn button calls `GameRespawn.RespawnPlayer` (fade, full heal, teleport to the checkpoint or the start position). Falling below `GameRespawn.threshold` (−200 in Level0, −15 on the prefab) calls `Health.Kill()`.
 
 ### Combat and enemies
-- **Player hits**: the `WeaponSensor` trigger on the `AttackSensor` child damages objects tagged `Enemy` once per attack state, using `stats.TotalDamage`. It flips with the hero's facing direction.
+- **Player hits**: the `WeaponSensor` trigger on the `AttackSensor` child damages objects tagged `Enemy` once per attack state, using `stats.TotalDamage`. It flips with the hero's facing direction. When a hit lands, `CharacterStats.ApplyOnHitEffects` applies the wearer's bleed, poison and burn to the target.
+- **Status effects** (`Health/StatusEffects.cs`) are damage per second for N seconds. They tick once per second, starting one second after the hit, and briefly tint the sprite (red for bleed, green for poison, orange for burn). The component is added to a target the first time it's affected. Each type runs independently, and reapplying one **restarts it with the new values** rather than stacking. It stops when the target dies. Enemies call the same `ApplyOnHitEffects` when their attacks land (the Bandit melee and the spike trap), so giving an enemy's `CharacterStats` bleed or poison values makes its attacks apply them.
 - **Enemy** (`Enemy.cs`) implements `IEntity`:
   - When `isTrap` is true it deals damage on trigger enter (Spiketrap).
   - Otherwise it patrols between `patrolPoints`, chases within `detectionRange`, and attacks within `attackRange` in a loop. Damage lands via the **animation event `DealDamage()`**.
@@ -135,10 +141,10 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - `characterStatsEffects` / `healthEffects`: applied on **equip**, removed on **unequip** (`ApplyEffects` / `RemoveEffects`).
   - `onActivateCharacterStatsEffects` / `onActivateHealthEffects`: applied on **use** (consumables are then removed from the inventory).
 - The JSON `effectType` strings are mapped in `RuntimeItem.Convert*Effects`:
-  - CharacterStats: `Armor`, `Block`, `Damage`, `BleedDamage`, `BleedDuration`.
+  - CharacterStats: `Armor`, `Block`, `Damage`, and `BleedDamage` / `BleedDuration` / `PoisonDamage` / `PoisonDuration` / `BurnDamage` / `BurnDuration`. The last six all map to one `OnHitStatusEffect`.
   - Health: `Health` (max HP), `Heal`.
   - **Unknown types are silently dropped**, for example `Buff` and `Shield` in items 6 and 14.
-- Description placeholders are replaced by each effect's `AdjustDescription`: `{bonusArmor}`, `{bonusDamage}`, `{bonusHealth}`, `{healAmount}`, `{bleedDamage}`, `{bleedDuration}`. `Block` appends a paragraph. Other placeholders in the JSON (`{poisonDamage}`, `{bonusShield}`, `{burnDamage}`, `{bonusMagicPower}`…) aren't implemented and show up raw.
+- Description placeholders are replaced by each effect's `AdjustDescription`: `{bonusArmor}`, `{bonusDamage}`, `{bonusHealth}`, `{healAmount}`, and `{bleed|poison|burn}{Damage|Duration}`. `Block` appends a paragraph. A placeholder is only filled if the item has the matching effect. Still raw: `{bonusShield}` (items 4, 8, 14), `{bonusManaRegen}` (6), `{bonusMagicPower}` (12), `{bonusAgility}` (15) and `{bonusIntellect}` (17), because those stats don't exist.
 - Sprites: `spriteName` is loaded from `Resources/Sprites/<name>`. Names containing `armor`, `clothing` or `potion_red` are looked up as sub-sprites of the `basic_armor`, `basic_clothing` or `potion_red` sprite sheets (for example `basic_clothing_10`). Many JSON items reference sprites that don't exist, which gives them a null icon.
 - `ItemSystem.AddToPlayerInventory(int[])` and `AddAndEquipOnPlayer(int[])` are the helpers for granting items by id.
 - The old ScriptableObject item workflow (`ItemVarients/*` with `CreateAssetMenu`, `ScriptedItems/HealCollectable`, the `Collectable` pickup) still exists alongside the JSON system. New items should go into JSON.
@@ -179,7 +185,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - **Items are saved by `items.json` id.** ScriptableObject items from `ItemVarients/` all report id 0, so they're skipped with a warning. IDs that no longer exist are skipped when loading.
 - **No main menu:** the game always continues the existing save. Quitting in the dungeon resumes in Level0, and the dungeon level stays where it was, so the next run is one level deeper.
 - **New game:** `SaveSystem.StartNewGame()` deletes the save, destroys the game's objects in the DontDestroyOnLoad scene (only roots with game scripts, so package helpers survive), and loads build index 0 (Level0) so everything is rebuilt. The pause menu exposes it as `PauseMenu.OnNewGameClicked()`. **The pause menu has no New Game button yet**; one needs adding in the Editor and wiring to that method.
-- **Editor tools**, under **Tools → Save Game**: *Delete Save File* (with confirmation), *Open Save Folder*, and *Start New Game* (Play mode only). Use *Delete Save File* to test the new-game path, because stopping Play mode doesn't reset the save. A `worldstate.json` in the same folder is left over from the old system and is unused.
+- **Editor tools**, under **Tools → Save Game**: *Delete Save File* (with confirmation), *Open Save Folder*, and *Start New Game* (Play mode only). **Tools → Debug** (Play mode) can give the status effect weapons and 100 gold. Use *Delete Save File* to test the new-game path, because stopping Play mode doesn't reset the save. A `worldstate.json` in the same folder is left over from the old system and is unused.
 - `CameraFollow` lerps toward the player, clamped to `minBounds` and `maxBounds`. The dungeon generator rewrites the bounds as tiles are placed.
 
 ### Procedural dungeon (`LevelGeneration/`)
@@ -221,6 +227,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 ## How to extend
 
 - **Add an item**: append to `items.json` with a unique `id`, a `type` that matches the `ItemType` name (for example `"Weapon"`), a `spriteName` that exists in `Resources/Sprites` (or a sheet sub-sprite), `price`, `isSellable`, and effects. Use only supported `effectType`s, and put the matching `{placeholder}` in the description.
+- **Add a status effect type**: add it to `StatusEffectType`, give it a tint in `StatusEffects.TintFor`, add its damage and duration fields plus the `switch` cases in `CharacterStats` (`AddStatusEffectBonus`, `ApplyOnHitEffects`), and map `<Name>Damage` / `<Name>Duration` in `RuntimeItem.ConvertCharacterStatsEffects`. The tooltip placeholders are `{<name>Damage}` / `{<name>Duration}`, with the name lower-cased.
 - **Add an effect type**: subclass `ItemEffect<CharacterStats>` or `ItemEffect<Health>` in `Items/Effects/` (implement `AdjustDescription`, `ApplyEffect`, `RemoveEffect`, `UseItem`), then add a `case` in `RuntimeItem.ConvertCharacterStatsEffects` / `ConvertHealthEffects`. New stats need fields and `Total*` properties in `CharacterStats`.
 - **Save something new**: add a public field to `PlayerSaveData` (or use `WorldStateManager` flags for quest-style state), fill it in `SaveSystem.CapturePlayer`, and apply it in `SaveSystem.RestorePlayer`. Only use JSON-friendly types (no `Vector3` or Unity objects). Missing fields in older saves load as defaults, but renaming a field loses its data: bump `SaveSystem.CurrentVersion` and migrate instead.
 - **Add an NPC behavior**: subclass `NPCInteractionBehavior` with `[CreateAssetMenu(menuName = "NPC/Behaviors/...")]`, create the asset under `ScriptedItems/NPCBehaviors/<NPC>/`, and assign it to an NPC slot. Use `WorldStateManager` bools with unique, descriptive keys (for example `Merchant_Amulet_Given`) for one-time actions.
@@ -331,9 +338,19 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 
 - [x] `ShowDialogBehavior` and `GiveItemBehavior` cached their world-state flag in public ScriptableObject fields (`HasShownDialog`, `HasGivenItem`). That state is shared by every user of the asset and persists in the Editor. It's now a local, read from `WorldStateManager` each time.
 
+### 12. Status effects
+- [x] **Bleed, poison and burn are real damage over time** (see "Combat and enemies"). Before, `BleedDamage` silently added flat damage, `BleedDuration` did nothing, and the poison and burn weapons had no effect at all. Their tooltips showed raw `{poisonDamage}` / `{burnDamage}`.
+- [x] Weapons whose descriptions promise an effect now have one. The values are tunable in `items.json`:
+  - Elven Longbow: poison 3/s for 5s
+  - Staff of Frostbite: poison 3/s for 4s. The description says poison despite the frost name.
+  - Venomfang Dagger: poison 4/s for 6s
+  - Emberfang: burn 6/s for 3s
+  - Giant's Cleaver: bleed 5/s for 4s
+  - Crimson Blade keeps bleed 5/s for 5s but loses the +5 flat damage the old bleed effect was wrongly adding.
+- [x] Falling out of the level used `TakeDamage(999)`, which blocking, rolling or i-frames could ignore, leaving the player falling forever. It now uses `Health.Kill()`.
+
 ### Needs a design decision (not scheduled)
-- Status effects (bleed, poison, burn) are description text only. `BleedDamage` adds flat damage, and `BleedDuration` does nothing.
-- Many `items.json` entries reference sprites that don't exist, use unsupported effect types (`Buff`, `Shield`), show unfilled `{placeholders}`, or have no price (so they're unsellable).
+- Many `items.json` entries reference sprites that don't exist, use unsupported effect types (`Buff`, `Shield`), show unfilled `{placeholders}` (see Items above), or have no price (so they're unsellable). **None of the bleed, poison or burn weapons (ids 0, 2, 5, 7, 10, 13) can be obtained in-game yet**: the shop only sells potions and the only loot table has potions. Use *Tools → Debug → Give Status Effect Weapons* to test them.
 - `ShopSystem.BuyItem` ignores `ShopItemData.quantity` (infinite stock).
 - Legacy Input Manager: migrate to the Input System package.
 - No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.

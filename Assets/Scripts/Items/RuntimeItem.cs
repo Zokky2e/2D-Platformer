@@ -74,19 +74,36 @@ public class RuntimeItem : Item
                     list.Add(damageEffect);
                     break;
                 case "BleedDamage":
-                    var bleedDamage = ScriptableObject.CreateInstance<BleedDamageEffect>();
-                    bleedDamage.bleedDamage = data.value;
-                    list.Add(bleedDamage);
+                    list.Add(CreateOnHitStatusEffect(StatusEffectType.Bleed, false, data.value));
                     break;
                 case "BleedDuration":
-                    var bleedDuration = ScriptableObject.CreateInstance<BleedDurationEffect>();
-                    bleedDuration.bleedDuration = data.value;
-                    list.Add(bleedDuration);
+                    list.Add(CreateOnHitStatusEffect(StatusEffectType.Bleed, true, data.value));
+                    break;
+                case "PoisonDamage":
+                    list.Add(CreateOnHitStatusEffect(StatusEffectType.Poison, false, data.value));
+                    break;
+                case "PoisonDuration":
+                    list.Add(CreateOnHitStatusEffect(StatusEffectType.Poison, true, data.value));
+                    break;
+                case "BurnDamage":
+                    list.Add(CreateOnHitStatusEffect(StatusEffectType.Burn, false, data.value));
+                    break;
+                case "BurnDuration":
+                    list.Add(CreateOnHitStatusEffect(StatusEffectType.Burn, true, data.value));
                     break;
                     // Add more CharacterStats-based effects here
             }
         }
         return list;
+    }
+
+    private static OnHitStatusEffect CreateOnHitStatusEffect(StatusEffectType type, bool isDuration, float value)
+    {
+        var effect = ScriptableObject.CreateInstance<OnHitStatusEffect>();
+        effect.statusType = type;
+        effect.isDuration = isDuration;
+        effect.value = value;
+        return effect;
     }
 
     private List<ItemEffect<Health>> ConvertHealthEffects(List<EffectData> effectDataList)

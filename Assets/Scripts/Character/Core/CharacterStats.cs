@@ -16,6 +16,14 @@ public class CharacterStats : MonoBehaviour
     public float bonusDamage = 0f;
     public float bonusArmor = 0f;
 
+    [Header("On-hit Status Effects")] // Damage per second and duration in seconds, mostly from equipment
+    public float bleedDamage = 0f;
+    public float bleedDuration = 0f;
+    public float poisonDamage = 0f;
+    public float poisonDuration = 0f;
+    public float burnDamage = 0f;
+    public float burnDuration = 0f;
+
     [HideInInspector] public bool canUseBlock = false;
 
 
@@ -28,6 +36,30 @@ public class CharacterStats : MonoBehaviour
     public void AddBonusJumpHeight(float amount) => bonusJumpHeight += amount;
     public void AddBonusDamage(float amount) => bonusDamage += amount;
     public void AddBonusArmor(float amount) => bonusArmor += amount;
+    public void AddStatusEffectBonus(StatusEffectType type, bool isDuration, float amount)
+    {
+        switch (type)
+        {
+            case StatusEffectType.Bleed:
+                if (isDuration) bleedDuration += amount; else bleedDamage += amount;
+                break;
+            case StatusEffectType.Poison:
+                if (isDuration) poisonDuration += amount; else poisonDamage += amount;
+                break;
+            case StatusEffectType.Burn:
+                if (isDuration) burnDuration += amount; else burnDamage += amount;
+                break;
+        }
+    }
+
+    // Applies this character's on-hit effects to something it just hit
+    public void ApplyOnHitEffects(GameObject target)
+    {
+        StatusEffects.Apply(target, StatusEffectType.Bleed, bleedDamage, bleedDuration);
+        StatusEffects.Apply(target, StatusEffectType.Poison, poisonDamage, poisonDuration);
+        StatusEffects.Apply(target, StatusEffectType.Burn, burnDamage, burnDuration);
+    }
+
     public float CalculateDamage(float _damage) => 
         Mathf.Floor(_damage * (1 - (TotalArmor / (TotalArmor + balancingArmorConstant))));
     public void ResetBonuses()
