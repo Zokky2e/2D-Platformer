@@ -20,7 +20,7 @@ public class PauseMenu : Singleton<PauseMenu>
 
     private void Update()
     {
-        if (!CoreUI.IsUIOpen && Input.GetKeyDown(KeyCode.Escape))
+        if (!CoreUI.IsUIOpen && GameInput.CancelPressed)
         {
             CheckForPause();
         }

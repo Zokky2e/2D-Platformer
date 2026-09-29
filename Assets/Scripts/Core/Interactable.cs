@@ -59,7 +59,7 @@ public class Interactable : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isPlayerNearby && !DialogSystem.Instance.DialogActive && !DialogSystem.Instance.InputConsumedThisFrame && Input.GetKeyDown(KeyCode.E))
+        if (isPlayerNearby && !DialogSystem.Instance.DialogActive && !DialogSystem.Instance.InputConsumedThisFrame && GameInput.InteractPressed)
         {
             onInteract?.Invoke(); // Execute the assigned interaction action
         }

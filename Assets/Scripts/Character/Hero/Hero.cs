@@ -176,7 +176,7 @@ public class Hero : MonoBehaviour, IEntity {
         }
         handleInput();
         // -- Handle input and movement --
-        m_horizontalInput = Input.GetAxis("Horizontal");
+        m_horizontalInput = GameInput.Horizontal;
         // Swap direction of sprite depending on walk direction
         if (m_horizontalInput > 0)
         {

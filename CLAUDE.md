@@ -26,7 +26,7 @@ Every trip into `RoomGenerator` builds a fresh dungeon, and `DungeonManager.Dung
 
 - **Unity `6000.6.3f1`**. The project was upgraded from `6000.0.33f1` on 2026-09-29 (see "Unity 6000.6 upgrade notes" below). URP is 17.6 and always uses Render Graph, because the old compatibility mode was removed.
 - **URP 2D** renderer (`Assets/Settings`, `UniversalRenderPipelineGlobalSettings.asset`), linear color space, default resolution 1920x1080.
-- **Input**: all gameplay code uses the **legacy `UnityEngine.Input`** API (`Input.GetKeyDown`, `Input.GetAxis("Horizontal")`). `activeInputHandler: 2` (Both) must stay enabled. Unity 6000.6 logs "Input Manager is marked for deprecation" on startup, so migrating to the Input System package is future work. `Assets/InputSystem_Actions.inputactions` exists but nothing uses it.
+- **Input**: the **Input System package** (1.20). Gameplay reads every control through the static `Core/GameInput` class (keyboard and mouse device API), and UI goes through the EventSystem's `InputSystemUIInputModule` in `UI.prefab`. **Never call `UnityEngine.Input` in game code**; add a property to `GameInput` instead. `activeInputHandler` is still `2` (Both) until the migration is play-tested. After that, set *Player Settings → Active Input Handling* to *Input System Package (New)*, which also silences Unity 6000.6's "Input Manager is marked for deprecation" message. Only unused vendor demo scripts (`HeroKnight.cs`, `Bandit.cs`) still call the old API. `Assets/InputSystem_Actions.inputactions` exists but nothing uses it.
 - **Key packages**: `com.unity.nuget.newtonsoft-json` (item DB and save file), `com.unity.2d.*`, `com.unity.ugui` + TextMeshPro, UI Toolkit, `com.unity.behavior` and `com.unity.ai.navigation` (installed but unused).
 - **SuperTiled2Unity** is an **embedded package** at `Packages/com.seanba.super-tiled2unity/`. It imports Tiled `.tmx` maps as prefabs. The dungeon generator depends on its `SuperMap` type. It is committed to git, so a fresh clone compiles.
 - IDE: Visual Studio or Rider. `*.sln` and `*.csproj` are generated and git-ignored.
@@ -74,10 +74,10 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - **Always enter Play mode from `Level0`.** The player, HUD, dialog canvas, pause menu, inventory/shop/loot UIs, fade canvas, `ItemDatabase` and `WorldStateManager` only exist in Level0 and survive into the dungeon through `DontDestroyOnLoad`. `RoomGenerator` has only the generator, camera and HUD, so starting there logs "Player not found" and `Singleton` getters create empty components that throw null-reference errors.
 - Level0 contains the village tilemap (`village.tmx`, 32x16 tiles), the Town Merchant, a loot chest, a Respawn Stone checkpoint, tutorial signs, and an `ExitPoint` whose `nextSceneName` is `RoomGenerator`.
 
-### Controls (all hard-coded in scripts)
+### Controls (all defined in `Core/GameInput.cs`)
 | Input | Action | Where |
 |---|---|---|
-| A/D, arrow keys | Move | `Hero.Update` (`Input.GetAxis("Horizontal")`) |
+| A/D, arrow keys | Move, smoothed like the old `Input.GetAxis` (ramps at 3/s, snaps to 0 on reversing) | `Hero.Update` (`GameInput.Horizontal`) |
 | Space | Jump / wall jump | `IdleState` → `JumpingState` |
 | Left Shift | Roll (damage immune while rolling) | `RollingState` |
 | Left mouse | Attack (3-hit combo `Attack1..3`); also advances dialog | `AttackingState`, `DialogSystem` |
@@ -410,8 +410,13 @@ Design choice (made by the user): a Bandit Chief built from the existing Bandit 
 - [x] Patrol with no patrol points left the enemy playing its run animation after a chase.
 - The prefab and room edits were made in YAML. **Open `bossRoom` and `BanditChief` in the Editor to check placement**: the boss is at local (8, -10.9) and the chest at (5.5, -11.06), on the corridor floor.
 
+### 17. Input System migration (branch `input-system`)
+Design choice (made by the user): migrate with the same keys and feel, no gamepad yet.
+- [x] `GameInput` replaces all 13 legacy `Input` calls in `Hero`, `HeroState`, `DialogSystem`, `Interactable`, `PauseMenu` and the inventory, shop and loot UIs. `Horizontal` reproduces the Input Manager's smoothing (sensitivity 3, gravity 3, snap, dead zone 0.001) from `ProjectSettings/InputManager.asset`.
+- [x] Blocking now ends whenever the right button isn't held, instead of on the frame it's released, so a release missed during a skipped frame can't leave the hero stuck blocking.
+- [ ] **For the user:** play-test movement feel, then switch *Active Input Handling* to *Input System Package (New)*. Gamepad support means adding bindings to `GameInput`'s properties (for example `Gamepad.current?.buttonSouth`).
+
 ### Needs a design decision (not scheduled)
-- Legacy Input Manager: migrate to the Input System package.
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
 - More bosses, or boss attack patterns. The Monsters Creatures Fantasy pack only has single-animation controllers, so its creatures need attack, hurt and death animators built first.
 - Consider Git LFS for binary art before committing more vendor packs.

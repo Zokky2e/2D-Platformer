@@ -38,12 +38,12 @@ public class InventoryUI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!PauseMenu.GameIsPaused && !isOpen && Input.GetKeyDown(KeyCode.I))
+        if (!PauseMenu.GameIsPaused && !isOpen && GameInput.InventoryPressed)
         {
             ToggleInventory();
         }
 
-        if (isOpen && Input.GetKeyDown(KeyCode.Escape)) 
+        if (isOpen && GameInput.CancelPressed) 
         {
             ToggleInventory();
         }

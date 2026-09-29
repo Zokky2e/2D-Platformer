@@ -42,7 +42,7 @@ public class ShopUI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
+        if (isOpen && GameInput.CancelPressed)
         {
             ToggleShopInventory();
         }

@@ -84,7 +84,7 @@ public class DialogSystem : Singleton<DialogSystem>
 
     private void Update()
     {
-        if (dialogActive && !InputConsumedThisFrame && (Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0)))
+        if (dialogActive && !InputConsumedThisFrame && GameInput.AdvanceDialogPressed)
         {
             if (isTyping)
             {

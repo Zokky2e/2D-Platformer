@@ -34,7 +34,7 @@ public class HeroState
 
     public bool IsAttacking()
     {
-        return Input.GetMouseButtonDown(0);
+        return GameInput.AttackPressed;
     }
 }
 
@@ -48,22 +48,22 @@ public class IdleState : HeroState
         {
             return new DeadState();
         }
-        if (Input.GetKeyDown("space"))
+        if (GameInput.JumpPressed)
         {
             return new JumpingState();
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (GameInput.AttackPressed)
         {
             return new AttackingState();
         }
 
-        if (Input.GetMouseButtonDown(1) && hero.stats.canUseBlock)
+        if (GameInput.BlockPressed && hero.stats.canUseBlock)
         {
             return new BlockingState();
         }
 
-        if (Input.GetKeyDown("left shift"))
+        if (GameInput.RollPressed)
         {
             return new RollingState();
         }
@@ -110,7 +110,7 @@ public class JumpingState : HeroState
             }
                 m_body2d.gravityScale = hero.Gravity;
         }
-        else if (Input.GetKeyDown("space"))
+        else if (GameInput.JumpPressed)
         {
             Jump();
         }
@@ -213,7 +213,7 @@ public class BlockingState : HeroState
     public BlockingState() : base(HeroStates.Block) { }
     override public HeroState handleInput()
     {
-        if (Input.GetMouseButtonUp(1))
+        if (!GameInput.BlockHeld) // Not "released this frame", which a skipped frame could miss
         {
             m_animator.SetBool(AnimatorParams.IdleBlock, false);
             return new IdleState();
