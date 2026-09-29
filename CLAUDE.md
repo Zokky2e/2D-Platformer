@@ -154,7 +154,9 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - An effect entry can have an optional `"duration"` in seconds. Only `TemporaryShield` uses it so far.
   - **Unknown types, or types in a list the loader doesn't read for them, are silently dropped.** Check new data against this list.
 - Description placeholders are replaced by each effect's `AdjustDescription`: `{bonusArmor}`, `{bonusDamage}`, `{bonusHealth}`, `{healAmount}`, `{bonusShield}`, `{shieldDuration}`, `{bonusMagicPower}`, `{bonusAgility}`, `{bonusMana}`, `{bonusManaRegen}`, `{restoreMana}`, and `{bleed|poison|burn}{Damage|Duration}`. `Block` appends a paragraph. A placeholder is only filled if the item has the matching effect. As of 2026-09-29 every placeholder in `items.json` resolves.
-- Sprites: `spriteName` is loaded from `Resources/Sprites/<name>`. Names containing `armor`, `clothing` or `potion_red` are looked up as sub-sprites of the `basic_armor`, `basic_clothing` or `potion_red` sprite sheets (for example `basic_clothing_10`). Many JSON items reference sprites that don't exist, which gives them a null icon.
+- Sprites: `spriteName` is loaded as `Resources/Sprites/<name>`. If there's no such file, it's taken as sub-sprite `<sheet>_<n>` of the sheet `Resources/Sprites/<sheet>`, for example `basic_clothing_10`. A missing sprite logs a warning.
+  - **New icons:** as of 2026-09-29 every item has one. The 14 previously missing icons were copied from the `RPG Icons Pixel Art` pack (`<Category>/PNG/Transperent/IconN.png`) into `Resources/Sprites` under the item's `spriteName`.
+  - **Import settings for new icons:** Point filter, no compression, new GUID, matching the other item icons. Import new icons the same way; the pack's own settings blur pixel art.
 - `ItemSystem.AddToPlayerInventory(int[])` and `AddAndEquipOnPlayer(int[])` are the helpers for granting items by id.
 - The old ScriptableObject item workflow (`ItemVarients/*` with `CreateAssetMenu`, `ScriptedItems/HealCollectable`, the `Collectable` pickup) still exists alongside the JSON system. New items should go into JSON.
 - Economy: shop sell price is `floor(price * 0.6)`. The player starts with 50 gold (`InventorySystem.gold`).
@@ -376,7 +378,6 @@ Design choices (made by the user): shield is an absorbing barrier, there's a man
 
 ### Needs a design decision (not scheduled)
 - **Item content:**
-  - Many `items.json` entries reference sprites that don't exist, which gives them a null icon.
   - Most items have no price, which makes them unsellable and free in a shop.
   - **Only items 18–21 can be obtained in-game**: the starting kit, the shop potions, the chest potions, and the merchant's amulet. Everything else, including the status effect weapons, shields, mana and agility gear, needs a place in the shop or in loot tables.
   - Use *Tools → Debug → Give All Items* to test in the meantime.

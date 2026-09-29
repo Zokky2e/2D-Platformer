@@ -22,34 +22,17 @@ public class RuntimeItem : Item
 
     private void SetSprite(ItemData data)
     {
-        List<Sprite> allSprites = new();
-        if (data.spriteName.Contains("armor"))
+        // A standalone sprite in Resources/Sprites (e.g. weapon_elven_bow), or a sub-sprite "<sheet>_<n>" of a
+        // sprite sheet there (e.g. basic_clothing_10 in basic_clothing)
+        _sprite = Resources.Load<Sprite>($"Sprites/{data.spriteName}");
+        int split = data.spriteName.LastIndexOf('_');
+        if (_sprite == null && split > 0)
         {
-            allSprites = Resources.LoadAll<Sprite>("Sprites/basic_armor").ToList();
+            string sheet = data.spriteName.Substring(0, split);
+            _sprite = Resources.LoadAll<Sprite>($"Sprites/{sheet}").FirstOrDefault(sprite => sprite.name == data.spriteName);
         }
-        else if (data.spriteName.Contains("clothing"))
-        {
-            allSprites = Resources.LoadAll<Sprite>("Sprites/basic_clothing").ToList();
-        }
-        else if (data.spriteName.Contains("potion_red"))
-        {
-            allSprites = Resources.LoadAll<Sprite>("Sprites/potion_red").ToList();
-        }
-
-        if (allSprites.Count > 0)
-        {
-            foreach (Sprite sprite in allSprites)
-            {
-                if (sprite.name == data.spriteName)
-                {
-                    _sprite = sprite;
-                }
-            }
-        }
-        else
-        {
-            _sprite = Resources.Load<Sprite>($"Sprites/{data.spriteName}");
-        }
+        if (_sprite == null)
+            Debug.LogWarning($"Item '{data.name}' has no sprite '{data.spriteName}' in Resources/Sprites");
     }
 
     private List<ItemEffect<CharacterStats>> ConvertCharacterStatsEffects(List<EffectData> effectDataList)
