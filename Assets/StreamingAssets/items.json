@@ -155,7 +155,12 @@
       "characterStatsEffects": [
         { "effectType": "Block" }
       ],
-      "healthEffects": [],
+      "healthEffects": [
+        {
+          "effectType": "Shield",
+          "value": 20
+        }
+      ],
       "onActivateCharacterStatsEffects": [],
       "onActivateHealthEffects": []
     },
@@ -186,15 +191,15 @@
     {
       "id": 6,
       "name": "Mana Vial",
-      "description": "{bonusManaRegen} Mana Regen\n\nA quick sip to awaken your mind.",
+      "description": "{restoreMana} Mana\n\nA quick sip to awaken your mind.",
       "type": "Consumable",
       "spriteName": "potion_mana",
       "characterStatsEffects": [],
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [
         {
-          "effectType": "Buff",
-          "value": 10
+          "effectType": "RestoreMana",
+          "value": 30
         }
       ],
       "onActivateHealthEffects": []
@@ -230,7 +235,12 @@
       "type": "Accessory",
       "spriteName": "accessory_ring_guardian",
       "characterStatsEffects": [],
-      "healthEffects": [],
+      "healthEffects": [
+        {
+          "effectType": "Shield",
+          "value": 15
+        }
+      ],
       "onActivateCharacterStatsEffects": [],
       "onActivateHealthEffects": []
     },
@@ -305,6 +315,10 @@
         {
           "effectType": "Armor",
           "value": 2
+        },
+        {
+          "effectType": "MagicPower",
+          "value": 10
         }
       ],
       "healthEffects": [
@@ -343,18 +357,19 @@
     {
       "id": 14,
       "name": "Potion of Invincibility",
-      "description": "{bonusShield} Bonus Shield\n\nLiquid courage in its purest form.",
+      "description": "{bonusShield} Shield for {shieldDuration}s\n\nLiquid courage in its purest form.",
       "type": "Consumable",
       "spriteName": "potion_invincibility",
       "characterStatsEffects": [],
       "healthEffects": [],
-      "onActivateCharacterStatsEffects": [
+      "onActivateCharacterStatsEffects": [],
+      "onActivateHealthEffects": [
         {
-          "effectType": "Shield",
-          "value": 999
+          "effectType": "TemporaryShield",
+          "value": 999,
+          "duration": 10
         }
-      ],
-      "onActivateHealthEffects": []
+      ]
     },
     {
       "id": 15,
@@ -366,6 +381,10 @@
         {
           "effectType": "Armor",
           "value": 2
+        },
+        {
+          "effectType": "Agility",
+          "value": 5
         }
       ],
       "healthEffects": [
@@ -396,10 +415,19 @@
     {
       "id": 17,
       "name": "Ring of Wisdom",
-      "description": "{bonusIntellect} Bonus Intellect\n\nA ring that hums with forgotten knowledge.",
+      "description": "{bonusMana} Max Mana\n{bonusManaRegen} Mana Regen per second\n\nA ring that hums with forgotten knowledge.",
       "type": "Accessory",
       "spriteName": "accessory_ring_wisdom",
-      "characterStatsEffects": [],
+      "characterStatsEffects": [
+        {
+          "effectType": "Mana",
+          "value": 25
+        },
+        {
+          "effectType": "ManaRegen",
+          "value": 1
+        }
+      ],
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [],
       "onActivateHealthEffects": []

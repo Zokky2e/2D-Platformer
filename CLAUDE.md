@@ -112,17 +112,25 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - Animator parameters used: `AnimState`, `Grounded`, `AirSpeedY`, `WallSlide`, `Jump`, `Roll`, `Attack1-3`, `Block`, `IdleBlock`, `Hurt`, `Death`, `Revive`, `noBlood`.
 
 ### Stats, health and damage
-- `CharacterStats` holds base plus bonus values for move speed, jump height, damage and armor, a `canUseBlock` flag, and **on-hit status effects**: `bleed`/`poison`/`burn` `Damage` (per second) and `Duration` (seconds), mostly set by equipment. `TotalJumpHeight` is **unused**; jumping uses `Hero.m_jumpForce`.
+- `CharacterStats` holds base plus bonus values for move speed, jump height, damage, armor and **magic power** (unused until spells exist). It also has **agility**, where each point adds `MoveSpeedPerAgility` (0.1) to move speed, a `canUseBlock` flag, and **on-hit status effects**: `bleed`/`poison`/`burn` `Damage` (per second) and `Duration` (seconds), mostly set by equipment. `TotalJumpHeight` is **unused**; jumping uses `Hero.m_jumpForce`.
 - Armor formula: `damage * (1 - armor / (armor + 50))`, floored (`CalculateDamage`).
 - `Health` has `baseHealth + bonusHealth = MaxHealth`, `CurrentHealth`, and delegates to `IEntity` (`Hero` or `Enemy`) for `IsBlocking`, `TakeDamage` (returns the final damage) and `Die`. It has three damage paths:
   - `Health.TakeDamage(float)` **returns whether the hit landed**. A hit doesn't land if it was blocked or rolled through, fully absorbed by armor, landed during i-frames, or the target was already dead.
   - `TakeStatusDamage` is used for damage over time. It ignores armor, blocking and i-frames, and plays no hurt animation.
   - `Kill()` is instant death, used for falling out of the level.
 
-  All three end in `ReduceHealth`, which calls `IEntity.Die()` and the virtual `OnDied()` exactly once. `PersistentPlayerHealth` overrides `OnDied` to start the death sequence. I-frames with a red flash and ignored Player/Enemy layer collision **only run when the configured player layer is layer 6** (hard-coded check).
+  All three end in `ReduceHealth`, which calls `IEntity.Die()` and the virtual `OnDied()` exactly once. `PersistentPlayerHealth` overrides `OnDied` to start the death sequence.
+- **Shield** (in `Health`) soaks damage before HP. Hit damage is absorbed after armor, and damage over time goes through the shield too. There are two pools:
+  - The **recharging shield** goes up to `MaxShield = baseShield + bonusShield`. Equipment adds to `bonusShield`. It refills at `shieldRechargeRate` (10/s) once no damage has come in for `shieldRechargeDelay` (3 s).
+  - The **temporary shield** comes from consumables (`AddTemporaryShield(amount, duration)`), doesn't recharge, and expires after its duration. The timer uses scaled time, so it doesn't run while menus are open.
+
+  A hit that's fully absorbed counts as not landed, so it applies no on-hit effects.
+- **Mana** (`Health/Mana.cs`) is a component the hero adds to itself in `Start` (it isn't on the prefab yet). It has `MaxMana = baseMana (50) + bonusMana` and regenerates `baseManaRegen (1) + bonusManaRegen` per second. It's a foundation only: nothing spends mana yet. Spells should call `TrySpend` and scale with `CharacterStats.TotalMagicPower`.
+- I-frames with a red flash and ignored Player/Enemy layer collision **only run when the configured player layer is layer 6** (hard-coded check).
 - Hero `TakeDamage` returns 0 while in Block or Roll.
 - Player defaults: 100 HP, speed 4, damage 15, armor 5. With the starting kit that becomes 120 HP, 20 damage and 30 armor.
-- HUD `Healthbar` reads `PersistentPlayerHealth.Instance` and draws a breakpoint marker every 25 HP (`createBreakpoints`, which is re-run when max HP changes).
+- HUD `Healthbar` reads `PersistentPlayerHealth.Instance` and draws a breakpoint marker every 25 HP (`createBreakpoints`, which is re-run when max HP changes). The HP text shows the shield as `95 (+30)`.
+- **The mana bar is created in code.** In `Start`, the HUD's health bar (`resource = Health`, no `entityHealth`) clones itself right below as a `resource = Mana` bar with the blue fill (`manaFillSprite`, which is Violet's `Progress Bar Blue_0`, set in `UI.prefab`). There's no mana bar object in any prefab. To restyle or move it, change the clone code in `Healthbar.CreateManaBar`, or turn off `spawnManaBar` and build one in the Editor.
 - Death: `PersistentPlayerHealth` waits 2 s, then force-opens the pause menu, whose Respawn button calls `GameRespawn.RespawnPlayer` (fade, full heal, teleport to the checkpoint or the start position). Falling below `GameRespawn.threshold` (−200 in Level0, −15 on the prefab) calls `Health.Kill()`.
 
 ### Combat and enemies
@@ -141,10 +149,11 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - `characterStatsEffects` / `healthEffects`: applied on **equip**, removed on **unequip** (`ApplyEffects` / `RemoveEffects`).
   - `onActivateCharacterStatsEffects` / `onActivateHealthEffects`: applied on **use** (consumables are then removed from the inventory).
 - The JSON `effectType` strings are mapped in `RuntimeItem.Convert*Effects`:
-  - CharacterStats: `Armor`, `Block`, `Damage`, and `BleedDamage` / `BleedDuration` / `PoisonDamage` / `PoisonDuration` / `BurnDamage` / `BurnDuration`. The last six all map to one `OnHitStatusEffect`.
-  - Health: `Health` (max HP), `Heal`.
-  - **Unknown types are silently dropped**, for example `Buff` and `Shield` in items 6 and 14.
-- Description placeholders are replaced by each effect's `AdjustDescription`: `{bonusArmor}`, `{bonusDamage}`, `{bonusHealth}`, `{healAmount}`, and `{bleed|poison|burn}{Damage|Duration}`. `Block` appends a paragraph. A placeholder is only filled if the item has the matching effect. Still raw: `{bonusShield}` (items 4, 8, 14), `{bonusManaRegen}` (6), `{bonusMagicPower}` (12), `{bonusAgility}` (15) and `{bonusIntellect}` (17), because those stats don't exist.
+  - CharacterStats lists: `Armor`, `Block`, `Damage`, `MagicPower`, `Agility`, `Mana` (max), `ManaRegen`, `RestoreMana` (consumables), and `{Bleed,Poison,Burn}{Damage,Duration}`, which all map to one `OnHitStatusEffect`.
+  - Health lists: `Health` (max HP), `Heal`, `Shield` (equipment, recharging) and `TemporaryShield` (consumables). The last two are one `ShieldEffect`.
+  - An effect entry can have an optional `"duration"` in seconds. Only `TemporaryShield` uses it so far.
+  - **Unknown types, or types in a list the loader doesn't read for them, are silently dropped.** Check new data against this list.
+- Description placeholders are replaced by each effect's `AdjustDescription`: `{bonusArmor}`, `{bonusDamage}`, `{bonusHealth}`, `{healAmount}`, `{bonusShield}`, `{shieldDuration}`, `{bonusMagicPower}`, `{bonusAgility}`, `{bonusMana}`, `{bonusManaRegen}`, `{restoreMana}`, and `{bleed|poison|burn}{Damage|Duration}`. `Block` appends a paragraph. A placeholder is only filled if the item has the matching effect. As of 2026-09-29 every placeholder in `items.json` resolves.
 - Sprites: `spriteName` is loaded from `Resources/Sprites/<name>`. Names containing `armor`, `clothing` or `potion_red` are looked up as sub-sprites of the `basic_armor`, `basic_clothing` or `potion_red` sprite sheets (for example `basic_clothing_10`). Many JSON items reference sprites that don't exist, which gives them a null icon.
 - `ItemSystem.AddToPlayerInventory(int[])` and `AddAndEquipOnPlayer(int[])` are the helpers for granting items by id.
 - The old ScriptableObject item workflow (`ItemVarients/*` with `CreateAssetMenu`, `ScriptedItems/HealCollectable`, the `Collectable` pickup) still exists alongside the JSON system. New items should go into JSON.
@@ -178,14 +187,14 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - `RespawnCheckpoint` (`Prefabs/Environment/Respawn Stone.prefab`) records a checkpoint in `GameRespawn` on interaction, saves the game, and shows a dialog. `GameRespawn` keeps the checkpoint as **scene name plus position**, so it survives dungeon trips and save/load. Respawning uses the checkpoint while that scene is loaded, and otherwise the scene's `EntryPoint`.
 
 ### Save and load (`Core/SaveSystem/`)
-- **What's saved:** `SaveSystem` writes `savegame.json` to `Application.persistentDataPath`. It holds the `SaveData` version, the world flags, and `PlayerSaveData`: gold, current HP, dungeon level, the IDs of equipped and inventory items, and the last checkpoint.
+- **What's saved:** `SaveSystem` writes `savegame.json` to `Application.persistentDataPath`. It holds the `SaveData` version, the world flags, and `PlayerSaveData`: gold, current HP, dungeon level, current mana (nullable, because older saves lack it), the IDs of equipped and inventory items, and the last checkpoint. The shield isn't saved; it starts full and recharges.
 - **When it saves:** at checkpoints, on every scene change (`LevelTransition`, `DungeonGenerator.SpawnPlayer`), and on Quit from the pause menu. It does **not** save when Play mode stops, so editor sessions don't overwrite the save.
 - **Writing is safe:** it writes a `.tmp` file and then `File.Replace`s the real one. An unreadable save is copied to `savegame.json.corrupt` and the game starts fresh.
 - **Loading:** the file is read once, when `SaveSystem` is first created (from `WorldStateManager.Awake` during Level0's load). `Hero.Start` then calls `SaveSystem.RestorePlayer`. That equips the saved gear *before* filling the inventory, because `EquipItem` removes the item from the inventory and would take a spare copy. It sets HP after equipping (so bonuses count) and moves the player to the checkpoint when it's in the current scene. **With no save, `Hero.Start` grants the starting kit** at full health.
 - **Items are saved by `items.json` id.** ScriptableObject items from `ItemVarients/` all report id 0, so they're skipped with a warning. IDs that no longer exist are skipped when loading.
 - **No main menu:** the game always continues the existing save. Quitting in the dungeon resumes in Level0, and the dungeon level stays where it was, so the next run is one level deeper.
 - **New game:** `SaveSystem.StartNewGame()` deletes the save, destroys the game's objects in the DontDestroyOnLoad scene (only roots with game scripts, so package helpers survive), and loads build index 0 (Level0) so everything is rebuilt. The pause menu exposes it as `PauseMenu.OnNewGameClicked()`. **The pause menu has no New Game button yet**; one needs adding in the Editor and wiring to that method.
-- **Editor tools**, under **Tools → Save Game**: *Delete Save File* (with confirmation), *Open Save Folder*, and *Start New Game* (Play mode only). **Tools → Debug** (Play mode) can give the status effect weapons and 100 gold. Use *Delete Save File* to test the new-game path, because stopping Play mode doesn't reset the save. A `worldstate.json` in the same folder is left over from the old system and is unused.
+- **Editor tools**, under **Tools → Save Game**: *Delete Save File* (with confirmation), *Open Save Folder*, and *Start New Game* (Play mode only). **Tools → Debug** (Play mode) can give the status effect weapons, all items, and 100 gold. Use *Delete Save File* to test the new-game path, because stopping Play mode doesn't reset the save. A `worldstate.json` in the same folder is left over from the old system and is unused.
 - `CameraFollow` lerps toward the player, clamped to `minBounds` and `maxBounds`. The dungeon generator rewrites the bounds as tiles are placed.
 
 ### Procedural dungeon (`LevelGeneration/`)
@@ -349,8 +358,28 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
   - Crimson Blade keeps bleed 5/s for 5s but loses the +5 flat damage the old bleed effect was wrongly adding.
 - [x] Falling out of the level used `TakeDamage(999)`, which blocking, rolling or i-frames could ignore, leaving the player falling forever. It now uses `Health.Kill()`.
 
+### 13. Shield, mana and agility effects
+Design choices (made by the user): shield is an absorbing barrier, there's a mana foundation without spells, and agility means move speed.
+- [x] Shield in `Health`: a recharging shield from equipment plus a temporary shield from consumables. The HUD shows it in the HP text.
+- [x] `Mana` component, magic power stat, and an HUD mana bar cloned from the health bar. Mana is saved.
+- [x] Agility stat, which adds move speed.
+- [x] Item data, all tunable in `items.json`:
+  - Oakwood Shield: +20 shield
+  - Guardian Ring: +15 shield
+  - Potion of Invincibility: 999 temporary shield for 10s (moved from the stats list, where it was ignored)
+  - Mana Vial: the unsupported `Buff` became *restore 30 mana*
+  - Arcane Robe: +10 magic power
+  - Thief's Gloves: +5 agility
+  - Ring of Wisdom: "intellect" became +25 max mana and +1 mana/s
+
+  The Mana Vial and Ring of Wisdom descriptions were reworded to match.
+
 ### Needs a design decision (not scheduled)
-- Many `items.json` entries reference sprites that don't exist, use unsupported effect types (`Buff`, `Shield`), show unfilled `{placeholders}` (see Items above), or have no price (so they're unsellable). **None of the bleed, poison or burn weapons (ids 0, 2, 5, 7, 10, 13) can be obtained in-game yet**: the shop only sells potions and the only loot table has potions. Use *Tools → Debug → Give Status Effect Weapons* to test them.
+- **Item content:**
+  - Many `items.json` entries reference sprites that don't exist, which gives them a null icon.
+  - Most items have no price, which makes them unsellable and free in a shop.
+  - **Only items 18–21 can be obtained in-game**: the starting kit, the shop potions, the chest potions, and the merchant's amulet. Everything else, including the status effect weapons, shields, mana and agility gear, needs a place in the shop or in loot tables.
+  - Use *Tools → Debug → Give All Items* to test in the meantime.
 - `ShopSystem.BuyItem` ignores `ShopItemData.quantity` (infinite stock).
 - Legacy Input Manager: migrate to the Input System package.
 - No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.

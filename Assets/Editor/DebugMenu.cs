@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,6 +17,17 @@ public static class DebugMenu
 
     [MenuItem("Tools/Debug/Give Status Effect Weapons", true)]
     private static bool CanGiveStatusEffectWeapons() => Application.isPlaying;
+
+    [MenuItem("Tools/Debug/Give All Items")]
+    private static void GiveAllItems()
+    {
+        int[] ids = ItemDatabase.Instance.AllItems.Select(item => item.Id).ToArray();
+        ItemSystem.Instance.AddToPlayerInventory(ids);
+        Debug.Log($"Added all {ids.Length} items to the inventory");
+    }
+
+    [MenuItem("Tools/Debug/Give All Items", true)]
+    private static bool CanGiveAllItems() => Application.isPlaying;
 
     [MenuItem("Tools/Debug/Give 100 Gold")]
     private static void GiveGold()
