@@ -19,4 +19,15 @@ MonoBehaviour:
     quantity: -1
   - itemId: 20
     quantity: -1
-  items: []
+  - itemId: 11
+    quantity: 1
+  - itemId: 15
+    quantity: 1
+  - itemId: 4
+    quantity: 1
+  - itemId: 3
+    quantity: 1
+  - itemId: 7
+    quantity: 1
+  - itemId: 2
+    quantity: 1

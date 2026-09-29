@@ -164,7 +164,9 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 ### Inventory, equipment, shop, loot
 - `InventorySystem` (list of `Item` + gold, event `onInventoryChanged`) and `EquipmentSystem` (four slots: weapon, shield, armor, accessory; event `OnEquipmentChanged`) both live on `Prefabs/InterfaceGraphics/InventoryGraphics/InventoryManager.prefab`.
 - Clicking an item in the inventory equips it (swapping the old item back into the inventory) or uses it if it's a consumable. Clicking an equipment slot unequips.
-- **Shop**: an NPC's `OpenShopBehavior` hands a `ShopInventory` asset (item ids + quantity, where quantity is currently ignored) to `ShopUI`. Selecting an item enables Buy or Sell, which call `ShopSystem.BuyItem` / `SellItem`.
+- **Shop**: an NPC's `OpenShopBehavior` hands a `ShopInventory` asset to `ShopUI`. The asset lists item IDs and a `quantity` per entry, where -1 means unlimited. Selecting an item enables Buy or Sell, which call `ShopSystem.BuyItem` / `SellItem`.
+  - **Limited stock:** purchases are counted in world state as `Shop_<asset name>_<itemId>_Bought` and saved with the game. `SetItems()` rebuilds the runtime `items` list (`[NonSerialized]`) from what's still in stock.
+  - **The Town Merchant sells** the three Instant Heal potions (unlimited) and one each of the Iron Helm, Thief's Gloves, Oakwood Shield, Amulet of Lifeglow, Venomfang Dagger and Elven Longbow.
 - **Loot**: `LootChest` (on `Prefabs/Environment/LootChest.prefab`, wrapping Cainos' `Chest`) rolls `LootInventory.GetLoot()` once in `Start`. Interacting opens the chest animation and then `LootUI`, where **Take** moves the selected item into the inventory and **Take All** empties the chest and closes the window. Emptied chests stay open. Loot tables are `LootInventory` assets (lists of item-id groups with weights), for example `ScriptedItems/LootInventories/TestLootInventory/LootInventory_0.asset`.
 
 ### NPCs, dialog and world state
@@ -381,7 +383,6 @@ Design choices (made by the user): shield is an absorbing barrier, there's a man
   - Most items have no price, which makes them unsellable and free in a shop.
   - **Only items 18–21 can be obtained in-game**: the starting kit, the shop potions, the chest potions, and the merchant's amulet. Everything else, including the status effect weapons, shields, mana and agility gear, needs a place in the shop or in loot tables.
   - Use *Tools → Debug → Give All Items* to test in the meantime.
-- `ShopSystem.BuyItem` ignores `ShopItemData.quantity` (infinite stock).
 - Legacy Input Manager: migrate to the Input System package.
 - No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
 - `LevelTransition` runs its fade coroutine on an object destroyed by the scene load, so `FadeTransition.FadeBack` exists as a workaround. The transition flow could live on the persistent `FadeTransition` instead.

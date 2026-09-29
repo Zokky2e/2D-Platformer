@@ -117,17 +117,17 @@ public class ShopUI : MonoBehaviour
         playerItems.Add(UpdateItemsUI(playerInventory.items, true)); 
 
         //shop section
-        if (shopInventory?.items?.Count > 0)
-        {
-            shopItems.Clear();
+        shopItems.Clear(); // Also when the last item sold out
+        if (shopInventory != null)
             shopItems.Add(UpdateItemsUI(shopInventory.items));
-        }
     }
 
     private ScrollView UpdateItemsUI(List<Item> items, bool isPlayerInventory = false)
     {
         VisualElement grid = ItemGrid.Build(items, 16, tooltip,
-            item => (isPlayerInventory ? "Sell: " + ((int)MathF.Floor(item.Price * 0.6f)) : "Buy: " + item.Price) + " G",
+            item => isPlayerInventory
+                ? "Sell: " + (int)MathF.Floor(item.Price * 0.6f) + " G"
+                : "Buy: " + item.Price + " G" + StockText(item),
             UpdateTooltipPosition,
             (itemSlot, index) =>
             {
@@ -220,9 +220,15 @@ public class ShopUI : MonoBehaviour
         //select item, if in player inventory have a button for sell
         //if in shop inventory have a button for buy
         Debug.Log($"Buying {shopInventory.items[selectedItem.itemId].Name}");
-        bool isBought = shopSystem.BuyItem(ref shopInventory, selectedItem.itemId);
+        bool isBought = shopSystem.BuyItem(shopInventory, selectedItem.itemId);
         if (isBought) selectedItem = (false, -1); 
         SetEnabledButtons();
+    }
+
+    private string StockText(Item item)
+    {
+        int left = shopInventory.StockLeft(shopInventory.items.IndexOf(item));
+        return left > 0 ? $" ({left} left)" : "";
     }
 
     public void SetShopInventory(ShopInventory shopInventory)

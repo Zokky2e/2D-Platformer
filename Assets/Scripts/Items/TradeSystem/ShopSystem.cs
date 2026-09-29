@@ -25,7 +25,7 @@ public class ShopSystem : Singleton<ShopSystem>
         return true;
     }
 
-    public bool BuyItem(ref ShopInventory shopInventory, int i)
+    public bool BuyItem(ShopInventory shopInventory, int i)
     {
         if (shopInventory == null) { return false; }
         var items = shopInventory.items;
@@ -36,9 +36,9 @@ public class ShopSystem : Singleton<ShopSystem>
 
         var item = items[i];
         if (item == null) { return false; }
-        if (inventorySystem.gold == 0) { return false; }
         if (inventorySystem.gold < item.Price) { return false; }
 
+        shopInventory.RecordPurchase(i); // Before the inventory events below refresh the shop window
         inventorySystem.UpdateGold(-item.Price);
         inventorySystem.AddItem(item);
         return true;
