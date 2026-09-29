@@ -108,7 +108,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - Horizontal velocity is set in `Hero.FixedUpdate` from `stats.TotalMoveSpeed`, except during `Roll` and `Dead`.
 - Wall mechanics are in `JumpingState`: box-cast `onWall()`, wall slide (velocity zeroed), and a wall jump that uses `jump_modifier_x/y` (32/16 on the prefab). The 1 s `m_wallCooldown` gates wall sticking.
 - The hero can't move while `DialogSystem.DialogActive` (it is forced back to Idle).
-- **Starting kit** is hard-coded in `Hero.Start`: inventory gets item ids `18, 18, 19, 20` (heal potions), and equipment gets `69, 420, 1337` (Basic Metal Shield, Broadsword, Lether Armor). The easter-egg ids are intentional.
+- **Starting kit** is hard-coded in `Hero.Start`: inventory gets item ids `18, 18, 19, 20` (heal potions), and equipment gets `69, 420, 1337` (Basic Metal Shield, Broadsword, Leather Armor). The easter-egg ids are intentional.
 - Animator parameters used: `AnimState`, `Grounded`, `AirSpeedY`, `WallSlide`, `Jump`, `Roll`, `Attack1-3`, `Block`, `IdleBlock`, `Hurt`, `Death`, `Revive`, `noBlood`.
 
 ### Stats, health and damage
@@ -181,11 +181,11 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - `CompositeNPCBehavior` (runs a list of behaviors in sequence)
 - **Town Merchant** (Level0) wiring in `ScriptedItems/NPCBehaviors/Merchant/`:
   - onSpawn is `Merchant_Conditional_Action`: if `Merchant_Amulet_Given` is set, switch to Trade.
-  - Attention is `MerchantIntro_Composite`: intro dialog, then give item 21 (Merchants Amulet, +5 damage).
-  - Trade is `MerchentTrade_Composite`: "Let's trade." dialog, then open a shop that sells potions 18, 19 and 20.
+  - Attention is `MerchantIntro_Composite`: intro dialog, then give item 21 (Merchant's Amulet, +5 damage).
+  - Trade is `MerchentTrade_Composite`: "Let's trade." dialog, then open the `Merchant_Shop_Inventory` shop (potions plus limited gear, see above).
 - `DialogSystem` splits text into **pages on `\n`**, uses a typewriter effect, and advances on E or left click. `ShowDialog(name, text, onClose)`.
 - `Interactable` is added at runtime by `NPC`, `LootChest` and `RespawnCheckpoint`. It needs a trigger collider on the object and a player tagged `Player`. It spawns the `Resources/InteractKey` "E" prompt.
-- `WorldStateManager` holds string-keyed bool, int and string flags. Only the two merchant bools are used so far. It restores them from the save in `Awake`, before any `NPC.Start` reads them, and `SaveSystem` writes them (see "Save and load").
+- `WorldStateManager` holds string-keyed bool, int and string flags. It holds the two merchant bools, shop purchase counts (`Shop_*`) and placed chests' contents (`Chest_*`). It restores them from the save in `Awake`, before any `NPC.Start` reads them, and `SaveSystem` writes them (see "Save and load").
 
 ### Scene transitions and checkpoints
 - `LevelTransition` (on `Prefabs/Scening/ExitPoint.prefab`) triggers on the player, fades through `FadeTransition.FadeAndExecute`, loads `nextSceneName`, then moves the player to the GameObject named **`EntryPoint`** in the new scene. The prefab default `"Level2"` no longer exists; every instance overrides it.
@@ -251,7 +251,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 ## Conventions and gotchas
 
 - Code style mostly follows Unity conventions, with some inconsistency: `m_` fields inherited from the HeroKnight demo in `Hero.cs`, camelCase method names in places (`handleInput`, `isGrounded`, `startState`), PascalCase elsewhere. Public fields and `[SerializeField] private` fields are used for Inspector wiring. There are no namespaces except `Assets.Scripts.IEntity`. Some files start with a UTF-8 BOM, and git warns about LF/CRLF. Match the surrounding file.
-- **Misspellings are load-bearing**: `ItemVarients/`, `numberOffFlashes`, `Invunerability`, `Merchent*` asset names, "Lether Armor", "Merchents Amulet". Serialized field names are the keys Unity uses in YAML, so renaming a serialized field loses its Inspector values unless you add `[FormerlySerializedAs("oldName")]`. Renaming or moving scripts is safe only if the `.meta` file (GUID) moves with it.
+- **Misspellings are load-bearing**: `ItemVarients/`, `numberOffFlashes`, `Invunerability`, `Merchent*` asset names. (Item names in `items.json` aren't keys, since saves and shops use ids, so those were fixed.) Serialized field names are the keys Unity uses in YAML, so renaming a serialized field loses its Inspector values unless you add `[FormerlySerializedAs("oldName")]`. Renaming or moving scripts is safe only if the `.meta` file (GUID) moves with it.
 - Two ScriptableObject files don't match their class names: `DIalogBehavior.cs` contains `ShowDialogBehavior`, and `CompositeBehavior.cs` contains `CompositeNPCBehavior`. Unity expects them to match for ScriptableObject assets, so if those assets show "missing script" after the Unity upgrade, this is why.
 - When editing `.unity` or `.prefab` YAML directly, references are `{fileID, guid}` pairs. Look up the GUID in the matching `.meta` file. Prefer telling the user what to change in the Editor over hand-editing complex scenes.
 - `ItemLoader` reads `StreamingAssets/items.json` with `File.ReadAllText`. That works on desktop, which is the current build target, but not on Android or WebGL, where StreamingAssets must be read with `UnityWebRequest`.
@@ -268,13 +268,16 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - Inventory and equipment with stat effects
 - JSON item database
 - Shop UI (buy and sell with working gold since the 2026-09-29 fixes)
-- Loot chests: open, browse, Take or Take All (finished 2026-09-29)
+- Loot chests: open, browse, Take or Take All (finished 2026-09-29), with loot that improves with dungeon depth
 - Procedural dungeon with enemy, loot and parkour rooms that grows each run
+- Save and load, status effects (bleed, poison, burn), shield, mana, magic power and agility stats (added 2026-09-29)
+- Every item has an icon and a price, and can be found in the shop or in chests (2026-09-29)
+
+Everything added on 2026-09-29 compiles but **hasn't been play-tested**.
 
 **Unfinished, where work stopped in May 2025:**
 - No bosses, no boss AI, and the boss room is just an exit.
 - Only Bandit and Spiketrap enemies exist. The monster art packs are imported but unused.
-- No status effects: bleed, poison and burn are only description text. `BleedDamage` actually adds flat damage, and `BleedDuration` does nothing.
 - No meta-progression, no win condition, and no story beyond the "Dark Lord" line.
 - Unity Behavior and NavMesh packages are installed but unused. The commit history shows they were tried and dropped in favour of the transform-based `Enemy` AI.
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are declared but unused.
@@ -379,11 +382,15 @@ Design choices (made by the user): shield is an absorbing barrier, there's a man
 
   The Mana Vial and Ring of Wisdom descriptions were reworded to match.
 
+### 14. Item content (branch `item-content`)
+Before this, most items had no price (unsellable, free in a shop), and only items 18–21 could be obtained in-game. **Not play-tested yet.**
+- [x] **Icons** (`97c4d5e`): the 14 items without an icon got one from `RPG Icons Pixel Art` (see "Items"). `RuntimeItem.SetSprite` now tries a standalone sprite before a sheet sub-sprite, which the Oakwood Shield's icon needed.
+- [x] **Prices and tooltips** (`64038cb`): every item has a price (potions 8–60, gear 20–130) and can be sold, except the merchant's quest amulet (id 21). Tooltips now list every stat the item gives. "Lether Armor" and "Merchents Amulet" became "Leather Armor" and "Merchant's Amulet".
+- [x] **Shop stock** (`e6fbc76`): limited stock works and is saved (see "Inventory, equipment, shop, loot"). The merchant sells one of each of six pieces of gear besides the potions.
+- [x] **Loot by depth** (`37220c5`): loot tables unlock groups by dungeon level, the one table covers every item, and placed chests keep their contents instead of re-rolling on every visit (the village chest was a free item farm).
+- Balance is a first pass: prices, stock and the dungeon levels in `LootInventory_0` are all tunable without code.
+
 ### Needs a design decision (not scheduled)
-- **Item content:**
-  - Most items have no price, which makes them unsellable and free in a shop.
-  - **Only items 18–21 can be obtained in-game**: the starting kit, the shop potions, the chest potions, and the merchant's amulet. Everything else, including the status effect weapons, shields, mana and agility gear, needs a place in the shop or in loot tables.
-  - Use *Tools → Debug → Give All Items* to test in the meantime.
 - Legacy Input Manager: migrate to the Input System package.
 - No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
 - `LevelTransition` runs its fade coroutine on an object destroyed by the scene load, so `FadeTransition.FadeBack` exists as a workaround. The transition flow could live on the persistent `FadeTransition` instead.
