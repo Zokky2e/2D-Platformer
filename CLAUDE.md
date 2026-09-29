@@ -329,11 +329,12 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 
 - [x] **Save/load implemented** (see "Save and load" under Architecture). It replaces the old `WorldStateManager` file I/O: `Awake` overwrote `worldstate.json` with empty state on every launch, `Load()` was never called, and `Load()` would have thrown anyway, because `WorldStateData` had no parameterless constructor.
 
+- [x] `ShowDialogBehavior` and `GiveItemBehavior` cached their world-state flag in public ScriptableObject fields (`HasShownDialog`, `HasGivenItem`). That state is shared by every user of the asset and persists in the Editor. It's now a local, read from `WorldStateManager` each time.
+
 ### Needs a design decision (not scheduled)
 - Status effects (bleed, poison, burn) are description text only. `BleedDamage` adds flat damage, and `BleedDuration` does nothing.
 - Many `items.json` entries reference sprites that don't exist, use unsupported effect types (`Buff`, `Shield`), show unfilled `{placeholders}`, or have no price (so they're unsellable).
 - `ShopSystem.BuyItem` ignores `ShopItemData.quantity` (infinite stock).
-- `ShowDialogBehavior` and `GiveItemBehavior` write runtime state into ScriptableObject fields, which persists into the asset in the Editor.
 - Legacy Input Manager: migrate to the Input System package.
 - No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
 - `LevelTransition` runs its fade coroutine on an object destroyed by the scene load, so `FadeTransition.FadeBack` exists as a workaround. The transition flow could live on the persistent `FadeTransition` instead.
