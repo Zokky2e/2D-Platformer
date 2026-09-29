@@ -222,6 +222,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - **Misspellings are load-bearing**: `ItemVarients/`, `numberOffFlashes`, `Invunerability`, `Merchent*` asset names, "Lether Armor", "Merchents Amulet". Serialized field names are the keys Unity uses in YAML, so renaming a serialized field loses its Inspector values unless you add `[FormerlySerializedAs("oldName")]`. Renaming or moving scripts is safe only if the `.meta` file (GUID) moves with it.
 - Two ScriptableObject files don't match their class names: `DIalogBehavior.cs` contains `ShowDialogBehavior`, and `CompositeBehavior.cs` contains `CompositeNPCBehavior`. Unity expects them to match for ScriptableObject assets, so if those assets show "missing script" after the Unity upgrade, this is why.
 - When editing `.unity` or `.prefab` YAML directly, references are `{fileID, guid}` pairs. Look up the GUID in the matching `.meta` file. Prefer telling the user what to change in the Editor over hand-editing complex scenes.
+- `ItemLoader` reads `StreamingAssets/items.json` with `File.ReadAllText`. That works on desktop, which is the current build target, but not on Android or WebGL, where StreamingAssets must be read with `UnityWebRequest`.
 - Lookups by name or tag are fragile: `"Player"` tag, `"EntryPoint"` GameObject, `"InteractKey"` and `"Sprites/..."` Resources paths, sensor child names, and UXML element names.
 - Commit messages in this repo are short, lowercase, present-participle summaries ("implementing chest UI", "fixing camera follow in dungeon").
 
@@ -302,6 +303,15 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [x] Unused `using System.Dynamic;` and `using Unity.VisualScripting;` in `Healthbar.cs` (removed with the 2b rewrite).
 - [x] `PlayerSpawnManager` is unused, since nothing attaches it. Deleted.
 - [x] `UserSettings/` is per-user editor state (layouts, search settings) and is tracked. Untrack and ignore it, like the standard Unity `.gitignore` does, and add build-output ignores.
+
+### 10. Input hand-off and invincibility frames (found on the second pass)
+- [x] **One key press could be handled twice.** Update order between `DialogSystem`, `Interactable` and `Hero` is undefined, so:
+  - the E press that closed a dialog could re-open the interaction at once, so a checkpoint's "saved" dialog could keep coming back
+  - the E press that opened a dialog could skip its first page's typing
+  - the click that closed a dialog could swing the sword
+
+  `DialogSystem.InputConsumedThisFrame` (true on the open and close frames) is now checked by all three.
+- [x] **Invincibility frames didn't block enemy attacks.** They only ignored Player/Enemy collisions, but `Enemy.DealDamage` calls `TakeDamage` directly. `Health` now ignores damage while the player is flashing.
 
 ### Needs a design decision (not scheduled)
 - **Save/load**:

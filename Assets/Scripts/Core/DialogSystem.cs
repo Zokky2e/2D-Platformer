@@ -19,6 +19,13 @@ public class DialogSystem : Singleton<DialogSystem>
     private List<string> dialogPages = new List<string>(); // Stores all pages of dialog
     private int currentPage = 0; // Tracks which page is being shown
     private Action onDialogClose;
+    private int openedFrame = -1;
+    private int closedFrame = -1;
+
+    // True on the frame a dialog opened or closed. Update order between DialogSystem, Interactable and
+    // Hero is undefined, so without this one E/click could open and instantly skip a page, re-open the
+    // interaction that was just closed, or swing the sword while closing the dialog.
+    public bool InputConsumedThisFrame => Time.frameCount == openedFrame || Time.frameCount == closedFrame;
 
     public bool DialogActive
     {
@@ -37,6 +44,7 @@ public class DialogSystem : Singleton<DialogSystem>
     public void ShowDialog(string npcName, string dialog, Action onComplete)
     {
         dialogBox.SetActive(true);
+        openedFrame = Time.frameCount;
         nameText.text = npcName;
         dialogPages = SplitDialogIntoPages(dialog);
         currentPage = 0;
@@ -76,7 +84,7 @@ public class DialogSystem : Singleton<DialogSystem>
 
     private void Update()
     {
-        if (dialogActive && (Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0)))
+        if (dialogActive && !InputConsumedThisFrame && (Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0)))
         {
             if (isTyping)
             {
@@ -105,6 +113,7 @@ public class DialogSystem : Singleton<DialogSystem>
     {
         dialogBox.SetActive(false);
         dialogActive = false;
+        closedFrame = Time.frameCount;
         if (onDialogClose != null)
         {
             onDialogClose.Invoke();

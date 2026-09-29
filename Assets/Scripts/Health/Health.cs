@@ -22,6 +22,7 @@ public class Health : MonoBehaviour
 
     private int playerLayerNumber;
     private int enemyLayerNumber;
+    private bool isInvulnerable = false;
 
     public void Awake()
     {
@@ -33,8 +34,8 @@ public class Health : MonoBehaviour
 
     public virtual void TakeDamage(float _damage)
     {
-        if (CurrentHealth <= 0)
-            return; // Already dead
+        if (CurrentHealth <= 0 || isInvulnerable)
+            return; // Already dead, or flashing after a hit
         if (!entity.IsBlocking())
         {
             _damage = entity.TakeDamage(_damage);
@@ -63,6 +64,8 @@ public class Health : MonoBehaviour
     {
         if (playerLayerNumber == 6)
         {
+            // Ignoring collisions alone doesn't stop enemy attacks, which call TakeDamage directly
+            isInvulnerable = true;
             Physics2D.IgnoreLayerCollision(playerLayerNumber, enemyLayerNumber, true);
             for (int i = 0; i < numberOffFlashes; i++) 
             {
@@ -72,6 +75,7 @@ public class Health : MonoBehaviour
                 yield return new WaitForSeconds(iFramesDuration / (numberOffFlashes * 2));
             }
             Physics2D.IgnoreLayerCollision(playerLayerNumber, enemyLayerNumber, false);
+            isInvulnerable = false;
         }
 
         yield break;

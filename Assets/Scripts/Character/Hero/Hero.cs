@@ -238,7 +238,7 @@ public class Hero : MonoBehaviour, IEntity {
 
     public bool CanMove()
     {
-        return !DialogSystem.Instance.DialogActive;
+        return !DialogSystem.Instance.DialogActive && !DialogSystem.Instance.InputConsumedThisFrame;
     }
 
     public float TakeDamage(float _damage)
