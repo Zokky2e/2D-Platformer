@@ -32,27 +32,50 @@ public class Health : MonoBehaviour
         enemyLayerNumber = (int)Math.Log(enemyLayer.value, 2);
     }
 
-    public virtual void TakeDamage(float _damage)
+    // Returns true if the hit landed (not blocked, rolled through, fully absorbed by armor or during i-frames)
+    public bool TakeDamage(float _damage)
     {
         if (CurrentHealth <= 0 || isInvulnerable)
-            return; // Already dead, or flashing after a hit
-        if (!entity.IsBlocking())
+            return false; // Already dead, or flashing after a hit
+        if (entity.IsBlocking())
+            return false;
+        _damage = entity.TakeDamage(_damage);
+        if (_damage == 0)
+            return false;
+        if (CurrentHealth - _damage > 0)
+            StartCoroutine(Invunerability());
+        ReduceHealth(_damage);
+        return true;
+    }
+
+    // Damage over time (bleed, poison, burn): ignores armor, blocking and i-frames, no hurt animation
+    public void TakeStatusDamage(float _damage)
+    {
+        if (CurrentHealth <= 0)
+            return;
+        ReduceHealth(_damage);
+    }
+
+    // Instant death (falling out of the level), regardless of blocking or i-frames
+    public void Kill()
+    {
+        if (CurrentHealth > 0)
+            ReduceHealth(CurrentHealth);
+    }
+
+    private void ReduceHealth(float _damage)
+    {
+        CurrentHealth = Mathf.Clamp(CurrentHealth - _damage, 0, MaxHealth);
+        if (CurrentHealth == 0)
         {
-            _damage = entity.TakeDamage(_damage);
-            if (_damage == 0)
-            {
-                return;
-            }
-            else if (CurrentHealth - _damage > 0)
-            {
-                StartCoroutine(Invunerability());
-            }
-            else
-            {
-                entity.Die();
-            }
-            CurrentHealth = Mathf.Clamp(CurrentHealth - _damage, 0, MaxHealth);
+            entity.Die();
+            OnDied();
         }
+    }
+
+    // Runs once when health reaches zero, whatever the damage source
+    protected virtual void OnDied()
+    {
     }
 
     public void SetHealth(float _health)

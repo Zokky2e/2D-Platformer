@@ -48,7 +48,7 @@ public class GameRespawn : Singleton<GameRespawn>
     {
         if (transform.position.y < threshold)
         {
-            playerHealth.TakeDamage(999f);
+            playerHealth.Kill(); // Blocking, rolling or i-frames must not keep the player falling forever
         }
     }
 

@@ -20,15 +20,9 @@ public class PersistentPlayerHealth : Health
         }
     }
 
-    public override void TakeDamage(float _damage)
+    protected override void OnDied()
     {
-        if (CurrentHealth <= 0)
-            return; // Already dead, death sequence is running
-        base.TakeDamage(_damage);
-        if (CurrentHealth == 0)
-        {
-            StartCoroutine(DoDeathAnimation());
-        }
+        StartCoroutine(DoDeathAnimation());
     }
 
     public void AddMaxHealth(float _maxHealth)
