@@ -282,7 +282,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - Save and load, status effects (bleed, poison, burn), shield, mana, magic power and agility stats (added 2026-09-29)
 - Every item has an icon and a price, and can be found in the shop or in chests (2026-09-29)
 
-Everything added on 2026-09-29 compiles but **hasn't been play-tested**.
+Everything added on 2026-09-29 compiles. The first play-test (2026-09-30) found the bugs listed under "Play-test bugs" in the audit backlog; equipment, the shop and the inventory windows are **not reliable** until they're fixed.
 
 **Unfinished, where work stopped in May 2025:**
 - One boss, the Bandit Chief, which is a stronger Bandit with the same AI. There is no boss-specific attack pattern.
@@ -311,7 +311,7 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 ### 2b. Health bars
 - [x] **Every enemy threw a `NullReferenceException` on spawn.** `FloatingHealthBar` inherits `Healthbar.Start`, which wrote the *player's* HP into `healthText`, and enemy bars have no `healthText`. The exception also stopped the enemy's breakpoints from being drawn. `Healthbar` now reads its assigned `entityHealth`, or the persistent player when none is set (the HUD). `healthText` is optional.
 - [x] HUD breakpoints were built only once in `Start`. `AddMaxHealth` (the only refresh path) is never called, because `HealthEffect` changes `bonusHealth` directly, so equipping HP gear left stale markers. The bar now rebuilds its breakpoints whenever max HP changes, and clears its `markers` list. The now-unused `PersistentPlayerHealth.Healthbar` reference was removed.
-- Note: enemy bars now actually draw their breakpoints (every 5 HP, per `Bandit.prefab`). Raise `breakpointEveryX` if that looks too dense.
+- Note: enemy bars now draw their breakpoints, but **drawn in the wrong place** (see "Play-test bugs", P1).
 
 ### 3. Enemy AI
 - [x] **Patrol coroutines stack.** `StopCoroutine(Patrol())` creates a new enumerator and stops nothing, and a new `Patrol()` starts each time the player leaves detection range. Called every frame while chasing, it also allocates.
@@ -415,6 +415,34 @@ Design choice (made by the user): migrate with the same keys and feel, no gamepa
 - [x] `GameInput` replaces all 13 legacy `Input` calls in `Hero`, `HeroState`, `DialogSystem`, `Interactable`, `PauseMenu` and the inventory, shop and loot UIs. `Horizontal` reproduces the Input Manager's smoothing (sensitivity 3, gravity 3, snap, dead zone 0.001) from `ProjectSettings/InputManager.asset`.
 - [x] Blocking now ends whenever the right button isn't held, instead of on the frame it's released, so a release missed during a skipped frame can't leave the hero stuck blocking.
 - [ ] **For the user:** play-test movement feel, then switch *Active Input Handling* to *Input System Package (New)*. Gamepad support means adding bindings to `GameInput`'s properties (for example `Gamepad.current?.buttonSouth`).
+
+### Play-test bugs (reported 2026-09-30, not fixed yet)
+Found by the user in the first play-test of everything above. Each entry has the symptom, then what the code confirms or what is only suspected.
+
+- [ ] **P1. Enemy health bar breakpoints are drawn in the wrong place.** The markers start in the middle of the bar and run past its right end, as a dense black comb (19 markers at every 5 HP on a 100 HP Bandit, 4 on the Bandit Chief).
+  - Likely cause: `Healthbar.CreateBreakpoint` sets `localPosition.x = normalizedPos * healthBarFill.rect.width`, which assumes x = 0 is the fill's left edge. That holds for the HUD bar but not the enemy bar (`InterfaceGraphics/Healthbar.prefab`), whose fill appears to be centered. Position markers from `rect.xMin` or with anchors instead.
+  - Also raise the Bandit's `breakpointEveryX` from 5 (for example to 25).
+- [ ] **P2. Gear swaps never remove the old item's stats.** Confirmed in code: `EquipmentSystem.EquipItem` → `Swap` puts the old item back in the inventory but never calls its `RemoveEffects`. Equipping Thief's Gloves over Leather Armor therefore kept the armor's +20 armor and +10 HP and added the gloves' stats on top.
+  - Thief's Gloves are typed `Armor` in `items.json`, so they replace the body armor. Decide whether gloves should be armor at all.
+- [ ] **P3. The same item can be equipped again and again, stacking its stats** (agility made the hero very fast). Confirmed: equipping an item into the slot it already occupies re-applies its effects. It was only possible because the inventory window kept showing the gloves after they were equipped (P5), so they could be clicked again.
+- [ ] **P4. Unequipping the armor also unequipped the sword, shield and amulet, and all of them vanished.** The armor slot then showed the gloves. **Cause not found.** `EquipmentUI` binds one click callback per slot and `UnequipItem` only touches one slot, so something else is involved.
+  - Leads: `UnequipItem` raises `OnEquipmentChanged` (which re-registers every slot's callbacks in `UpdateSlot`) while the click is still being dispatched, and it raises it before `RemoveEffects`.
+  - The "vanished" part matches P5: the unequipped items probably went into an inventory the window isn't showing.
+- [ ] **P5. The inventory and shop windows show stale data.** Symptoms:
+  - After buying, the shop's gold label went down (80 → 20 → 0), but the bought item stayed in the shop grid and never appeared in the player's grid. The inventory window (I) still showed 80 gold.
+  - Reopening the shop made the bought item disappear.
+  - Clicking the stale Elven Longbow slot threw `ArgumentOutOfRangeException`. The grid's click handler indexes `shopInventory.items`, which `RecordPurchase` → `SetItems` had already shortened, so this is a consequence of the stale grid, not a separate bug. The purchase itself had gone through, which is why the gold was spent.
+  - Suspected cause: the windows are displaying a different `InventorySystem`/`EquipmentSystem` (or a visual tree) than the one that changed. Possibilities:
+    - a duplicate UI or system surviving a return to Level0 (the test went village → dungeon → village)
+    - a `UIDocument` rebuilding its tree after the scripts cached element references
+    - a refresh that throws partway
+
+    Check with a debugger or logs, starting with `InventorySystem.Instance` versus each window's cached `inventory`/`playerInventory`, and how many `InventoryUI`/`ShopUI` objects exist after a return to Level0.
+- [ ] **P6. The HUD mana bar shows a red heart with "999".** Confirmed: `Healthbar.CreateManaBar` clones the whole HP bar, including the heart icon and the HP text. It only unhooks the text (`healthText = null`), so the text keeps the prefab's placeholder "999". The clone should hide or destroy those children, or show mana in its own text.
+- [ ] **P7. The hero stays tinted red after being hit by a bleed.** Confirmed sequence:
+  - `Health.TakeDamage` starts the i-frame flash, which sets the sprite red before its first yield. `Enemy.DealDamage` then calls `ApplyOnHitEffects`, which adds `StatusEffects` to the hero.
+  - `StatusEffects.Awake` records the sprite's *current* color (red) as the base color, and every flash end resets the sprite to it.
+  - Fix: capture `Color.white` or the prefab color, not the current color, or keep the base color outside the flash. The same can happen to enemies hit during a flash.
 
 ### Needs a design decision (not scheduled)
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
