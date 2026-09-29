@@ -14,6 +14,9 @@ public class LootUI : MonoBehaviour
     private VisualElement lootPanel;
     private VisualElement lootContainer;
     private Button closeButton;
+    private Button takeSelectedButton;
+    private Button takeAllButton;
+
     private ItemTooltip tooltip;
     private int selectedItem = -1;
     private VisualElement selectedItemSlot;
@@ -55,10 +58,6 @@ public class LootUI : MonoBehaviour
             yield return null; // Wait for next frame
         }
         playerInventory = InventorySystem.Instance; // Find inventory
-        playerInventory.onInventoryChanged += () =>
-        {
-            UpdateInventoryUI(); // Listen for changes
-        };
 
         var root = uiDocument.rootVisualElement;
         lootPanel = root;
@@ -67,8 +66,13 @@ public class LootUI : MonoBehaviour
         closeButton = root.Q<Button>("ExitButton");
         lootPanel.style.display = DisplayStyle.None;
         closeButton.clicked += ToggleLootInventory;
+        takeSelectedButton = root.Q<Button>("TakeSelectedButton");
+        takeAllButton = root.Q<Button>("TakeAllButton");
+        takeSelectedButton.clicked += OnTakeSelectedClicked;
+        takeAllButton.clicked += OnTakeAllClicked;
+
         tooltip = new ItemTooltip(lootContainer);
-        UpdateInventoryUI();
+        RefreshLoot();
     }
 
     public void ToggleLootInventory()
@@ -78,9 +82,12 @@ public class LootUI : MonoBehaviour
         lootPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
 
         if (isOpen)
-            UpdateInventoryUI();
-        else
-            lootChest.CloseChest();
+        {
+            ClearSelection();
+            RefreshLoot();
+        }
+        else if (lootChest.Loot.Count > 0)
+            lootChest.CloseChest(); // Emptied chests stay open
         Time.timeScale = isOpen ? 0f : 1f;
         PauseMenu.GameIsPaused = isOpen;
         StartCoroutine(DelayUIFlagClear());
@@ -92,21 +99,55 @@ public class LootUI : MonoBehaviour
         CoreUI.IsUIOpen = isOpen;
     }
 
-    private void OnDisable()
+    private void RefreshLoot()
     {
-        if (playerInventory != null)
-            playerInventory.onInventoryChanged -= UpdateInventoryUI;
+        loot.Clear();
+        if (lootChest != null)
+            loot.Add(UpdateItemsUI(lootChest.Loot));
+        UpdateButtons();
     }
 
-    private void UpdateInventoryUI()
+    private void UpdateButtons()
     {
+        bool hasLoot = lootChest != null && lootChest.Loot.Count > 0;
+        takeAllButton.SetEnabled(hasLoot);
+        takeSelectedButton.SetEnabled(hasLoot && selectedItem >= 0 && selectedItem < lootChest.Loot.Count);
+    }
 
-        //shop section
-        if (lootChest?.Loot?.Count > 0)
+    private void ClearSelection()
+    {
+        selectedItem = -1;
+        selectedItemSlot = null;
+    }
+
+    private void OnTakeSelectedClicked()
+    {
+        if (lootChest == null || selectedItem < 0 || selectedItem >= lootChest.Loot.Count)
+            return;
+
+        Item item = lootChest.Loot[selectedItem];
+        lootChest.Loot.RemoveAt(selectedItem);
+        playerInventory.AddItem(item);
+        ClearSelection();
+
+        if (lootChest.Loot.Count == 0)
+            ToggleLootInventory(); // Nothing left to take
+        else
+            RefreshLoot();
+    }
+
+    private void OnTakeAllClicked()
+    {
+        if (lootChest == null)
+            return;
+
+        foreach (Item item in lootChest.Loot)
         {
-            loot.Clear();
-            loot.Add(UpdateItemsUI(lootChest.Loot));
+            playerInventory.AddItem(item);
         }
+        lootChest.Loot.Clear();
+        ClearSelection();
+        ToggleLootInventory();
     }
 
     private ScrollView UpdateItemsUI(List<Item> items)
@@ -134,7 +175,9 @@ public class LootUI : MonoBehaviour
             selectedItem = index;
             itemSlot.style.backgroundColor = ItemGrid.SelectedColor;
         }
+        UpdateButtons();
     }
+
     private void UpdateTooltipPosition(Vector2 mousePosition)
     {
         float tooltipWidth = tooltip.Width;

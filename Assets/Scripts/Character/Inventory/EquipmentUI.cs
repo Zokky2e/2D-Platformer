@@ -30,10 +30,6 @@ public class EquipmentUI : MonoBehaviour
             yield return null; // Wait for next frame
         }
         equipment = EquipmentSystem.Instance; // Find inventory
-        equipment.OnEquipmentChanged += () =>
-        {
-            UpdateUI(); // Listen for changes
-        };
         var root = uiDocument.rootVisualElement;
 
         // Find the "Loadout" VisualElement

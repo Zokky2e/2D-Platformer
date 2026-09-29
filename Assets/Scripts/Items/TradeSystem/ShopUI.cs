@@ -61,10 +61,7 @@ public class ShopUI : MonoBehaviour
             yield return null; // Wait for next frame
         }
         playerInventory = InventorySystem.Instance; // Find inventory
-        playerInventory.onInventoryChanged += () =>
-        {
-            UpdateInventoryUI(); // Listen for changes
-        };
+        playerInventory.onInventoryChanged += UpdateInventoryUI; // Same delegate OnDisable removes
 
         var root = uiDocument.rootVisualElement;
         shopPanel = root;

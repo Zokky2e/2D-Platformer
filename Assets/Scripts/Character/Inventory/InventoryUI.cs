@@ -62,10 +62,7 @@ public class InventoryUI : MonoBehaviour
             yield return null; // Wait for next frame
         }
         inventory = InventorySystem.Instance; // Find inventory
-        inventory.onInventoryChanged += () =>
-        {
-            UpdateInventoryUI(); // Listen for changes
-        };
+        inventory.onInventoryChanged += UpdateInventoryUI; // Same delegate OnDisable removes
             
 
         var root = uiDocument.rootVisualElement;

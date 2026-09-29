@@ -233,11 +233,11 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - Merchant quest-style intro, dialog system, world-state flags
 - Inventory and equipment with stat effects
 - JSON item database
-- Shop UI
+- Shop UI (buy and sell with working gold since the 2026-09-29 fixes)
+- Loot chests: open, browse, Take or Take All (finished 2026-09-29)
 - Procedural dungeon with enemy, loot and parkour rooms that grows each run
 
 **Unfinished, where work stopped in May 2025:**
-- **Loot UI**: the chest opens and shows its items, and items can be selected, but the `TakeAllButton` and `TakeSelectedButton` in `LootUI.uxml` are **not wired up in `LootUI.cs`**, so loot can't be taken yet. `LootUI.Awake` also checks for `InventoryUI` (a copy-paste leftover).
 - No bosses, no boss AI, and the boss room is just an exit.
 - Only Bandit and Spiketrap enemies exist. The monster art packs are imported but unused.
 - No status effects: bleed, poison and burn are only description text. `BleedDamage` actually adds flat damage, and `BleedDuration` does nothing.
@@ -278,8 +278,8 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [x] Fill-phase tiles (empty caps, boss room) were never added to `occupiedTiles`, so two open exits facing the same cell could stack fillers there, for example a wall block on top of the boss room.
 
 ### 5. UI: event leaks and the unfinished loot window
-- [ ] Inventory, shop and loot UIs subscribe with a lambda but unsubscribe the method group, so they're never unsubscribed. `OnDisable` can throw if it runs before the subscription coroutine. `EquipmentUI` subscribes twice, so `UpdateUI` runs twice per change.
-- [ ] **Loot window can't take items.** `TakeAllButton` and `TakeSelectedButton` exist in `LootUI.uxml` but aren't wired up. The grid also doesn't refresh once the chest is empty.
+- [x] Inventory, shop and loot UIs subscribe with a lambda but unsubscribe the method group, so they're never unsubscribed. `OnDisable` can throw if it runs before the subscription coroutine. `EquipmentUI` subscribes twice, so `UpdateUI` runs twice per change.
+- [x] **Loot window can't take items.** `TakeAllButton` and `TakeSelectedButton` exist in `LootUI.uxml` but aren't wired up. The grid also doesn't refresh once the chest is empty. Now wired up: Take moves the selected item into the inventory, Take All moves everything and closes the window, the buttons are only enabled when they can act, and emptied chests stay open.
 - [x] Dead code: unused `Label tooltip` locals in `Start`, and the unused `gridScrollView` plus wheel handler in `InventoryUI`.
 
 ### 6. Refactor: shared item-grid and tooltip code
