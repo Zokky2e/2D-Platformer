@@ -660,6 +660,7 @@ MonoBehaviour:
   breakpointEveryX: 50
   healthText: {fileID: 2426808283866503733}
   markers: []
+  manaFillSprite: {fileID: 6085736671657559080, guid: 6119f52e1327e7142ace21eddd69fe50, type: 3}
 --- !u!114 &3708113990325133039 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1342269739266895527, guid: 7b9c3d59895fc1747977d7160f8defd1, type: 3}
