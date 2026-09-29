@@ -153,6 +153,9 @@ public class Hero : MonoBehaviour, IEntity {
         m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
         state = new IdleState();
         state.startState(this);
+        // Mana isn't on the prefab yet; it must exist before equipment with mana bonuses is applied
+        if (!TryGetComponent(out Mana _))
+            gameObject.AddComponent<Mana>();
         // Continue the saved game, or start a new one with the default kit
         if (!SaveSystem.Instance.RestorePlayer(this))
         {

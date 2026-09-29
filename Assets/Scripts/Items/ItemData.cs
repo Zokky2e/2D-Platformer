@@ -22,4 +22,5 @@ public class EffectData
 {
     public string effectType; // "Armor", "Health", etc.
     public float value;       // e.g., bonus value like +10 health
+    public float duration;    // Seconds, for timed effects like "TemporaryShield"; optional
 }

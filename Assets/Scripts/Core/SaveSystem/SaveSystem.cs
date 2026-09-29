@@ -120,6 +120,7 @@ public class SaveSystem : Singleton<SaveSystem>
         {
             gold = InventorySystem.Instance.gold,
             health = health.CurrentHealth,
+            mana = health.TryGetComponent(out Mana mana) ? mana.CurrentMana : null,
             dungeonLevel = DungeonManager.Instance.DungeonLevel,
             equippedItemIds = ToItemIds(equipped),
             inventoryItemIds = ToItemIds(InventorySystem.Instance.items),
@@ -153,6 +154,8 @@ public class SaveSystem : Singleton<SaveSystem>
 
         // After equipping, so max health includes equipment bonuses; a save made while dead comes back at full health
         hero.Health.SetHealth(player.health > 0 ? player.health : hero.Health.MaxHealth);
+        if (player.mana.HasValue && hero.TryGetComponent(out Mana mana))
+            mana.SetMana(player.mana.Value);
 
         if (!string.IsNullOrEmpty(player.checkpointScene))
         {

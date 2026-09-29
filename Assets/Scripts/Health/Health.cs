@@ -13,6 +13,18 @@ public class Health : MonoBehaviour
 
     public IEntity entity;
 
+    [Header("Shield")] // Absorbs damage before health
+    public float baseShield = 0f;
+    public float bonusShield = 0f; // From equipment
+    public float shieldRechargeDelay = 3f; // Seconds without taking damage before the shield refills
+    public float shieldRechargeRate = 10f; // Points per second
+    public float MaxShield => baseShield + bonusShield;
+    public float CurrentShield { get; private set; } // Recharging barrier, up to MaxShield
+    public float TemporaryShield { get; private set; } // From consumables; doesn't recharge, can expire
+    public float TotalShield => CurrentShield + TemporaryShield;
+    private float lastDamageTime = float.NegativeInfinity;
+    private Coroutine temporaryShieldExpiry;
+
     [Header("IFrames")]
     public float iFramesDuration;
     public int numberOffFlashes;
@@ -27,6 +39,7 @@ public class Health : MonoBehaviour
     public void Awake()
     {
         CurrentHealth = MaxHealth;
+        CurrentShield = MaxShield;
         spriteRend = GetComponent<SpriteRenderer>();
         playerLayerNumber = (int)Math.Log(playerLayer.value, 2);
         enemyLayerNumber = (int)Math.Log(enemyLayer.value, 2);
@@ -42,6 +55,9 @@ public class Health : MonoBehaviour
         _damage = entity.TakeDamage(_damage);
         if (_damage == 0)
             return false;
+        _damage = AbsorbWithShield(_damage);
+        if (_damage <= 0)
+            return false; // Soaked up by the shield
         if (CurrentHealth - _damage > 0)
             StartCoroutine(Invunerability());
         ReduceHealth(_damage);
@@ -53,7 +69,9 @@ public class Health : MonoBehaviour
     {
         if (CurrentHealth <= 0)
             return;
-        ReduceHealth(_damage);
+        _damage = AbsorbWithShield(_damage);
+        if (_damage > 0)
+            ReduceHealth(_damage);
     }
 
     // Instant death (falling out of the level), regardless of blocking or i-frames
@@ -61,6 +79,44 @@ public class Health : MonoBehaviour
     {
         if (CurrentHealth > 0)
             ReduceHealth(CurrentHealth);
+    }
+
+    // Shield points soak damage first (temporary before recharging); returns what gets through to health
+    private float AbsorbWithShield(float _damage)
+    {
+        lastDamageTime = Time.time;
+        float fromTemporary = Mathf.Min(TemporaryShield, _damage);
+        TemporaryShield -= fromTemporary;
+        _damage -= fromTemporary;
+        float fromShield = Mathf.Min(CurrentShield, _damage);
+        CurrentShield -= fromShield;
+        return _damage - fromShield;
+    }
+
+    // Consumable barrier on top of the regular shield. Replaces a weaker one and restarts its timer;
+    // a duration of 0 or less lasts until it's used up
+    public void AddTemporaryShield(float amount, float duration)
+    {
+        TemporaryShield = Mathf.Max(TemporaryShield, amount);
+        if (temporaryShieldExpiry != null)
+            StopCoroutine(temporaryShieldExpiry);
+        temporaryShieldExpiry = duration > 0 ? StartCoroutine(ExpireTemporaryShield(duration)) : null;
+    }
+
+    private IEnumerator ExpireTemporaryShield(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        TemporaryShield = 0;
+        temporaryShieldExpiry = null;
+    }
+
+    private void Update()
+    {
+        // Unequipping a shield item lowers the cap; otherwise refill once no damage came in for a while
+        if (CurrentShield > MaxShield)
+            CurrentShield = MaxShield;
+        else if (CurrentShield < MaxShield && CurrentHealth > 0 && Time.time - lastDamageTime >= shieldRechargeDelay)
+            CurrentShield = Mathf.Min(MaxShield, CurrentShield + shieldRechargeRate * Time.deltaTime);
     }
 
     private void ReduceHealth(float _damage)

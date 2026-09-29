@@ -13,6 +13,7 @@ public class PlayerSaveData
 {
     public int gold;
     public float health;
+    public float? mana; // Null in saves from before mana existed
     public int dungeonLevel;
     public List<int> equippedItemIds = new();
     public List<int> inventoryItemIds = new();

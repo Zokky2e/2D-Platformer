@@ -91,6 +91,25 @@ public class RuntimeItem : Item
                 case "BurnDuration":
                     list.Add(CreateOnHitStatusEffect(StatusEffectType.Burn, true, data.value));
                     break;
+                case "MagicPower":
+                    var magicPower = ScriptableObject.CreateInstance<MagicPowerEffect>();
+                    magicPower.bonusMagicPower = data.value;
+                    list.Add(magicPower);
+                    break;
+                case "Agility":
+                    var agility = ScriptableObject.CreateInstance<AgilityEffect>();
+                    agility.bonusAgility = data.value;
+                    list.Add(agility);
+                    break;
+                case "Mana":
+                    list.Add(CreateManaEffect(ManaStat.MaxMana, data.value));
+                    break;
+                case "ManaRegen":
+                    list.Add(CreateManaEffect(ManaStat.ManaRegen, data.value));
+                    break;
+                case "RestoreMana":
+                    list.Add(CreateManaEffect(ManaStat.Restore, data.value));
+                    break;
                     // Add more CharacterStats-based effects here
             }
         }
@@ -102,6 +121,14 @@ public class RuntimeItem : Item
         var effect = ScriptableObject.CreateInstance<OnHitStatusEffect>();
         effect.statusType = type;
         effect.isDuration = isDuration;
+        effect.value = value;
+        return effect;
+    }
+
+    private static ManaEffect CreateManaEffect(ManaStat stat, float value)
+    {
+        var effect = ScriptableObject.CreateInstance<ManaEffect>();
+        effect.stat = stat;
         effect.value = value;
         return effect;
     }
@@ -124,6 +151,14 @@ public class RuntimeItem : Item
                     list.Add(healEffect);
                     break;
 
+                case "Shield":
+                case "TemporaryShield":
+                    var shield = ScriptableObject.CreateInstance<ShieldEffect>();
+                    shield.bonusShield = data.value;
+                    shield.temporary = data.effectType == "TemporaryShield";
+                    shield.duration = data.duration;
+                    list.Add(shield);
+                    break;
                     // Add more Health-based effects here
             }
         }
