@@ -418,13 +418,13 @@ Design choice (made by the user): migrate with the same keys and feel, no gamepa
 - [ ] **For the user:** play-test movement feel, then switch *Active Input Handling* to *Input System Package (New)*. Gamepad support means adding bindings to `GameInput`'s properties (for example `Gamepad.current?.buttonSouth`).
 
 ### Play-test bugs (reported 2026-09-30, not fixed yet)
-Found by the user in the first play-test of everything above. Each entry has the symptom, then what the code confirms or what is only suspected.
+Found by the user in the first play-test of everything above. Each entry has the symptom, then what the code confirms or what is only suspected. **P2–P5 are to be fixed as part of the inventory and equipment refactor** (see "Planned features"), not one by one.
 
 - [ ] **P1. Enemy health bar breakpoints are drawn in the wrong place.** The markers start in the middle of the bar and run past its right end, as a dense black comb (19 markers at every 5 HP on a 100 HP Bandit, 4 on the Bandit Chief).
   - Likely cause: `Healthbar.CreateBreakpoint` sets `localPosition.x = normalizedPos * healthBarFill.rect.width`, which assumes x = 0 is the fill's left edge. That holds for the HUD bar but not the enemy bar (`InterfaceGraphics/Healthbar.prefab`), whose fill appears to be centered. Position markers from `rect.xMin` or with anchors instead.
   - Also raise the Bandit's `breakpointEveryX` from 5 (for example to 25).
 - [ ] **P2. Gear swaps never remove the old item's stats.** Confirmed in code: `EquipmentSystem.EquipItem` → `Swap` puts the old item back in the inventory but never calls its `RemoveEffects`. Equipping Thief's Gloves over Leather Armor therefore kept the armor's +20 armor and +10 HP and added the gloves' stats on top.
-  - Thief's Gloves are typed `Armor` in `items.json`, so they replace the body armor. Decide whether gloves should be armor at all.
+  - Thief's Gloves are typed `Armor` in `items.json`, so they replace the body armor. Decided: gloves, helmets and body armor get separate slots in the refactor.
 - [ ] **P3. The same item can be equipped again and again, stacking its stats** (agility made the hero very fast). Confirmed: equipping an item into the slot it already occupies re-applies its effects. It was only possible because the inventory window kept showing the gloves after they were equipped (P5), so they could be clicked again.
 - [ ] **P4. Unequipping the armor also unequipped the sword, shield and amulet, and all of them vanished.** The armor slot then showed the gloves. **Cause not found.** `EquipmentUI` binds one click callback per slot and `UnequipItem` only touches one slot, so something else is involved.
   - Leads: `UnequipItem` raises `OnEquipmentChanged` (which re-registers every slot's callbacks in `UpdateSlot`) while the click is still being dispatched, and it raises it before `RemoveEffects`.
@@ -469,6 +469,40 @@ The user found reaching upper platforms very hard: it took 5-6 wall jumps, there
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
 - More bosses, or boss attack patterns. The Monsters Creatures Fantasy pack only has single-animation controllers, so its creatures need attack, hurt and death animators built first.
 - Consider Git LFS for binary art before committing more vendor packs.
+
+## Planned features
+
+Bigger pieces of work the user has asked for. Each needs a design pass (ask the user) before implementation.
+
+### 1. Movement rework (next up)
+Fix and redesign the hero's jumping and wall mechanics. The problems and missing basics are P8–P12 under "Movement problems" in the audit backlog.
+
+### 2. Inventory and equipment refactor
+Requested by the user on 2026-09-30. It bundles the inventory play-test bugs with two design changes.
+
+**a) Fix the inventory bugs as one rework** (P2–P5):
+- Swapping gear must remove the old item's effects.
+- Re-equipping the same item must not stack its effects.
+- The inventory and shop windows show stale data (gold, items, stock).
+- Unequipping one slot emptied others and lost the items.
+
+The rework should make the systems the single source of truth. Each window should redraw from `InventorySystem`/`EquipmentSystem` on every change event and whenever it opens, with no cached lists or indexes that can go stale. Apply and remove effects in one place: an item's effects go on when it enters a slot and come off when it leaves, whether through equip, swap, unequip or load. Add a check that stats return to their base values after unequipping everything, to catch stacking.
+
+**b) One equipment slot per gear type.** There's only one `Armor` slot today, so the Iron Helm (11), Thief's Gloves (15), Leather Armor (1337) and Arcane Robe (12) all compete for it, and every ring and amulet shares the one `Accessory` slot.
+- Candidate slots: weapon, shield (off-hand), helmet, body armor, gloves, boots, and one or two accessories (amulet, ring). The user named helmet and gloves; the rest are to be decided.
+- `ItemType` is serialized as an integer, so **append new values at the end** (`Helmet`, `Gloves`, …). Don't reuse `Armor` for body armor under a new name. `items.json` uses the type *names*, so move the helm and gloves to their new types there.
+- `EquipmentSystem`'s four hard-coded fields and `UnequipItem`'s if-chain should become a slot → item map, so adding a slot is a data change.
+- `EquipmentUI.uxml` has four fixed slot elements (`Weapon`, `Shield`, `Armor`, `Accessory`) plus labels, and `EquipmentUI` queries them by name. It needs the new slots and default icons (the Violet Theme UI `White Icons` folder has more).
+- **Saves already work**: `PlayerSaveData.equippedItemIds` is a plain id list and `RestorePlayer` re-equips each through `EquipItem`, so new slots need no save migration.
+
+**c) Weapon types with their own animations.** The weapons are already different kinds: Broadsword, Crimson Blade and Emberfang (swords), Venomfang Dagger (dagger), Giant's Cleaver (heavy two-hander), Elven Longbow (bow), Staff of Frostbite (staff) and Spark Wand (wand). All of them currently swing the same sword combo (`Attack1-3`), and the hero sprite always shows the same sword.
+- Data: add a weapon type to items (for example `"weaponType": "Sword" | "Dagger" | "Greatweapon" | "Bow" | "Staff" | "Wand"` in `items.json`, mapped to an enum in `RuntimeItem`).
+- Combat: the type should choose the attack animation set, attack speed and range (`WeaponSensor` hitbox), and possibly shield compatibility, since two-handers and bows can't be used with a shield. Bows need projectiles, and staffs or wands are the natural first users of the mana foundation (`Mana.TrySpend`, `CharacterStats.TotalMagicPower`).
+- **Art is the blocker**: the Hero Knight pack only has sword animations, with the sword baked into the sprite sheet. Options to discuss with the user:
+  - Find a character pack with multiple weapon animations.
+  - Draw the weapon as a separate sprite on top of a weaponless body.
+  - Keep the sword animations and change only timing, range and effects per type.
+- Animator: `AnimatorParams.HeroAttack(n)` and the `AttackingState` combo assume three sword attacks. Per-type animations probably mean an Animator Override Controller per weapon type, which is the approach the Bandit art already uses (`HeavyBandit_AnimController.overrideController`).
 
 ## Unity 6000.6 upgrade notes (2026-09-29)
 
