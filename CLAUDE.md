@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Context for working on this repository. It was written in September 2026 by reading the whole codebase after the project had sat untouched since May 2025. Treat the "Known bugs" and "Status" sections as a snapshot and re-verify before relying on them.
+Context for working on this repository. It was written in September 2026 by reading the whole codebase after the project had sat untouched since May 2025. Treat the "Audit backlog" and "Status" sections as a snapshot and re-verify before relying on them.
 
 ## What this game is
 
@@ -164,7 +164,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - Trade is `MerchentTrade_Composite`: "Let's trade." dialog, then open a shop that sells potions 18, 19 and 20.
 - `DialogSystem` splits text into **pages on `\n`**, uses a typewriter effect, and advances on E or left click. `ShowDialog(name, text, onClose)`.
 - `Interactable` is added at runtime by `NPC`, `LootChest` and `RespawnCheckpoint`. It needs a trigger collider on the object and a player tagged `Player`. It spawns the `Resources/InteractKey` "E" prompt.
-- `WorldStateManager` is a set of string-keyed bool, int and string dictionaries saved as JSON to `Application.persistentDataPath/worldstate.json`. It saves on scene load, checkpoint use and dungeon spawn. Only the two merchant bools are used so far. **Inventory, gold, equipment and dungeon level are not persisted** (see Known bugs about loading).
+- `WorldStateManager` is a set of string-keyed bool, int and string dictionaries saved as JSON to `Application.persistentDataPath/worldstate.json`. It saves on scene load, checkpoint use and dungeon spawn. Only the two merchant bools are used so far. **Inventory, gold, equipment and dungeon level are not persisted** (see "Needs a design decision" in the Audit backlog).
 
 ### Scene transitions and checkpoints
 - `LevelTransition` (on `Prefabs/Scening/ExitPoint.prefab`) triggers on the player, fades through `FadeTransition.FadeAndExecute`, loads `nextSceneName`, then moves the player to the GameObject named **`EntryPoint`** in the new scene. The prefab default `"Level2"` no longer exists; every instance overrides it.
@@ -245,22 +245,66 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - Unity Behavior and NavMesh packages are installed but unused. The commit history shows they were tried and dropped in favour of the transform-based `Enemy` AI.
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` and `SpawnTile`'s `isBossTile` parameter are declared but unused. `PlayerSpawnManager` (PlayerPrefs `LastExit`) is unused.
 
-## Known bugs (verified by reading the code, not by running it)
+## Audit backlog (2026-09-29)
 
-1. **Gold never changes.** In `InventorySystem.UpdateGold(int gold)`, `gold += gold;` updates the parameter, not the field, so buying is free and selling gives nothing. Fix: `this.gold += gold;`.
-2. **Loot roll always returns the last entry.** `LootInventory.GetLoot` has no `break` or `return` after a match, and `randomValue <= currentChance` stays true for every later entry.
-3. **World state never loads.** `WorldStateManager.Load()` and `LoadFromData()` are never called, and `Awake()` calls `Save()`, which overwrites `worldstate.json` with empty state on every launch. State only lasts within a single session.
-4. **Stray dungeon tile at the origin.** On the 10th failed attempt, `DungeonGenerator.SpawnTile` runs `newTile = null; DestroyImmediate(newTile);`, which destroys nothing and leaves the instance at `Vector3.zero`. This matches the commit "fixing issue with tiles spawning on vector zero - still buggy". The same null-then-destroy pattern appears in the `skipTile` branches.
-5. **Enemy patrol coroutines stack.** `Enemy.Update` calls `StopCoroutine(Patrol())` with a new enumerator, which doesn't stop the running coroutine, and it starts a new `Patrol()` every time the player leaves detection range.
-6. **Respawn in the dungeon uses the wrong position.** `GameRespawn.startingPosition` is recorded once in `Awake` (in Level0). A checkpoint transform from Level0 is destroyed after a scene change, so dying in the dungeon without a new checkpoint teleports the player to Level0's coordinates inside the dungeon scene.
-7. **Item data problems in `items.json`**:
-   - many entries reference sprites that don't exist
-   - unsupported effect types (`Buff`, `Shield`) are dropped
-   - unfilled `{placeholders}` show up raw
-   - "Oakwood Shield" (id 4) has type `Armor`, not `Shield`
-   - item 21 has lowercase type `"accessory"`, unlike the rest; check that it parses
-   - many items have no price, which defaults to 0 (unsellable in practice)
-8. `ShopSystem.BuyItem` ignores `ShopItemData.quantity` (infinite stock). `Hero.FixedUpdate` computes an unused `BoxCast`. `ShowDialogBehavior` and `GiveItemBehavior` write runtime state into ScriptableObject fields (`HasShownDialog`, `HasGivenItem`), which persists into the asset in the Editor.
+Found by reading the code after the Unity 6000.6 upgrade; **nothing here has been play-tested yet**. Items are grouped the way they are committed on the `unity-6000.6-upgrade` branch. Tick an item and note its commit when it lands; add new findings here instead of losing them.
+
+### 1. Gameplay logic bugs
+- [ ] **Gold never changes.** In `InventorySystem.UpdateGold(int gold)`, `gold += gold;` updates the parameter, not the field, so buying is free and selling pays nothing.
+- [ ] **Loot roll always returns the last entry.** `LootInventory.GetLoot` doesn't stop at the first match, and `randomValue <= currentChance` stays true for every later entry.
+- [ ] **Dead entities keep taking damage.** `Health.TakeDamage` has no "already dead" guard. Below the fall threshold, `GameRespawn` deals 999 damage every `FixedUpdate`, so `PersistentPlayerHealth` starts a new death coroutine each physics step and re-forces the pause menu. Enemies re-trigger `Die()` and the `Death` animation on every hit.
+- [ ] **`EquipmentSystem.ApplyInitialStats` waits on `&&` instead of `||`.** It continues as soon as either the stats or the health component exists.
+
+### 2. Returning to Level0 duplicates persistent objects
+- [ ] `InventoryUI`, `ShopUI` and `LootUI` check `GetComponent<Self>() != this`, which is never true, so they're never de-duplicated. Every return to Level0 adds another copy of each UI, all listening for input. `LootUI` checks for `InventoryUI` (copy-paste).
+- [ ] `Hero.Start` grants the starting kit. The duplicate hero in the reloaded Level0 is only destroyed at the end of the frame, so its `Start` may re-grant items and re-apply equipment stats to the persistent player. Guard it so only the persistent hero initialises.
+- [ ] `LevelTransition.OnSceneLoaded` moves `FindGameObjectWithTag("Player")`, which can be the doomed duplicate instead of the persistent player. `WeaponSensor` finds its hero with `FindAnyObjectByType<Hero>()` instead of its parent.
+- [ ] **Respawn point after a scene change**: `GameRespawn.startingPosition` is recorded once, in Level0. Dying in the dungeon without a checkpoint teleports the player to Level0 coordinates. Use the `EntryPoint` the player was placed at.
+- [ ] `LevelTransition` can fire more than once while its fade runs (no re-entry guard).
+
+### 3. Enemy AI
+- [ ] **Patrol coroutines stack.** `StopCoroutine(Patrol())` creates a new enumerator and stops nothing, and a new `Patrol()` starts each time the player leaves detection range. Called every frame while chasing, it also allocates.
+
+### 4. Dungeon generator
+- [ ] **Failed tiles are left in the scene at the origin.** `Destroy(newTile)` destroys only the `Room` component, not the tile GameObject, and `newTile = null; DestroyImmediate(newTile);` destroys nothing. This is the real cause of the "tiles spawning on vector zero - still buggy" commit.
+- [ ] Possible `NullReferenceException`: at the end of `SpawnTile`, `bestEntrance.pairedNode` is dereferenced even when no entrance matched (fill-phase boss room).
+- [ ] `SpawnTile`'s `isBossTile` parameter is unused.
+
+### 5. UI: event leaks and the unfinished loot window
+- [ ] Inventory, shop and loot UIs subscribe with a lambda but unsubscribe the method group, so they're never unsubscribed. `OnDisable` can throw if it runs before the subscription coroutine. `EquipmentUI` subscribes twice, so `UpdateUI` runs twice per change.
+- [ ] **Loot window can't take items.** `TakeAllButton` and `TakeSelectedButton` exist in `LootUI.uxml` but aren't wired up. The grid also doesn't refresh once the chest is empty.
+- [ ] Dead code: unused `Label tooltip` locals in `Start`, and the unused `gridScrollView` plus wheel handler in `InventoryUI`.
+
+### 6. Refactor: shared item-grid and tooltip code
+- [ ] `SetupTooltip` (~45 identical lines) and the item-grid builder are copy-pasted across `InventoryUI`, `EquipmentUI`, `ShopUI` and `LootUI`. Extract a shared helper.
+
+### 7. Performance
+- [ ] `Hero.Update` calls `GetComponent<SpriteRenderer>()` every frame with input, box-casts `isGrounded()` twice for the same animator bool, and allocates a new `IdleState` every frame during dialog. `Hero.FixedUpdate` computes an unused `BoxCast`.
+- [ ] Animator parameters are set by string every frame. Cache `Animator.StringToHash` ids in `Hero`, `HeroState` and `Enemy`.
+- [ ] `DialogSystem` types by `text += letter` (a new string per character) and allocates a `WaitForSeconds` per character. Use TMP `maxVisibleCharacters` and a cached wait.
+- [ ] `Healthbar.Update` rebuilds the HP text string every frame. Only update it when the value changes.
+- [ ] `ItemDatabase.GetItemById` does a linear LINQ scan, which could be a dictionary. `RuntimeItem.SetSprite` calls `Resources.LoadAll` on a sheet for every item, which could be cached.
+
+### 8. Item data (`StreamingAssets/items.json`)
+- [ ] Item 21 has a lowercase `"accessory"` type, and "Oakwood Shield" (id 4) is typed `Armor` although it carries `Block`.
+
+### 9. Cleanup and repo hygiene
+- [ ] Unused `using System.Dynamic;` and `using Unity.VisualScripting;` in `Healthbar.cs`. `PlayerSpawnManager` is unused, since nothing attaches it.
+- [ ] `UserSettings/` is per-user editor state (layouts, search settings) and is tracked. Untrack and ignore it, like the standard Unity `.gitignore` does, and add build-output ignores.
+
+### Needs a design decision (not scheduled)
+- **Save/load**:
+  - `WorldStateManager.Load()` is never called, and `Awake()` overwrites `worldstate.json` with empty state on every launch, so flags only last one session.
+  - Just turning loading on would be *worse*: the merchant flag would persist but the inventory wouldn't, so the amulet would be lost forever.
+  - It needs a real save of inventory, equipment, gold and dungeon level, or an explicit "no persistence" choice.
+- Status effects (bleed, poison, burn) are description text only. `BleedDamage` adds flat damage, and `BleedDuration` does nothing.
+- Many `items.json` entries reference sprites that don't exist, use unsupported effect types (`Buff`, `Shield`), show unfilled `{placeholders}`, or have no price (so they're unsellable).
+- `ShopSystem.BuyItem` ignores `ShopItemData.quantity` (infinite stock).
+- `ShowDialogBehavior` and `GiveItemBehavior` write runtime state into ScriptableObject fields, which persists into the asset in the Editor.
+- Legacy Input Manager: migrate to the Input System package.
+- No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
+- `LevelTransition` runs its fade coroutine on an object destroyed by the scene load, so `FadeTransition.FadeBack` exists as a workaround. The transition flow could live on the persistent `FadeTransition` instead.
+- Consider Git LFS for binary art before committing more vendor packs.
 
 ## Unity 6000.6 upgrade notes (2026-09-29)
 
