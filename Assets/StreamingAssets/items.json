@@ -6,6 +6,8 @@
       "description": "{bonusArmor} Armor\n\nA sturdy shield.",
       "type": "Shield",
       "spriteName": "shield",
+      "price": 25,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Armor",
@@ -22,9 +24,11 @@
     {
       "id": 420,
       "name": "Broadsword",
-      "description": "{bonusDamage} Damage\n {bonusHealth} Health\n\nBasket-hilted sword fitted for a knight.",
+      "description": "{bonusDamage} Damage\n{bonusHealth} Health\n\nBasket-hilted sword fitted for a knight.",
       "type": "Weapon",
       "spriteName": "sword",
+      "price": 30,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -42,10 +46,12 @@
     },
     {
       "id": 1337,
-      "name": "Lether Armor",
-      "description": "{bonusArmor} Armor\n{bonusHealth} Health\n\nBasic lether clothing for travelling.",
+      "name": "Leather Armor",
+      "description": "{bonusArmor} Armor\n{bonusHealth} Health\n\nBasic leather clothing for travelling.",
       "type": "Armor",
       "spriteName": "basic_clothing_10",
+      "price": 35,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Armor",
@@ -64,9 +70,11 @@
     {
       "id": 0,
       "name": "Crimson Blade",
-      "description": "{bonusDamage} Damage\n{bleedDamage} Bleed Damage\n{bleedDuration}s Bleed Duration\n\nA blade that thirsts for blood.",
+      "description": "{bonusDamage} Damage\n{bleedDamage} Bleed Damage\n{bleedDuration}s Bleed Duration\n{bonusHealth} Health\n\nA blade that thirsts for blood.",
       "type": "Weapon",
       "spriteName": "weapon_crimson_blade",
+      "price": 90,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -96,6 +104,8 @@
       "description": "{healAmount} Heal\n\nA small vial brimming with vitality.",
       "type": "Consumable",
       "spriteName": "potion_heal_minor",
+      "price": 8,
+      "isSellable": true,
       "characterStatsEffects": [],
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [],
@@ -109,9 +119,11 @@
     {
       "id": 2,
       "name": "Elven Longbow",
-      "description": "{poisonDamage} Poison Damage\n{poisonDuration}s Poison Duration\n\nForged by the hands of ancient archers.",
+      "description": "{bonusDamage} Damage\n{poisonDamage} Poison Damage\n{poisonDuration}s Poison Duration\n\nForged by the hands of ancient archers.",
       "type": "Weapon",
       "spriteName": "weapon_elven_bow",
+      "price": 60,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -136,6 +148,8 @@
       "description": "{bonusHealth} Bonus Health\n\nAn amulet that pulses with life energy.",
       "type": "Accessory",
       "spriteName": "accessory_amulet_lifeglow",
+      "price": 40,
+      "isSellable": true,
       "characterStatsEffects": [],
       "healthEffects": [
         {
@@ -152,6 +166,8 @@
       "description": "{bonusShield} Bonus Shield\n\nSolid wood crafted to block any foe.",
       "type": "Shield",
       "spriteName": "armor_shield_oak",
+      "price": 45,
+      "isSellable": true,
       "characterStatsEffects": [
         { "effectType": "Block" }
       ],
@@ -167,9 +183,11 @@
     {
       "id": 5,
       "name": "Staff of Frostbite",
-      "description": "{poisonDamage} Poison Damage\n{poisonDuration}s Poison Duration\n\nCold to the touch, deadly to the soul.",
+      "description": "{bonusDamage} Damage\n{poisonDamage} Poison Damage\n{poisonDuration}s Poison Duration\n\nCold to the touch, deadly to the soul.",
       "type": "Weapon",
       "spriteName": "weapon_staff_frost",
+      "price": 50,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -194,6 +212,8 @@
       "description": "{restoreMana} Mana\n\nA quick sip to awaken your mind.",
       "type": "Consumable",
       "spriteName": "potion_mana",
+      "price": 10,
+      "isSellable": true,
       "characterStatsEffects": [],
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [
@@ -207,9 +227,11 @@
     {
       "id": 7,
       "name": "Venomfang Dagger",
-      "description": "{poisonDamage} Poison Damage\n{poisonDuration}s Poison Duration\n\nA dagger kissed by vipers.",
+      "description": "{bonusDamage} Damage\n{poisonDamage} Poison Damage\n{poisonDuration}s Poison Duration\n\nA dagger kissed by vipers.",
       "type": "Weapon",
       "spriteName": "weapon_dagger_venom",
+      "price": 55,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -234,6 +256,8 @@
       "description": "{bonusShield} Bonus Shield\n\nWorn by protectors of the ancient realms.",
       "type": "Accessory",
       "spriteName": "accessory_ring_guardian",
+      "price": 45,
+      "isSellable": true,
       "characterStatsEffects": [],
       "healthEffects": [
         {
@@ -250,6 +274,8 @@
       "description": "{healAmount} Heal\n\nA potent brew that mends even the gravest wounds.",
       "type": "Consumable",
       "spriteName": "potion_heal_major",
+      "price": 18,
+      "isSellable": true,
       "characterStatsEffects": [],
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [],
@@ -263,9 +289,11 @@
     {
       "id": 10,
       "name": "Emberfang",
-      "description": "{burnDamage} Burn Damage\n{burnDuration}s Burn Duration\n\nForged in dragonfire, it sears the soul.",
+      "description": "{bonusDamage} Damage\n{burnDamage} Burn Damage\n{burnDuration}s Burn Duration\n\nForged in dragonfire, it sears the soul.",
       "type": "Weapon",
       "spriteName": "weapon_sword_ember",
+      "price": 110,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -290,6 +318,8 @@
       "description": "{bonusHealth} Bonus Health\n{bonusArmor} Bonus Armor\n\nA sturdy helm for enduring brutal battles.",
       "type": "Armor",
       "spriteName": "basic_armor_3",
+      "price": 20,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Armor",
@@ -308,9 +338,11 @@
     {
       "id": 12,
       "name": "Arcane Robe",
-      "description": "{bonusMagicPower} Bonus Magic Power\n{bonusArmor} Bonus Armor\n\nRobes imbued with ancient spells.",
+      "description": "{bonusMagicPower} Bonus Magic Power\n{bonusArmor} Bonus Armor\n{bonusHealth} Health\n\nRobes imbued with ancient spells.",
       "type": "Armor",
       "spriteName": "basic_clothing_41",
+      "price": 45,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Armor",
@@ -333,9 +365,11 @@
     {
       "id": 13,
       "name": "Giant’s Cleaver",
-      "description": "{bleedDamage} Bleed Damage\n{bleedDuration}s Bleed Duration\n\nA monstrous weapon that leaves deep wounds.",
+      "description": "{bonusDamage} Damage\n{bleedDamage} Bleed Damage\n{bleedDuration}s Bleed Duration\n\nA monstrous weapon that leaves deep wounds.",
       "type": "Weapon",
       "spriteName": "weapon_axe_giant",
+      "price": 130,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -360,6 +394,8 @@
       "description": "{bonusShield} Shield for {shieldDuration}s\n\nLiquid courage in its purest form.",
       "type": "Consumable",
       "spriteName": "potion_invincibility",
+      "price": 60,
+      "isSellable": true,
       "characterStatsEffects": [],
       "healthEffects": [],
       "onActivateCharacterStatsEffects": [],
@@ -374,9 +410,11 @@
     {
       "id": 15,
       "name": "Thief's Gloves",
-      "description": "{bonusAgility} Bonus Agility\n{bonusArmor} Bonus Armor\n\nPerfect for a quick escape... or a swift strike.",
+      "description": "{bonusAgility} Bonus Agility\n{bonusArmor} Bonus Armor\n{bonusHealth} Health\n\nPerfect for a quick escape... or a swift strike.",
       "type": "Armor",
       "spriteName": "basic_armor_63",
+      "price": 35,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Armor",
@@ -402,6 +440,8 @@
       "description": "{bonusDamage} Bonus Damage\n\nA wand crackling with unstable energy.",
       "type": "Weapon",
       "spriteName": "weapon_wand_spark",
+      "price": 40,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
@@ -418,6 +458,8 @@
       "description": "{bonusMana} Max Mana\n{bonusManaRegen} Mana Regen per second\n\nA ring that hums with forgotten knowledge.",
       "type": "Accessory",
       "spriteName": "accessory_ring_wisdom",
+      "price": 40,
+      "isSellable": true,
       "characterStatsEffects": [
         {
           "effectType": "Mana",
@@ -488,10 +530,12 @@
     },
     {
       "id": 21,
-      "name": "Merchents Amulet",
+      "name": "Merchant's Amulet",
       "description": "Town merchant says this amulet holds power in it, increasing damage output by {bonusDamage}.",
       "type": "Accessory",
       "spriteName": "amulet_merchant",
+      "price": 50,
+      "isSellable": false,
       "characterStatsEffects": [
         {
           "effectType": "Damage",
