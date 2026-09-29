@@ -11,6 +11,7 @@ public class Enemy : MonoBehaviour, IEntity
     public Transform[] patrolPoints;
     private int currentPointIndex = 0;
     private bool isChasing = false;
+    private Coroutine patrolRoutine; // The running Patrol(), so it can actually be stopped
 
     [Header("Combat")]
     public float attackDelay = 1.5f;
@@ -39,8 +40,8 @@ public class Enemy : MonoBehaviour, IEntity
 
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
-        if (!isTrap) 
-            StartCoroutine(Patrol());
+        if (!isTrap)
+            patrolRoutine = StartCoroutine(Patrol());
 
     }
     void Update()
@@ -52,15 +53,28 @@ public class Enemy : MonoBehaviour, IEntity
             float distanceToPlayer = Vector2.Distance(transform.position, player.position);
             if (distanceToPlayer <= detectionRange)
             {
-                isChasing = true;
-                StopCoroutine(Patrol());
+                if (!isChasing)
+                {
+                    isChasing = true;
+                    StopPatrol();
+                }
                 ChasePlayer();
             }
             else if (isChasing)
             {
                 isChasing = false;
-                StartCoroutine(Patrol());
+                patrolRoutine = StartCoroutine(Patrol());
             }
+        }
+    }
+
+    private void StopPatrol()
+    {
+        // StopCoroutine(Patrol()) would stop a new enumerator, not the running one
+        if (patrolRoutine != null)
+        {
+            StopCoroutine(patrolRoutine);
+            patrolRoutine = null;
         }
     }
 

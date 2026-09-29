@@ -268,7 +268,7 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - Note: enemy bars now actually draw their breakpoints (every 5 HP, per `Bandit.prefab`). Raise `breakpointEveryX` if that looks too dense.
 
 ### 3. Enemy AI
-- [ ] **Patrol coroutines stack.** `StopCoroutine(Patrol())` creates a new enumerator and stops nothing, and a new `Patrol()` starts each time the player leaves detection range. Called every frame while chasing, it also allocates.
+- [x] **Patrol coroutines stack.** `StopCoroutine(Patrol())` creates a new enumerator and stops nothing, and a new `Patrol()` starts each time the player leaves detection range. Called every frame while chasing, it also allocates.
 
 ### 4. Dungeon generator
 - [ ] **Failed tiles are left in the scene at the origin.** `Destroy(newTile)` destroys only the `Room` component, not the tile GameObject, and `newTile = null; DestroyImmediate(newTile);` destroys nothing. This is the real cause of the "tiles spawning on vector zero - still buggy" commit.
