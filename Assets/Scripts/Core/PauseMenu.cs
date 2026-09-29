@@ -70,6 +70,12 @@ public class PauseMenu : Singleton<PauseMenu>
         }
     }
 
+    // Hook a pause-menu button's OnClick to this
+    public void OnNewGameClicked()
+    {
+        SaveSystem.Instance.StartNewGame();
+    }
+
     public void OnQuitGameClicked()
     {
         Resume();

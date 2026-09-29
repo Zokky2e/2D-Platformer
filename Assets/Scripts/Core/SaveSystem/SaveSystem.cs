@@ -79,6 +79,34 @@ public class SaveSystem : Singleton<SaveSystem>
         }
     }
 
+    public void DeleteSave()
+    {
+        foreach (string path in new[] { SavePath, SavePath + ".tmp" })
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        LoadedData = null;
+    }
+
+    // Deletes the save and restarts from the first scene with fresh persistent objects
+    public void StartNewGame()
+    {
+        DeleteSave();
+        // The player, inventory, UIs and managers live in the DontDestroyOnLoad scene (where this object
+        // is too); clear them so Level0 recreates everything from scratch. Only our own objects:
+        // packages (URP, Input System) can keep helpers there that would not come back.
+        System.Reflection.Assembly gameAssembly = typeof(SaveSystem).Assembly;
+        foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+        {
+            if (root.GetComponentsInChildren<MonoBehaviour>(true).Any(b => b != null && b.GetType().Assembly == gameAssembly))
+                Destroy(root);
+        }
+        Time.timeScale = 1f;
+        CoreUI.IsUIOpen = false;
+        SceneManager.LoadScene(0);
+    }
+
     private static PlayerSaveData CapturePlayer()
     {
         PersistentPlayerHealth health = PersistentPlayerHealth.Instance;
