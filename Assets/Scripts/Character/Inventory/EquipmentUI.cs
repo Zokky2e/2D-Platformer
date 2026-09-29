@@ -15,10 +15,7 @@ public class EquipmentUI : MonoBehaviour
     public Sprite defaultShieldSprite;
     public Sprite defaultArmorSprite;
     public Sprite defaultAccessorySprite;
-    private VisualElement tooltip;
-    private Label tooltipName;
-    private Label tooltipGold;
-    private Label tooltipDescription;
+    private ItemTooltip tooltip;
 
     private void OnEnable()
     {
@@ -55,7 +52,7 @@ public class EquipmentUI : MonoBehaviour
         EquipmentSystem.Instance.OnEquipmentChanged += UpdateUI;
 
         // Initialize UI
-        SetupTooltip(); // Initialize tooltip setups
+        tooltip = new ItemTooltip(equipmentContainer);
         UpdateUI();
     }
 
@@ -99,7 +96,7 @@ public class EquipmentUI : MonoBehaviour
         else
         {
             // If no item, reset the slot background
-            slot.style.backgroundColor = new Color(0, 0, 0, 0.1f);
+            slot.style.backgroundColor = ItemGrid.SlotColor;
         }
     }
 
@@ -113,12 +110,8 @@ public class EquipmentUI : MonoBehaviour
     private void OnMouseEnter(MouseEnterEvent evt, Item item)
     {
         var slot = evt.target as VisualElement;
-        slot.style.backgroundColor = new Color(1, 1, 1, 0.3f); // Lighten background on hover
-        item.AdjustDescription(); // Ensure description updates dynamically
-        tooltipName.text = item.Name;
-        tooltipGold.text = item.Price.ToString() + " G";
-        tooltipDescription.text = item.Description;
-        tooltip.style.visibility = Visibility.Visible;
+        slot.style.backgroundColor = ItemGrid.HoverColor;
+        tooltip.Show(item, item.Price + " G");
         UpdateTooltipPosition(evt.mousePosition);
     }
 
@@ -130,72 +123,25 @@ public class EquipmentUI : MonoBehaviour
     private void OnMouseLeave(MouseLeaveEvent evt)
     {
         var slot = evt.target as VisualElement;
-        slot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Reset background when leaving
+        slot.style.backgroundColor = ItemGrid.SlotColor; // Reset background when leaving
 
-        tooltip.style.visibility = Visibility.Hidden;
+        tooltip.Hide();
     }
 
     private void OnItemClick(ClickEvent evt, Item item)
     {
         var slot = evt.target as VisualElement;
-        slot.style.backgroundColor = new Color(0, 0, 0, 0.1f); // Reset background after clicking
+        slot.style.backgroundColor = ItemGrid.SlotColor; // Reset background after clicking
 
-        tooltip.style.visibility = Visibility.Hidden;
+        tooltip.Hide();
         OnEquipedItemClicked(slot, item);
-    }
-    private void SetupTooltip()
-    {
-        tooltip = new Label();
-        tooltip.style.position = Position.Absolute;
-        tooltip.style.backgroundColor = new Color(0, 0, 0, 0.8f);
-        tooltip.style.color = Color.white;
-        tooltip.style.paddingLeft = 10;
-        tooltip.style.paddingRight = 10;
-        tooltip.style.paddingTop = 5;
-        tooltip.style.paddingBottom = 5;
-        tooltip.style.fontSize = 24;
-        tooltip.style.maxWidth = 500;
-        tooltip.style.visibility = Visibility.Hidden;
-
-        // Create the item name label
-        tooltipName = new Label();
-        tooltipName.style.unityFontStyleAndWeight = FontStyle.Bold;
-        tooltipName.style.fontSize = 28;
-        tooltipName.style.color = Color.white;
-        tooltipName.style.marginBottom = 5; // Space between name and description
-        tooltipName.style.whiteSpace = WhiteSpace.Normal;
-        tooltipName.style.overflow = Overflow.Hidden;
-        tooltipName.style.textOverflow = TextOverflow.Clip;
-
-        // Create the item gold label
-        tooltipGold = new Label();
-        tooltipGold.style.fontSize = 22;
-        tooltipGold.style.color = Color.yellow;
-        tooltipGold.style.marginBottom = 5; // Space between name and description
-        tooltipGold.style.whiteSpace = WhiteSpace.Normal;
-        tooltipGold.style.overflow = Overflow.Hidden;
-        tooltipGold.style.textOverflow = TextOverflow.Clip;
-
-        // Create the item description label
-        tooltipDescription = new Label();
-        tooltipDescription.style.fontSize = 22;
-        tooltipDescription.style.color = Color.white;
-        tooltipDescription.style.whiteSpace = WhiteSpace.Normal;
-        tooltipDescription.style.overflow = Overflow.Hidden;
-        tooltipDescription.style.textOverflow = TextOverflow.Clip;
-
-        // Add labels to the tooltip container
-        tooltip.Add(tooltipName);
-        tooltip.Add(tooltipGold);
-        tooltip.Add(tooltipDescription);
-
-        equipmentContainer.Add(tooltip); // Add tooltip to the inventory UI
     }
 
     private void UpdateTooltipPosition(Vector2 mousePosition)
     {
-        float tooltipWidth = tooltip.resolvedStyle.width;
-        float tooltipHeight = tooltip.resolvedStyle.height;
+        float tooltipWidth = tooltip.Width;
+        float tooltipHeight = tooltip.Height;
+
         float screenWidth = Screen.width;
         float screenHeight = Screen.height;
         float offset = 100f;
@@ -215,8 +161,7 @@ public class EquipmentUI : MonoBehaviour
             newY = mousePosition.y - tooltipHeight - offset * 3; // Move up
         }
 
-        // Apply position
-        tooltip.style.left = newX;
-        tooltip.style.top = newY;
+        tooltip.MoveTo(newX, newY);
+
     }
 }

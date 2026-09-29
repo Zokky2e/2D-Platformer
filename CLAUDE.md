@@ -280,10 +280,10 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 ### 5. UI: event leaks and the unfinished loot window
 - [ ] Inventory, shop and loot UIs subscribe with a lambda but unsubscribe the method group, so they're never unsubscribed. `OnDisable` can throw if it runs before the subscription coroutine. `EquipmentUI` subscribes twice, so `UpdateUI` runs twice per change.
 - [ ] **Loot window can't take items.** `TakeAllButton` and `TakeSelectedButton` exist in `LootUI.uxml` but aren't wired up. The grid also doesn't refresh once the chest is empty.
-- [ ] Dead code: unused `Label tooltip` locals in `Start`, and the unused `gridScrollView` plus wheel handler in `InventoryUI`.
+- [x] Dead code: unused `Label tooltip` locals in `Start`, and the unused `gridScrollView` plus wheel handler in `InventoryUI`.
 
 ### 6. Refactor: shared item-grid and tooltip code
-- [ ] `SetupTooltip` (~45 identical lines) and the item-grid builder are copy-pasted across `InventoryUI`, `EquipmentUI`, `ShopUI` and `LootUI`. Extract a shared helper.
+- [x] `SetupTooltip` (~45 identical lines) and the item-grid builder are copy-pasted across `InventoryUI`, `EquipmentUI`, `ShopUI` and `LootUI`. Extract a shared helper.
 
 ### 7. Performance
 - [ ] `Hero.Update` calls `GetComponent<SpriteRenderer>()` every frame with input, box-casts `isGrounded()` twice for the same animator bool, and allocates a new `IdleState` every frame during dialog. `Hero.FixedUpdate` computes an unused `BoxCast`.
