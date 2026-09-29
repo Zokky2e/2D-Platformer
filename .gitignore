@@ -40,3 +40,19 @@ Assets/TextMesh Pro/Examples & Extras/
 Assets/TextMesh Pro/Examples & Extras.meta
 # Unused Photoshop sources that crash the Unity 6000.6 PSD importer (~335 MB); the trailing ~ hides them from Unity
 Assets/JohnFarmer/Keyboard Keys & Mouse Sprites/PSB File~/
+
+# Per-user editor state (layouts, search index, editor settings)
+UserSettings/
+
+# Build output and captures
+Build/
+Builds/
+MemoryCaptures/
+Recordings/
+*.apk
+*.aab
+crashlytics-build.properties
+sysinfo.txt
+
+# Rider
+.idea/

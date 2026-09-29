@@ -45,12 +45,13 @@ Assets/
       Hero/                    Hero (player controller), HeroState (FSM), WeaponSensor
       Enemies/                 Enemy (patrol/chase/attack/trap), EnemyGenerator
       Core/                    CharacterStats, CameraFollow, FadeTransition, GameRespawn,
-                               LevelTransition, NPC, IEntity, PlayerSpawnManager (unused),
+                               LevelTransition, NPC, IEntity, AnimatorParams (cached animator ids),
                                NPCInteractionBehavior + NPCInteractionBehaviors/*
       Inventory/               InventorySystem, EquipmentSystem, InventoryUI, EquipmentUI
     Health/                    Health, Healthbar (player HUD), FloatingHealthBar (enemies)
     Items/                     Item, RuntimeItem, ItemData, ItemLoader, ItemDatabase, ItemSystem,
-                               Collectable, Effects/*, ItemVarients/* (sic), LootSystem/*, TradeSystem/*
+                               Collectable, ItemGrid + ItemTooltip (shared item-window UI),
+                               Effects/*, ItemVarients/* (sic), LootSystem/*, TradeSystem/*
     LevelGeneration/           DungeonGenerator, DungeonManager, RoomGeneration (rules), Room, Node
     WorldObjects/              RespawnCheckpoint
   Editor/DungeonGeneratorEditor.cs   Inspector buttons "Expand Dungeon" / "Expand Dungeon To Max"
@@ -99,7 +100,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - Two UI technologies are in use:
   - **uGUI Canvas**: HUD health bar (`Prefabs/Scening/UI.prefab`), dialog box, pause menu, fade.
   - **UI Toolkit** (`UIDocument` + UXML): inventory, equipment, shop, loot. UXML lives next to the prefabs in `Prefabs/InterfaceGraphics/**`. Scripts query elements by name (`"InventoryContainer"`, `"Items"`, `"Gold"`, `"ExitButton"`, `"ShopItems"`, `"PlayerItems"`, `"SellButton"`, `"BuyButton"`, `"LootContainer"`, `"LootItems"`, `"Loadout"`, `"EquipmentContainer"`, `"Weapon"`…). **Renaming an element in UXML breaks the script silently.**
-  - Item grids and tooltips are built in C#. The tooltip and grid code is **copy-pasted across InventoryUI, EquipmentUI, ShopUI and LootUI**, so apply a fix to all four or extract a shared helper.
+  - Item grids and tooltips are built in C# by the shared `ItemGrid.Build` (slots, hover, click, selection highlight) and `ItemTooltip` (Show, Hide, MoveTo). Each window keeps its own `UpdateTooltipPosition`, because their layouts need different hand-tuned offsets.
 
 ### Player: `Hero` + `HeroState` FSM
 - `HeroStates` enum: `Idle, Run, Jump, Roll, Attack, Block, Dead`. `Run` has no state class; running is handled in `Hero.Update` by setting animator `AnimState=1`.
@@ -147,7 +148,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - `InventorySystem` (list of `Item` + gold, event `onInventoryChanged`) and `EquipmentSystem` (four slots: weapon, shield, armor, accessory; event `OnEquipmentChanged`) both live on `Prefabs/InterfaceGraphics/InventoryGraphics/InventoryManager.prefab`.
 - Clicking an item in the inventory equips it (swapping the old item back into the inventory) or uses it if it's a consumable. Clicking an equipment slot unequips.
 - **Shop**: an NPC's `OpenShopBehavior` hands a `ShopInventory` asset (item ids + quantity, where quantity is currently ignored) to `ShopUI`. Selecting an item enables Buy or Sell, which call `ShopSystem.BuyItem` / `SellItem`.
-- **Loot**: `LootChest` (on `Prefabs/Environment/LootChest.prefab`, wrapping Cainos' `Chest`) rolls `LootInventory.GetLoot()` once in `Start`. Interacting opens the chest animation and then `LootUI`. Loot tables are `LootInventory` assets (lists of item-id groups with weights), for example `ScriptedItems/LootInventories/TestLootInventory/LootInventory_0.asset`.
+- **Loot**: `LootChest` (on `Prefabs/Environment/LootChest.prefab`, wrapping Cainos' `Chest`) rolls `LootInventory.GetLoot()` once in `Start`. Interacting opens the chest animation and then `LootUI`, where **Take** moves the selected item into the inventory and **Take All** empties the chest and closes the window. Emptied chests stay open. Loot tables are `LootInventory` assets (lists of item-id groups with weights), for example `ScriptedItems/LootInventories/TestLootInventory/LootInventory_0.asset`.
 
 ### NPCs, dialog and world state
 - `NPC` has a `currentAction` (`None, Attention, Information, Trade`) that controls the overhead indicator prefab (! / ? / trader mark) and which behavior runs on interaction (E). `onSpawnBehavior` runs in `Start`. If `isTrader` is set, the NPC switches to `Trade` after any interaction.
@@ -243,7 +244,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - No status effects: bleed, poison and burn are only description text. `BleedDamage` actually adds flat damage, and `BleedDuration` does nothing.
 - No meta-progression, no win condition, no story beyond the "Dark Lord" line, and no save/load of the player's progress.
 - Unity Behavior and NavMesh packages are installed but unused. The commit history shows they were tried and dropped in favour of the transform-based `Enemy` AI.
-- `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` and `SpawnTile`'s `isBossTile` parameter are declared but unused. `PlayerSpawnManager` (PlayerPrefs `LastExit`) is unused.
+- `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are declared but unused.
 
 ## Audit backlog (2026-09-29)
 
@@ -299,8 +300,8 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 
 ### 9. Cleanup and repo hygiene
 - [x] Unused `using System.Dynamic;` and `using Unity.VisualScripting;` in `Healthbar.cs` (removed with the 2b rewrite).
-- [ ] `PlayerSpawnManager` is unused, since nothing attaches it.
-- [ ] `UserSettings/` is per-user editor state (layouts, search settings) and is tracked. Untrack and ignore it, like the standard Unity `.gitignore` does, and add build-output ignores.
+- [x] `PlayerSpawnManager` is unused, since nothing attaches it. Deleted.
+- [x] `UserSettings/` is per-user editor state (layouts, search settings) and is tracked. Untrack and ignore it, like the standard Unity `.gitignore` does, and add build-output ignores.
 
 ### Needs a design decision (not scheduled)
 - **Save/load**:
@@ -339,4 +340,4 @@ The upgrade from 6000.0.33f1 needed these changes. **Vendor code was patched loc
 - **Policy: only commit vendor assets the game actually uses.** Vendor packs are imported whole into `Assets/`, but only the files that tracked scenes, prefabs and UI reference (directly or through other referenced assets) get committed, together with their `.meta` and parent-folder `.meta` files. Mostly or fully untracked packs: `Assets/RPG Icons Pixel Art/` (73 MB, unused), `Assets/Violet Theme Ui/` (a few icons and the red progress bar used), `Assets/Imported Assets/` (one icon sheet used), `Assets/JohnFarmer/Keyboard Keys & Mouse Sprites/` (a few key sprites used), and `Assets/NaughtyAttributes/` (unused, carries a local 6000.6 patch).
 - **Before committing, check that new references resolve.** A fresh clone only has tracked files, so a scene or prefab pointing at an untracked asset breaks. Resolve the referenced GUIDs (`[0-9a-f]{32}` in YAML and UXML) against `.meta` files, and commit any untracked dependency. The 2026-09-29 baseline did this with a small script that walks references transitively.
 - Never commit `Assets/JohnFarmer/Keyboard Keys & Mouse Sprites/PSB File~/` (~335 MB of unused Photoshop source). It is in `.gitignore`.
-- `.gitignore` excludes `Library/`, `Temp/`, `Logs/`, `obj/`, `.vs/`, `*.csproj`, `*.sln`, and TextMesh Pro Examples. There is no Git LFS, and binary art is committed directly.
+- `.gitignore` excludes `Library/`, `Temp/`, `Logs/`, `obj/`, `.vs/`, `.idea/`, `UserSettings/` (per-user, untracked since 2026-09-29), build output, `*.csproj`, `*.sln`, and TextMesh Pro Examples. There is no Git LFS, and binary art is committed directly.
