@@ -142,7 +142,7 @@
       "id": 4,
       "name": "Oakwood Shield",
       "description": "{bonusShield} Bonus Shield\n\nSolid wood crafted to block any foe.",
-      "type": "Armor",
+      "type": "Shield",
       "spriteName": "armor_shield_oak",
       "characterStatsEffects": [
         { "effectType": "Block" }
@@ -422,7 +422,7 @@
       "id": 21,
       "name": "Merchents Amulet",
       "description": "Town merchant says this amulet holds power in it, increasing damage output by {bonusDamage}.",
-      "type": "accessory",
+      "type": "Accessory",
       "spriteName": "amulet_merchant",
       "characterStatsEffects": [
         {

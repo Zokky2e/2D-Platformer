@@ -295,7 +295,7 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [x] **The hero kept sliding during dialogs.** `Hero.Update` returns early while a dialog is open, but `m_horizontalInput` kept its last value and `FixedUpdate` kept applying it. It's now zeroed.
 
 ### 8. Item data (`StreamingAssets/items.json`)
-- [ ] Item 21 has a lowercase `"accessory"` type, and "Oakwood Shield" (id 4) is typed `Armor` although it carries `Block`.
+- [x] Item 21 has a lowercase `"accessory"` type, and "Oakwood Shield" (id 4) is typed `Armor` although it carries `Block`.
 
 ### 9. Cleanup and repo hygiene
 - [x] Unused `using System.Dynamic;` and `using Unity.VisualScripting;` in `Healthbar.cs` (removed with the 2b rewrite).
