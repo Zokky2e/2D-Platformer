@@ -84,7 +84,7 @@ public class Enemy : MonoBehaviour, IEntity
         {
             Transform targetPoint = patrolPoints[currentPointIndex];
 
-            while (Vector2.Distance(transform.position, targetPoint.position) > 0.1f)
+            while (Mathf.Abs(transform.position.x - targetPoint.position.x) > 0.1f)
             {
                 animator.SetInteger(AnimatorParams.AnimState, 2);
                 MoveTowards(targetPoint.position);
@@ -95,10 +95,13 @@ public class Enemy : MonoBehaviour, IEntity
             currentPointIndex = (currentPointIndex + 1) % patrolPoints.Length;
             yield return new WaitForSeconds(2f);
         }
+        animator.SetInteger(AnimatorParams.AnimState, 0); // Nothing to patrol (bosses), so stand still after a chase
     }
 
+    // Walks horizontally only: moving toward the target's height made enemies float up after a jumping player
     private void MoveTowards(Vector2 target)
     {
+        target.y = transform.position.y;
         Vector2 direction = target - (Vector2)transform.position;
         transform.position = Vector2.MoveTowards(transform.position, target, stats.TotalMoveSpeed * Time.deltaTime);
 
@@ -109,8 +112,9 @@ public class Enemy : MonoBehaviour, IEntity
     private void ChasePlayer()
     {
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+        bool underPlayer = Mathf.Abs(player.position.x - transform.position.x) < 0.1f; // Player is above, out of reach
 
-        if (distanceToPlayer > attackRange * 0.9f)
+        if (distanceToPlayer > attackRange * 0.9f && !underPlayer)
         {
             animator.SetInteger(AnimatorParams.AnimState, 2);
             MoveTowards(player.position);

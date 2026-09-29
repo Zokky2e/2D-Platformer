@@ -139,8 +139,14 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - **Enemy** (`Enemy.cs`) implements `IEntity`:
   - When `isTrap` is true it deals damage on trigger enter (Spiketrap).
   - Otherwise it patrols between `patrolPoints`, chases within `detectionRange`, and attacks within `attackRange` in a loop. Damage lands via the **animation event `DealDamage()`**.
-  - It moves by setting `transform.position` directly, not through the Rigidbody.
-- Enemy prefabs: `Prefabs/Enemies/Bandit.prefab` (100 HP, speed 2, damage 15, armor 5, attackDelay 5.5; it also has an `NPC` component that makes it face the player) and `Spiketrap.prefab`. **There is no boss enemy yet.**
+  - It moves by setting `transform.position` directly, not through the Rigidbody, and only horizontally (it used to float up toward a jumping player). When the player is straight above and out of reach, it stands still.
+  - With no patrol points it stands still until the player comes within `detectionRange`, and returns to idle after a chase.
+- Enemy prefabs: `Prefabs/Enemies/Bandit.prefab` (100 HP, speed 2, damage 15, armor 5, attackDelay 5.5; it also has an `NPC` component that makes it face the player) and `Spiketrap.prefab`.
+- **Boss: the Bandit Chief** (`Prefabs/Enemies/BanditChief.prefab`, a prefab variant of `Bandit`) is 1.5x the size and tinted red, with 250 HP, damage 25, armor 10, speed 2.5, bleed 4/s for 3s, attackDelay 2.5 and detection range 6. Its `BossEnemy` component:
+  - adds `healthPerLevel` (75), `damagePerLevel` (4) and `armorPerLevel` (2) for each dungeon level after the first
+  - locks the room's exit (`LevelTransition.Lock`, which shows a message and adds an invisible wall) until it dies
+  - on death (`Health.Died` event), unlocks the exit, pays `goldReward + goldPerLevel` per extra level (30, +20), reveals the room's hidden `RewardChest` and shows a dialog
+  - finds the exit and chest with `GetComponentInParent<Room>()`, so it only works inside a room prefab
 - `EnemyGenerator` does a weighted random pick from `enemies[]` and spawns the enemy plus a single `PatrolPoint` at `spawnPoint`. The `enemyRoomLR` prefab overrides the list with Bandit (20), Spiketrap (5) and others.
 
 ### Items (data-driven)
@@ -215,7 +221,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   3. `ExpandToMaxDungeon()` repeatedly takes `activeNodes[0]` and calls `SpawnTile`. That computes the neighbour grid cell and world offset (map width and height), skips occupied cells, rolls a weighted room from the rules, reassigns node directions by position relative to the tile's bounds center, and searches for an entrance node pair that aligns with the exit pair (up to 10 attempts). On success it links the nodes, marks the cell occupied, grows the camera bounds, and queues the new room's other exits (sorted by direction).
   4. **Fill phase**: while exits remain open, the first open exit facing **Right** gets the `bossRoom` and every other exit gets an `empty` cap.
   5. It moves the player to the `EntryPoint` inside `startRoom`.
-- `bossRoom` contains an `ExitPoint` back to `Level0`. It **contains no boss**.
+- `bossRoom` contains an `ExitPoint` back to `Level0`, the **Bandit Chief** in the lower corridor between the entrance and the exit, and an inactive `RewardChest` (a `LootChest`) that appears when the boss dies. The chest is inside a `Room`, so its loot is rolled fresh each run.
 - Enemy rooms contain an `EnemyGenerator`, and loot rooms contain a `LootChest`.
 - `DungeonGeneratorEditor` adds Inspector buttons to step the generator manually in the Editor.
 
@@ -234,6 +240,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 | `Prefabs/NPCs/Merchant.prefab` | NPC |
 | `Prefabs/Enemies/Bandit.prefab` | Enemy, Health, CharacterStats, NPC, FloatingHealthBar |
 | `Prefabs/Enemies/Spiketrap.prefab` | Enemy (isTrap), CharacterStats |
+| `Prefabs/Enemies/BanditChief.prefab` (variant of Bandit) | + BossEnemy |
 | `Prefabs/Environment/LootChest.prefab`, `Respawn Stone.prefab` | Chest (Cainos) + LootChest, RespawnCheckpoint |
 | `Prefabs/LevelGeneration/EnemyGenerator.prefab`, `Node.prefab`, `Rooms/*` | EnemyGenerator, Node, Room + Nodes |
 
@@ -246,6 +253,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - **Add an effect type**: subclass `ItemEffect<CharacterStats>` or `ItemEffect<Health>` in `Items/Effects/` (implement `AdjustDescription`, `ApplyEffect`, `RemoveEffect`, `UseItem`), then add a `case` in `RuntimeItem.ConvertCharacterStatsEffects` / `ConvertHealthEffects`. New stats need fields and `Total*` properties in `CharacterStats`.
 - **Save something new**: add a public field to `PlayerSaveData` (or use `WorldStateManager` flags for quest-style state), fill it in `SaveSystem.CapturePlayer`, and apply it in `SaveSystem.RestorePlayer`. Only use JSON-friendly types (no `Vector3` or Unity objects). Missing fields in older saves load as defaults, but renaming a field loses its data: bump `SaveSystem.CurrentVersion` and migrate instead.
 - **Add an NPC behavior**: subclass `NPCInteractionBehavior` with `[CreateAssetMenu(menuName = "NPC/Behaviors/...")]`, create the asset under `ScriptedItems/NPCBehaviors/<NPC>/`, and assign it to an NPC slot. Use `WorldStateManager` bools with unique, descriptive keys (for example `Merchant_Amulet_Given`) for one-time actions.
+- **Add a boss**: make a prefab variant of an enemy, add `BossEnemy`, set its patrol points to none, and place it inside a room prefab next to that room's `ExitPoint`. Add an inactive `LootChest` to the room for a reward. Scaling and rewards are Inspector fields on `BossEnemy`.
 - **Add a room**: create a 12x12 `.tmx` in `Assets/Sprites/Tilesets/` using `2D-Platformer-Tileset.tsx`. Make a prefab in `Prefabs/LevelGeneration/Rooms/` with the imported map, a `Room` component, and paired `Node`s at each opening, placed exactly where neighbouring rooms' nodes will sit. Then add it to `RoomGeneration.ruleEntries` in `RoomGenerator.unity`, both as an option under existing room types and as a source type with its own directions.
 - **Add enum values at the end only.** `RoomType`, `ItemType`, `NPCAction`, `NodeShouldGoTo` and `HeroStates` are serialized as integers in scenes, prefabs and assets, so inserting a value in the middle silently remaps existing data.
 
@@ -277,8 +285,8 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 Everything added on 2026-09-29 compiles but **hasn't been play-tested**.
 
 **Unfinished, where work stopped in May 2025:**
-- No bosses, no boss AI, and the boss room is just an exit.
-- Only Bandit and Spiketrap enemies exist. The monster art packs are imported but unused.
+- One boss, the Bandit Chief, which is a stronger Bandit with the same AI. There is no boss-specific attack pattern.
+- Only Bandit, Spiketrap and Bandit Chief enemies exist. The monster art packs are imported but unused.
 - No meta-progression, no win condition, and no story beyond the "Dark Lord" line.
 - Unity Behavior and NavMesh packages are installed but unused. The commit history shows they were tried and dropped in favour of the transform-based `Enemy` AI.
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are declared but unused.
@@ -394,9 +402,18 @@ Before this, most items had no price (unsellable, free in a shop), and only item
 ### 15. Scene transitions (branch `scene-transitions`)
 - [x] `LevelTransition` ran its fade coroutine on the exit object, which the scene load destroys, so the fade back never ran and `FadeTransition.FadeBack` patched over it. The transition now lives on the persistent `FadeTransition.LoadScene`, `FadeBack` is gone, and the re-entry guard is global, so an exit trigger the player spawns inside can't start a second transition. The unused `LevelTransition.spawnPoint` field was removed.
 
+### 16. Boss (branch `boss`)
+Design choice (made by the user): a Bandit Chief built from the existing Bandit art.
+- [x] `BossEnemy`, the `BanditChief` prefab variant, and the boss room wiring (see "Combat and enemies"). `Health.Died` is a new event for anything that needs to react to a death.
+- [x] `LevelTransition.Lock`/`Unlock` for exits that need a condition.
+- [x] **Enemies floated up toward a jumping player**, because they moved toward the player's full position with `transform.position`. They now move horizontally only, and patrol arrival checks only x.
+- [x] Patrol with no patrol points left the enemy playing its run animation after a chase.
+- The prefab and room edits were made in YAML. **Open `bossRoom` and `BanditChief` in the Editor to check placement**: the boss is at local (8, -10.9) and the chest at (5.5, -11.06), on the corridor floor.
+
 ### Needs a design decision (not scheduled)
 - Legacy Input Manager: migrate to the Input System package.
-- No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
+- `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
+- More bosses, or boss attack patterns. The Monsters Creatures Fantasy pack only has single-animation controllers, so its creatures need attack, hurt and death animators built first.
 - Consider Git LFS for binary art before committing more vendor packs.
 
 ## Unity 6000.6 upgrade notes (2026-09-29)

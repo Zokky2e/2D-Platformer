@@ -12,6 +12,7 @@ public class Health : MonoBehaviour
     public float MaxHealth => baseHealth + bonusHealth; // Dynamic max HP
 
     public IEntity entity;
+    public event Action Died; // Raised once when health reaches zero
 
     [Header("Shield")] // Absorbs damage before health
     public float baseShield = 0f;
@@ -126,6 +127,7 @@ public class Health : MonoBehaviour
         {
             entity.Die();
             OnDied();
+            Died?.Invoke();
         }
     }
 
