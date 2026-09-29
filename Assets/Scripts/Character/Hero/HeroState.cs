@@ -73,7 +73,7 @@ public class IdleState : HeroState
     public override void startState(Hero hero)
     {
         base.startState(hero);
-        m_animator.SetInteger("AnimState", 0);
+        m_animator.SetInteger(AnimatorParams.AnimState, 0);
     }
 }
 
@@ -101,12 +101,12 @@ public class JumpingState : HeroState
         {
             if (hero.onWall() && !hero.isGrounded())
             {
-                m_animator.SetBool("WallSlide", true);
+                m_animator.SetBool(AnimatorParams.WallSlide, true);
                 m_body2d.linearVelocity = Vector2.zero;
             }
             else
             {
-                m_animator.SetBool("WallSlide", false);
+                m_animator.SetBool(AnimatorParams.WallSlide, false);
             }
                 m_body2d.gravityScale = hero.Gravity;
         }
@@ -118,11 +118,11 @@ public class JumpingState : HeroState
 
     private void Jump()
     {
-        m_animator.SetBool("WallSlide", false);
+        m_animator.SetBool(AnimatorParams.WallSlide, false);
         m_body2d.gravityScale = hero.Gravity;
         if (hero.isGrounded())
         {
-            m_animator.SetTrigger("Jump");
+            m_animator.SetTrigger(AnimatorParams.Jump);
             m_body2d.linearVelocity = new Vector2(m_body2d.linearVelocity.x, hero.JumpForce);
             hero.GroundSensor.Disable(0.2f);
         }
@@ -134,11 +134,11 @@ public class JumpingState : HeroState
             }
             else
             {
-                m_animator.SetTrigger("Jump");
+                m_animator.SetTrigger(AnimatorParams.Jump);
                 m_body2d.gravityScale = 5f;
                 m_body2d.linearVelocity = new Vector2(-Mathf.Sign(hero.FacingDirection) * hero.JumpModifierX, hero.JumpModifierY);
             }
-            m_animator.SetBool("WallSlide", false);
+            m_animator.SetBool(AnimatorParams.WallSlide, false);
             m_body2d.gravityScale = hero.Gravity;
             m_wallCooldown = 0;
         }
@@ -180,7 +180,7 @@ public class AttackingState : HeroState
                 m_currentAttack = 1;
 
             // Call one of three attack animations "Attack1", "Attack2", "Attack3"
-            m_animator.SetTrigger("Attack" + m_currentAttack);
+            m_animator.SetTrigger(AnimatorParams.HeroAttack(m_currentAttack));
 
             // Reset timer
             m_timeSinceAttack = 0.0f;
@@ -201,7 +201,7 @@ public class AttackingState : HeroState
         m_currentAttack++;
         if (m_currentAttack > 3) m_currentAttack = 1;
 
-        m_animator.SetTrigger("Attack" + m_currentAttack);
+        m_animator.SetTrigger(AnimatorParams.HeroAttack(m_currentAttack));
 
         yield return new WaitForSeconds(0.5f); // Adjust based on animation length
 
@@ -215,7 +215,7 @@ public class BlockingState : HeroState
     {
         if (Input.GetMouseButtonUp(1))
         {
-            m_animator.SetBool("IdleBlock", false);
+            m_animator.SetBool(AnimatorParams.IdleBlock, false);
             return new IdleState();
         }
         return this;
@@ -223,8 +223,8 @@ public class BlockingState : HeroState
     public override void startState(Hero hero)
     {
         base.startState(hero);
-        m_animator.SetTrigger("Block");
-        m_animator.SetBool("IdleBlock", true);
+        m_animator.SetTrigger(AnimatorParams.Block);
+        m_animator.SetBool(AnimatorParams.IdleBlock, true);
     }
 }
 
@@ -246,7 +246,7 @@ public class RollingState : HeroState
     public override void startState(Hero hero)
     {
         base.startState(hero);
-        m_animator.SetTrigger("Roll");
+        m_animator.SetTrigger(AnimatorParams.Roll);
         Roll(hero);
     }
 
@@ -271,7 +271,7 @@ public class DeadState : HeroState
     {
         if (hero.CurrentHealth != 0)
         {
-            m_animator.SetTrigger("Revive");
+            m_animator.SetTrigger(AnimatorParams.Revive);
             return new IdleState();
         }
         return this;
@@ -279,7 +279,7 @@ public class DeadState : HeroState
     public override void startState(Hero hero)
     {
         base.startState(hero);
-        m_animator.SetBool("noBlood", hero.NoBlood);
-        m_animator.SetTrigger("Death");
+        m_animator.SetBool(AnimatorParams.NoBlood, hero.NoBlood);
+        m_animator.SetTrigger(AnimatorParams.Death);
     }
 }

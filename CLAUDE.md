@@ -286,11 +286,13 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [x] `SetupTooltip` (~45 identical lines) and the item-grid builder are copy-pasted across `InventoryUI`, `EquipmentUI`, `ShopUI` and `LootUI`. Extract a shared helper.
 
 ### 7. Performance
-- [ ] `Hero.Update` calls `GetComponent<SpriteRenderer>()` every frame with input, box-casts `isGrounded()` twice for the same animator bool, and allocates a new `IdleState` every frame during dialog. `Hero.FixedUpdate` computes an unused `BoxCast`.
-- [ ] Animator parameters are set by string every frame. Cache `Animator.StringToHash` ids in `Hero`, `HeroState` and `Enemy`.
-- [ ] `DialogSystem` types by `text += letter` (a new string per character) and allocates a `WaitForSeconds` per character. Use TMP `maxVisibleCharacters` and a cached wait.
+- [x] `Hero.Update` calls `GetComponent<SpriteRenderer>()` every frame with input, box-casts `isGrounded()` twice for the same animator bool, and allocates a new `IdleState` every frame during dialog. `Hero.FixedUpdate` computes an unused `BoxCast`.
+- [x] Animator parameters are set by string every frame. Cache `Animator.StringToHash` ids in `Hero`, `HeroState` and `Enemy`.
+- [x] `DialogSystem` types by `text += letter` (a new string per character) and allocates a `WaitForSeconds` per character. Use TMP `maxVisibleCharacters` and a cached wait.
 - [x] `Healthbar.Update` rebuilds the HP text string every frame. Only update it when the value changes.
-- [ ] `ItemDatabase.GetItemById` does a linear LINQ scan, which could be a dictionary. `RuntimeItem.SetSprite` calls `Resources.LoadAll` on a sheet for every item, which could be cached.
+- [x] ~~`ItemDatabase.GetItemById` linear scan, `RuntimeItem.SetSprite` re-loading a sheet per item~~: **not worth changing.** Both are one-time startup work or rare lookups over ~22 items. Revisit if the item list grows large.
+
+- [x] **The hero kept sliding during dialogs.** `Hero.Update` returns early while a dialog is open, but `m_horizontalInput` kept its last value and `FixedUpdate` kept applying it. It's now zeroed.
 
 ### 8. Item data (`StreamingAssets/items.json`)
 - [ ] Item 21 has a lowercase `"accessory"` type, and "Oakwood Shield" (id 4) is typed `Armor` although it carries `Block`.

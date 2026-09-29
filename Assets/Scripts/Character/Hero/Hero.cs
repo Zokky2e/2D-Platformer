@@ -93,6 +93,7 @@ public class Hero : MonoBehaviour, IEntity {
     private Sensor_HeroKnight   m_wallSensorL1;
     private Sensor_HeroKnight   m_wallSensorL2;
     private BoxCollider2D boxCollider;
+    private SpriteRenderer m_spriteRenderer;
     private Health playerHealth;
     public CharacterStats stats;
 
@@ -140,6 +141,7 @@ public class Hero : MonoBehaviour, IEntity {
         m_animator = GetComponent<Animator>();
         m_body2d = GetComponent<Rigidbody2D>();
         boxCollider = GetComponent<BoxCollider2D>();
+        m_spriteRenderer = GetComponent<SpriteRenderer>();
         playerHealth = GetComponent<Health>();
         stats = GetComponent<CharacterStats>();
         playerHealth.entity = this;
@@ -157,26 +159,27 @@ public class Hero : MonoBehaviour, IEntity {
     }
     void Update()
     {
-        if (!CanMove()) 
+        if (!CanMove())
         {
-            state = new IdleState();
-            state.startState(this);
+            m_horizontalInput = 0; // FixedUpdate would keep applying the last input during dialog
+            if (state.GetCurrentState() != HeroStates.Idle)
+                state = new IdleState();
+            state.startState(this); // Resets the run animation too
             return; // Disable movement if dialog is active
         }
         handleInput();
-        m_animator.SetBool("Grounded", isGrounded());
         // -- Handle input and movement --
         m_horizontalInput = Input.GetAxis("Horizontal");
         // Swap direction of sprite depending on walk direction
         if (m_horizontalInput > 0)
         {
-            GetComponent<SpriteRenderer>().flipX = false;
+            m_spriteRenderer.flipX = false;
             m_facingDirection = 1;
         }
 
         else if (m_horizontalInput < 0)
         {
-            GetComponent<SpriteRenderer>().flipX = true;
+            m_spriteRenderer.flipX = true;
             m_facingDirection = -1;
         }
 
@@ -185,7 +188,7 @@ public class Hero : MonoBehaviour, IEntity {
         {
             // Reset timer
             m_delayToIdle = 0.05f;
-            m_animator.SetInteger("AnimState", 1);
+            m_animator.SetInteger(AnimatorParams.AnimState, 1);
         }
         //Idle
         else
@@ -193,23 +196,22 @@ public class Hero : MonoBehaviour, IEntity {
             // Prevents flickering transitions to idle
             m_delayToIdle -= Time.deltaTime;
             if (m_delayToIdle < 0)
-                m_animator.SetInteger("AnimState", 0);
+                m_animator.SetInteger(AnimatorParams.AnimState, 0);
         }
 
-        m_animator.SetBool("Grounded", isGrounded());
+        m_animator.SetBool(AnimatorParams.Grounded, isGrounded());
         state.Update();
     }
 
     void FixedUpdate()
     {
-        m_animator.SetFloat("AirSpeedY", m_body2d.linearVelocity.y);
+        m_animator.SetFloat(AnimatorParams.AirSpeedY, m_body2d.linearVelocity.y);
         //Wall Slide
         m_isWallSliding = (m_wallSensorR1.State() && m_wallSensorR2.State()) || (m_wallSensorL1.State() && m_wallSensorL2.State());
         if (!noMovementStates.Contains(state.GetCurrentState()))
         {
             m_body2d.linearVelocity = new Vector2(m_horizontalInput * stats.TotalMoveSpeed, m_body2d.linearVelocity.y);
         }
-        RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxCollider.size, 0, new Vector2(m_facingDirection, 0), 0.1f, groundLayer);
     }
 
     void handleInput()
@@ -246,7 +248,7 @@ public class Hero : MonoBehaviour, IEntity {
             float newDamage = stats.CalculateDamage(_damage);
             if (newDamage <= 0)
                 return 0;
-            m_animator.SetTrigger("Hurt");
+            m_animator.SetTrigger(AnimatorParams.Hurt);
             return newDamage;
         }
         return 0;

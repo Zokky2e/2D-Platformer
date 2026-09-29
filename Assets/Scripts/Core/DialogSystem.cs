@@ -59,12 +59,16 @@ public class DialogSystem : Singleton<DialogSystem>
     private IEnumerator TypeDialog(string text)
     {
         isTyping = true;
-        dialogText.text = "";
+        // Lay out the whole page once and reveal it character by character, instead of building a new
+        // string per letter (this also stops words jumping to the next line mid-typing)
+        dialogText.text = text;
+        dialogText.maxVisibleCharacters = 0;
+        WaitForSeconds wait = new WaitForSeconds(typingSpeed);
 
-        foreach (char letter in text.ToCharArray())
+        for (int i = 1; i <= text.Length; i++)
         {
-            dialogText.text += letter;
-            yield return new WaitForSeconds(typingSpeed);
+            dialogText.maxVisibleCharacters = i;
+            yield return wait;
         }
 
         isTyping = false;
@@ -78,7 +82,7 @@ public class DialogSystem : Singleton<DialogSystem>
             {
                 // Skip typing and show full text instantly
                 StopCoroutine(typingCoroutine);
-                dialogText.text = dialogPages[currentPage];
+                dialogText.maxVisibleCharacters = 99999; // TMP's default, i.e. no limit
                 isTyping = false;
             }
             else

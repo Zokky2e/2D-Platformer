@@ -86,12 +86,12 @@ public class Enemy : MonoBehaviour, IEntity
 
             while (Vector2.Distance(transform.position, targetPoint.position) > 0.1f)
             {
-                animator.SetInteger("AnimState", 2);
+                animator.SetInteger(AnimatorParams.AnimState, 2);
                 MoveTowards(targetPoint.position);
                 yield return null;
             }
 
-            animator.SetInteger("AnimState", 0);
+            animator.SetInteger(AnimatorParams.AnimState, 0);
             currentPointIndex = (currentPointIndex + 1) % patrolPoints.Length;
             yield return new WaitForSeconds(2f);
         }
@@ -112,12 +112,12 @@ public class Enemy : MonoBehaviour, IEntity
 
         if (distanceToPlayer > attackRange * 0.9f)
         {
-            animator.SetInteger("AnimState", 2);
+            animator.SetInteger(AnimatorParams.AnimState, 2);
             MoveTowards(player.position);
         }
         else
         {
-            animator.SetInteger("AnimState", 0); // Idle animation
+            animator.SetInteger(AnimatorParams.AnimState, 0); // Idle animation
 
             if (!isAttacking)
             {
@@ -149,7 +149,7 @@ public class Enemy : MonoBehaviour, IEntity
 
         while (player != null && Vector2.Distance(transform.position, player.position) <= attackRange)
         {
-            animator.SetTrigger("Attack");
+            animator.SetTrigger(AnimatorParams.Attack);
             yield return new WaitForSeconds(attackSpeedAnimation);
             yield return new WaitForSeconds(attackDelay);
         }
@@ -168,13 +168,13 @@ public class Enemy : MonoBehaviour, IEntity
     }
     public float TakeDamage(float _damage)
     {
-        animator.SetTrigger("Hurt");
+        animator.SetTrigger(AnimatorParams.Hurt);
         return stats.CalculateDamage(_damage);
     }
 
     public void Die()
     {
-        animator.SetTrigger("Death");
+        animator.SetTrigger(AnimatorParams.Death);
         StopAllCoroutines();
     }
 
