@@ -14,6 +14,7 @@ public class WorldStateManager : Singleton<WorldStateManager>
     protected override void Awake()
     {
         base.Awake();
+        if (IsDuplicate) return; // A duplicate would overwrite the save file with its empty state
         Save();
     }
 

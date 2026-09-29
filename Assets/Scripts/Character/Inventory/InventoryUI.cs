@@ -17,15 +17,19 @@ public class InventoryUI : MonoBehaviour
     private Label tooltipName;
     private Label tooltipGold;
     private Label tooltipDescription;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private static InventoryUI instance;
+
     private void Awake()
     {
-        if (this.GetComponent<InventoryUI>() != null && this.GetComponent<InventoryUI>() != this)
+        // Keep the first UI; Level0 brings its own copy every time it is reloaded
+        if (instance != null && instance != this)
         {
+            gameObject.SetActive(false);
             Destroy(gameObject);
             return;
         }
 
+        instance = this;
         DontDestroyOnLoad(gameObject);
     }
     void Start()
@@ -98,7 +102,8 @@ public class InventoryUI : MonoBehaviour
 
     private void OnDisable()
     {
-        inventory.onInventoryChanged -= UpdateInventoryUI;
+        if (inventory != null)
+            inventory.onInventoryChanged -= UpdateInventoryUI;
     }
 
     private void UpdateInventoryUI()

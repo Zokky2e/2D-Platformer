@@ -26,15 +26,19 @@ public class ShopUI : MonoBehaviour
     public string shopKeeperName;
     private (bool isPlayerInventory , int itemId) selectedItem = (false, -1);
     private VisualElement selectedItemSlot;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private static ShopUI instance;
+
     private void Awake()
     {
-        if (this.GetComponent<ShopUI>() != null && this.GetComponent<ShopUI>() != this)
+        // Keep the first UI; Level0 brings its own copy every time it is reloaded
+        if (instance != null && instance != this)
         {
+            gameObject.SetActive(false);
             Destroy(gameObject);
             return;
         }
 
+        instance = this;
         DontDestroyOnLoad(gameObject);
     }
     void Start()
@@ -111,7 +115,8 @@ public class ShopUI : MonoBehaviour
 
     private void OnDisable()
     {
-        playerInventory.onInventoryChanged -= UpdateInventoryUI;
+        if (playerInventory != null)
+            playerInventory.onInventoryChanged -= UpdateInventoryUI;
     }
 
     private void UpdateInventoryUI()

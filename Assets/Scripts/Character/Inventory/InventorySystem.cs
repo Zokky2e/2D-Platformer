@@ -10,8 +10,9 @@ public class InventorySystem : Singleton<InventorySystem>
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected override void Awake()
     {
-        player = FindAnyObjectByType<Hero>();
         base.Awake();
+        if (IsDuplicate) return;
+        player = FindAnyObjectByType<Hero>();
     }
 
     public void AddItem(Item newItem)

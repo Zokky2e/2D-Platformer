@@ -15,6 +15,8 @@ public class PersistentPlayerHealth : Health
         }
         else
         {
+            // Level0's own hero when returning to it: deactivate so its Start (starting kit) never runs
+            gameObject.SetActive(false);
             Destroy(gameObject);
         }
     }

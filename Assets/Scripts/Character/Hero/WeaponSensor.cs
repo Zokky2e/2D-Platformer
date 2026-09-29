@@ -7,9 +7,8 @@ class WeaponSensor : MonoBehaviour
     private bool isEnemyHit = false;
     public void Awake()
     {
-        player = Object.FindAnyObjectByType<Hero>();
-        //player has WeaponSensor as a child game object i need to fetch its collider component
-        //this will be used to check if enemy is hit by the collider
+        // WeaponSensor sits on a child of the hero it belongs to
+        player = GetComponentInParent<Hero>();
     }
     private void OnTriggerStay2D(Collider2D collision)
     {

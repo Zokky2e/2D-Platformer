@@ -30,6 +30,7 @@ public class DialogSystem : Singleton<DialogSystem>
     protected override void Awake()
     {
         base.Awake();
+        if (IsDuplicate) return;
         dialogBox.SetActive(false);
     }
 

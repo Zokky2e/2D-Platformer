@@ -14,8 +14,9 @@ public class EquipmentSystem : Singleton<EquipmentSystem>
 
     protected override void Awake()
     {
-        player = FindAnyObjectByType<Hero>();
         base.Awake();
+        if (IsDuplicate) return;
+        player = FindAnyObjectByType<Hero>();
         StartCoroutine(ApplyInitialStats());
     }
 

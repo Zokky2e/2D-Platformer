@@ -8,6 +8,7 @@ public class ItemDatabase : Singleton<ItemDatabase>
     protected override void Awake()
     {
         base.Awake();
+        if (IsDuplicate) return;
         LoadItems();
     }
 

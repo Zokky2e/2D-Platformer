@@ -256,11 +256,11 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [x] **`EquipmentSystem.ApplyInitialStats` waits on `&&` instead of `||`.** It continues as soon as either the stats or the health component exists.
 
 ### 2. Returning to Level0 duplicates persistent objects
-- [ ] `InventoryUI`, `ShopUI` and `LootUI` check `GetComponent<Self>() != this`, which is never true, so they're never de-duplicated. Every return to Level0 adds another copy of each UI, all listening for input. `LootUI` checks for `InventoryUI` (copy-paste).
-- [ ] `Hero.Start` grants the starting kit. The duplicate hero in the reloaded Level0 is only destroyed at the end of the frame, so its `Start` may re-grant items and re-apply equipment stats to the persistent player. Guard it so only the persistent hero initialises.
-- [ ] `LevelTransition.OnSceneLoaded` moves `FindGameObjectWithTag("Player")`, which can be the doomed duplicate instead of the persistent player. `WeaponSensor` finds its hero with `FindAnyObjectByType<Hero>()` instead of its parent.
-- [ ] **Respawn point after a scene change**: `GameRespawn.startingPosition` is recorded once, in Level0. Dying in the dungeon without a checkpoint teleports the player to Level0 coordinates. Use the `EntryPoint` the player was placed at.
-- [ ] `LevelTransition` can fire more than once while its fade runs (no re-entry guard).
+- [x] `InventoryUI`, `ShopUI` and `LootUI` check `GetComponent<Self>() != this`, which is never true, so they're never de-duplicated. Every return to Level0 adds another copy of each UI, all listening for input. `LootUI` checks for `InventoryUI` (copy-paste).
+- [x] `Hero.Start` grants the starting kit. The duplicate hero in the reloaded Level0 is only destroyed at the end of the frame, so its `Start` may re-grant items and re-apply equipment stats to the persistent player. Guard it so only the persistent hero initialises.
+- [x] `LevelTransition.OnSceneLoaded` moves `FindGameObjectWithTag("Player")`, which can be the doomed duplicate instead of the persistent player. `WeaponSensor` finds its hero with `FindAnyObjectByType<Hero>()` instead of its parent.
+- [x] **Respawn point after a scene change**: `GameRespawn.startingPosition` is recorded once, in Level0. Dying in the dungeon without a checkpoint teleports the player to Level0 coordinates. Use the `EntryPoint` the player was placed at.
+- [x] `LevelTransition` can fire more than once while its fade runs (no re-entry guard).
 
 ### 3. Enemy AI
 - [ ] **Patrol coroutines stack.** `StopCoroutine(Patrol())` creates a new enumerator and stops nothing, and a new `Patrol()` starts each time the player leaves detection range. Called every frame while chasing, it also allocates.

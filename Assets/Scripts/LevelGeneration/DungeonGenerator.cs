@@ -334,19 +334,16 @@ public class DungeonGenerator : MonoBehaviour
 
     private void SpawnPlayer()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null)
+        if (PersistentPlayerHealth.Instance == null)
         {
-            Debug.LogError("Player not found in the scene!");
+            Debug.LogError("Player not found in the scene! Enter Play mode from Level0.");
             return;
         }
-        GameObject entryPoint = GameObject.Find("EntryPoint");
-        if (entryPoint == null)
+        if (!GameRespawn.Instance.MoveToEntryPoint())
         {
             Debug.LogError("EntryPoint not found in the scene!");
             return;
         }
-        player.transform.position = entryPoint.transform.position;
         WorldStateManager.Instance.Save();
     }
 }

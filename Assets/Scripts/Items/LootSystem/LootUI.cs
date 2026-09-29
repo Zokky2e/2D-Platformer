@@ -20,15 +20,19 @@ public class LootUI : MonoBehaviour
     private Label tooltipDescription;
     private int selectedItem = -1;
     private VisualElement selectedItemSlot;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private static LootUI instance;
+
     private void Awake()
     {
-        if (this.GetComponent<InventoryUI>() != null && this.GetComponent<InventoryUI>() != this)
+        // Keep the first UI; Level0 brings its own copy every time it is reloaded
+        if (instance != null && instance != this)
         {
+            gameObject.SetActive(false);
             Destroy(gameObject);
             return;
         }
 
+        instance = this;
         DontDestroyOnLoad(gameObject);
     }
     void Start()
@@ -97,7 +101,8 @@ public class LootUI : MonoBehaviour
 
     private void OnDisable()
     {
-        playerInventory.onInventoryChanged -= UpdateInventoryUI;
+        if (playerInventory != null)
+            playerInventory.onInventoryChanged -= UpdateInventoryUI;
     }
 
     private void UpdateInventoryUI()

@@ -10,14 +10,28 @@ public class GameRespawn : Singleton<GameRespawn>
     protected override void Awake()
     {
         base.Awake();
+        if (IsDuplicate) return;
         playerHealth = GetComponent<Health>();
         startingPosition = transform.position;
         playerRespawn = null;
     }
-    
+
     public void SetPlayerRespawn(Transform newRespawnPoint)
     {
         playerRespawn = newRespawnPoint;
+    }
+
+    // Moves the player to the scene's "EntryPoint" and makes it the fallback respawn position,
+    // since checkpoints from the previous scene no longer exist
+    public bool MoveToEntryPoint()
+    {
+        GameObject entryPoint = GameObject.Find("EntryPoint");
+        if (entryPoint == null)
+            return false;
+        startingPosition = entryPoint.transform.position;
+        playerRespawn = null;
+        transform.position = startingPosition;
+        return true;
     }
 
     //Check if player dropped out of bounds, killing player gets the respawn button on screen
