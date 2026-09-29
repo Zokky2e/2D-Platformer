@@ -205,7 +205,8 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - **Loading:** the file is read once, when `SaveSystem` is first created (from `WorldStateManager.Awake` during Level0's load). `Hero.Start` then calls `SaveSystem.RestorePlayer`. That equips the saved gear *before* filling the inventory, because `EquipItem` removes the item from the inventory and would take a spare copy. It sets HP after equipping (so bonuses count) and moves the player to the checkpoint when it's in the current scene. **With no save, `Hero.Start` grants the starting kit** at full health.
 - **Items are saved by `items.json` id.** ScriptableObject items from `ItemVarients/` all report id 0, so they're skipped with a warning. IDs that no longer exist are skipped when loading.
 - **No main menu:** the game always continues the existing save. Quitting in the dungeon resumes in Level0, and the dungeon level stays where it was, so the next run is one level deeper.
-- **New game:** `SaveSystem.StartNewGame()` deletes the save, destroys the game's objects in the DontDestroyOnLoad scene (only roots with game scripts, so package helpers survive), and loads build index 0 (Level0) so everything is rebuilt. The pause menu exposes it as `PauseMenu.OnNewGameClicked()`. **The pause menu has no New Game button yet**; one needs adding in the Editor and wiring to that method.
+- **New game:** `SaveSystem.StartNewGame()` deletes the save, destroys the game's objects in the DontDestroyOnLoad scene (only roots with game scripts, so package helpers survive), and loads build index 0 (Level0) so everything is rebuilt. The pause menu exposes it as `PauseMenu.OnNewGameClicked()`. **A New Game button exists** (added by the user on 2026-09-30, meant for future features such as a main menu). It's `NewGameButton`, added in `Level0.unity` as a scene override on the `PauseMenuCanvas` instance, not in the prefab itself.
+  - **Bug:** its OnClick calls `PauseMenu.OnRespawnClicked`, apparently copied from the Respawn button. It must call `OnNewGameClicked` (P13).
 - **Editor tools**, under **Tools → Save Game**: *Delete Save File* (with confirmation), *Open Save Folder*, and *Start New Game* (Play mode only). **Tools → Debug** (Play mode) can give the status effect weapons, all items, and 100 gold. Use *Delete Save File* to test the new-game path, because stopping Play mode doesn't reset the save. A `worldstate.json` in the same folder is left over from the old system and is unused.
 - `CameraFollow` lerps toward the player, clamped to `minBounds` and `maxBounds`. The dungeon generator rewrites the bounds as tiles are placed.
 
@@ -443,6 +444,26 @@ Found by the user in the first play-test of everything above. Each entry has the
   - `Health.TakeDamage` starts the i-frame flash, which sets the sprite red before its first yield. `Enemy.DealDamage` then calls `ApplyOnHitEffects`, which adds `StatusEffects` to the hero.
   - `StatusEffects.Awake` records the sprite's *current* color (red) as the base color, and every flash end resets the sprite to it.
   - Fix: capture `Color.white` or the prefab color, not the current color, or keep the base color outside the flash. The same can happen to enemies hit during a flash.
+
+### Movement problems (reported 2026-09-30, next topic to work on)
+The user found reaching upper platforms very hard: it took 5-6 wall jumps, there's no jump across from a wall, and the hero can get stuck hanging with no way to jump. **The user wants all movement issues reworked.** What the code shows (`HeroState.cs` `JumpingState`, `Hero.FixedUpdate`):
+- [ ] **P8. Wall jumps never push away from the wall.** Confirmed:
+  - `JumpingState.Jump` sets x velocity to `-facing * JumpModifierX` (32), but `Hero.FixedUpdate` overwrites x with `horizontalInput * TotalMoveSpeed` on the next physics step. Only `Roll` and `Dead` are exempt (`noMovementStates`).
+  - The push therefore lasts one step. With the key held toward the wall, a wall jump only goes up the same wall, which is why reaching a ledge takes a chain of wall jumps followed by steering onto it while falling.
+  - `gravityScale = 5f` in the same branch is dead code, overwritten two lines later.
+- [ ] **P9. Stuck hanging on a wall or ledge, unable to jump.** Confirmed:
+  - After 1 s in `JumpingState` (`m_wallCooldown > 1`), touching a wall sets the velocity to zero every frame, so there's no slide and the hero hangs indefinitely.
+  - Jump input is only read in the `else if` branch that runs while the cooldown is ≤ 1 s. Once the hero has hung (or fallen) for more than 1 s, jumping is impossible until grounded. Chained wall jumps only work because each resets the cooldown.
+  - Platform **corners count as walls**: `Hero.onWall()` box-casts the whole collider 0.1 units in the facing direction. A falling hero that catches a platform's side edge hangs there, as in the user's screenshot of the hero stuck on a platform corner.
+- [ ] **P10. The hero may drop out of `JumpingState` right after takeoff** (suspected, depends on frame rate). `JumpingState.handleInput` returns to Idle as soon as `isGrounded()` is true, which is a 0.05-unit box-cast down. At high frame rates, several `Update`s can run before the physics step moves the hero, so the state flips back to Idle mid-air. Wall sliding and wall jumping then only happen through `IdleState` → `JumpingState` on a later Space press.
+- [ ] **P11. Jump height is fixed at about 4 tiles.** `m_jumpForce` 9 with gravity scale 1 gives an apex of about 4.1 units. `CharacterStats.TotalJumpHeight` is unused. Check platform spacing in Level0 and the parkour rooms against it.
+- [ ] **P12. Missing platformer basics** to consider in the rework:
+  - coyote time and jump buffering
+  - variable jump height (release to cut the jump)
+  - a controlled wall slide instead of a full stop
+  - air attacks (every state transition goes through Idle)
+  - a single wall-detection method: `Hero` computes `m_isWallSliding` from the four wall sensors but never uses it, while `JumpingState` uses the box-cast
+- [ ] **P13. The pause menu's New Game button calls `OnRespawnClicked`** instead of `OnNewGameClicked` (see "Save and load").
 
 ### Needs a design decision (not scheduled)
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
