@@ -17,6 +17,6 @@ public enum RoomType
 public class Room : MonoBehaviour
 {
     public RoomType Type;
-    public Tuple<int, int> location;
+    [NonSerialized] public Tuple<int, int> location;
 
 }

@@ -10,7 +10,7 @@ public class DungeonGenerator : MonoBehaviour
     public Room bossTilePrefab;
     public Room emptyTilePrefab;
     public List<Node> activeNodes = new List<Node>(); // Open connection points
-    public List<Tuple<int, int>> occupiedTiles;
+    [NonSerialized] public List<Tuple<int, int>> occupiedTiles;
     public int numberOfTiles = 10;
     private DungeonManager dungeonManager;
     private bool hasBossRoom;

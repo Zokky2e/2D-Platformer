@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 
-[System.Serializable]
 public class WorldStateData
 {
     public Dictionary<string, bool> boolStates;

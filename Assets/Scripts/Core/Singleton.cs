@@ -16,7 +16,7 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 
             if (_instance == null)
             {
-                _instance = Object.FindFirstObjectByType<T>();
+                _instance = Object.FindAnyObjectByType<T>();
 
                 if (_instance == null)
                 {

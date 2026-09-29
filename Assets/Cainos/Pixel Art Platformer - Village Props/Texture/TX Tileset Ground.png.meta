@@ -5,8 +5,7 @@ AssetOrigin:
   productId: 166114
   packageName: Pixel Art Platformer - Village Props
   packageVersion: 2.3.0
-  assetPath: Assets/Cainos/Pixel Art Platformer - Village Props/Texture/TX Tileset
-    Ground.png
+  assetPath: Assets/Cainos/Pixel Art Platformer - Village Props/Texture/TX Tileset Ground.png
   uploadId: 584302
 TextureImporter:
   internalIDToNameTable:
@@ -643,7 +642,9 @@ TextureImporter:
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
+  spriteTessellationMethod: 0
   spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0

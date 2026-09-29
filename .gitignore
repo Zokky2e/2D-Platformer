@@ -38,3 +38,5 @@ Assets/Settings/TextMesh Pro Settings.userprefs
 # Ignore TextMesh Pro Examples & Extras folder
 Assets/TextMesh Pro/Examples & Extras/
 Assets/TextMesh Pro/Examples & Extras.meta
+# Unused Photoshop sources that crash the Unity 6000.6 PSD importer (~335 MB); the trailing ~ hides them from Unity
+Assets/JohnFarmer/Keyboard Keys & Mouse Sprites/PSB File~/

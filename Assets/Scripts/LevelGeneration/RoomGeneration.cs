@@ -26,7 +26,7 @@ public class RoomGeneration : MonoBehaviour
 {
     [Header("Dungeon Rules")]
     public List<DungeonRuleEntry> ruleEntries;
-    public Dictionary<RoomType, Dictionary<NodeShouldGoTo, DungeonRoomType[]>> rules;
+    [NonSerialized] public Dictionary<RoomType, Dictionary<NodeShouldGoTo, DungeonRoomType[]>> rules;
     protected void Start()
     {
     }
