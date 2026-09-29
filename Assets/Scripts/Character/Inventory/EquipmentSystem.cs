@@ -22,18 +22,18 @@ public class EquipmentSystem : Singleton<EquipmentSystem>
 
     private IEnumerator ApplyInitialStats()
     {
+        // Only items assigned in the Inspector need this. Anything equipped while we wait (the starting
+        // kit, a loaded save) goes through EquipItem, which already applies its effects
+        Item[] initialItems = { EquippedWeapon, EquippedShield, EquippedArmor, EquippedAccessory };
         while (player.stats == null || player.Health == null)
         {
             yield return null; // Wait for next frame
         }
-        if (EquippedWeapon != null)
-            EquippedWeapon.ApplyEffects(player.stats, player.Health);
-        if (EquippedShield != null)
-            EquippedShield.ApplyEffects(player.stats, player.Health);
-        if (EquippedArmor != null)
-            EquippedArmor.ApplyEffects(player.stats, player.Health);
-        if (EquippedAccessory != null)
-            EquippedAccessory.ApplyEffects(player.stats, player.Health);
+        foreach (Item item in initialItems)
+        {
+            if (item != null)
+                item.ApplyEffects(player.stats, player.Health);
+        }
     }
 
     public void EquipItem(Item item)

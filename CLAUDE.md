@@ -313,6 +313,9 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
   `DialogSystem.InputConsumedThisFrame` (true on the open and close frames) is now checked by all three.
 - [x] **Invincibility frames didn't block enemy attacks.** They only ignored Player/Enemy collisions, but `Enemy.DealDamage` calls `TakeDamage` directly. `Health` now ignores damage while the player is flashing.
 
+### 11. Save system prerequisites
+- [x] **Starting equipment bonuses were applied twice.** `EquipmentSystem.ApplyInitialStats` waits for `Hero.Start`, then applied the effects of *whatever was equipped by then*, which is the starting kit `Hero.Start` had just equipped (and applied) through `EquipItem`. Players effectively started with 25 damage, 55 armor and 140 max HP instead of 20, 30 and 120, and unequipping only removed one copy. It now applies only the items that were assigned in the Inspector when it started.
+
 ### Needs a design decision (not scheduled)
 - **Save/load**:
   - `WorldStateManager.Load()` is never called, and `Awake()` overwrites `worldstate.json` with empty state on every launch, so flags only last one session.
