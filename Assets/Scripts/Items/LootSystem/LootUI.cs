@@ -127,6 +127,7 @@ public class LootUI : MonoBehaviour
 
         Item item = lootChest.Loot[selectedItem];
         lootChest.Loot.RemoveAt(selectedItem);
+        lootChest.SaveContents();
         playerInventory.AddItem(item);
         ClearSelection();
 
@@ -146,6 +147,7 @@ public class LootUI : MonoBehaviour
             playerInventory.AddItem(item);
         }
         lootChest.Loot.Clear();
+        lootChest.SaveContents();
         ClearSelection();
         ToggleLootInventory();
     }

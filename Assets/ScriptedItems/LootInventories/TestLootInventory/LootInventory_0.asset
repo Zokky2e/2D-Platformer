@@ -13,9 +13,63 @@ MonoBehaviour:
   m_Name: LootInventory_0
   m_EditorClassIdentifier: 
   itemsData:
-  - itemIds: 13000000
-    showChance: 10
   - itemIds: 1200000012000000
-    showChance: 10
+    showChance: 20
+    minDungeonLevel: 0
+  - itemIds: 13000000
+    showChance: 15
+    minDungeonLevel: 0
+  - itemIds: 0100000006000000
+    showChance: 15
+    minDungeonLevel: 0
   - itemIds: 14000000
+    showChance: 10
+    minDungeonLevel: 1
+  - itemIds: 09000000
+    showChance: 10
+    minDungeonLevel: 1
+  - itemIds: 0b000000
+    showChance: 8
+    minDungeonLevel: 1
+  - itemIds: 0f000000
+    showChance: 6
+    minDungeonLevel: 1
+  - itemIds: 03000000
+    showChance: 6
+    minDungeonLevel: 1
+  - itemIds: 10000000
+    showChance: 6
+    minDungeonLevel: 1
+  - itemIds: 07000000
     showChance: 5
+    minDungeonLevel: 2
+  - itemIds: 02000000
+    showChance: 5
+    minDungeonLevel: 2
+  - itemIds: 04000000
+    showChance: 5
+    minDungeonLevel: 2
+  - itemIds: 08000000
+    showChance: 4
+    minDungeonLevel: 2
+  - itemIds: 0c000000
+    showChance: 4
+    minDungeonLevel: 2
+  - itemIds: 11000000
+    showChance: 4
+    minDungeonLevel: 2
+  - itemIds: 05000000
+    showChance: 4
+    minDungeonLevel: 2
+  - itemIds: 00000000
+    showChance: 3
+    minDungeonLevel: 3
+  - itemIds: 0e000000
+    showChance: 3
+    minDungeonLevel: 3
+  - itemIds: 0a000000
+    showChance: 2
+    minDungeonLevel: 4
+  - itemIds: 0d000000
+    showChance: 2
+    minDungeonLevel: 4
