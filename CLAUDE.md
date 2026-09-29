@@ -188,12 +188,13 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - `WorldStateManager` holds string-keyed bool, int and string flags. It holds the two merchant bools, shop purchase counts (`Shop_*`) and placed chests' contents (`Chest_*`). It restores them from the save in `Awake`, before any `NPC.Start` reads them, and `SaveSystem` writes them (see "Save and load").
 
 ### Scene transitions and checkpoints
-- `LevelTransition` (on `Prefabs/Scening/ExitPoint.prefab`) triggers on the player, fades through `FadeTransition.FadeAndExecute`, loads `nextSceneName`, then moves the player to the GameObject named **`EntryPoint`** in the new scene. The prefab default `"Level2"` no longer exists; every instance overrides it.
+- `LevelTransition` (on `Prefabs/Scening/ExitPoint.prefab`) calls `FadeTransition.LoadScene(nextSceneName)` when the player walks in. The persistent `FadeTransition` then runs the whole transition: fade to black, load the scene, move the player to the GameObject named **`EntryPoint`**, save, and fade back. It ignores new requests while one is running (`IsTransitioning`), and logs an error for a scene that isn't in the build settings. The prefab default `"Level2"` no longer exists; every instance overrides it.
+- Respawning fades through `FadeTransition.FadeAndExecute` instead, since it doesn't change scenes.
 - `RespawnCheckpoint` (`Prefabs/Environment/Respawn Stone.prefab`) records a checkpoint in `GameRespawn` on interaction, saves the game, and shows a dialog. `GameRespawn` keeps the checkpoint as **scene name plus position**, so it survives dungeon trips and save/load. Respawning uses the checkpoint while that scene is loaded, and otherwise the scene's `EntryPoint`.
 
 ### Save and load (`Core/SaveSystem/`)
 - **What's saved:** `SaveSystem` writes `savegame.json` to `Application.persistentDataPath`. It holds the `SaveData` version, the world flags, and `PlayerSaveData`: gold, current HP, dungeon level, current mana (nullable, because older saves lack it), the IDs of equipped and inventory items, and the last checkpoint. The shield isn't saved; it starts full and recharges.
-- **When it saves:** at checkpoints, on every scene change (`LevelTransition`, `DungeonGenerator.SpawnPlayer`), and on Quit from the pause menu. It does **not** save when Play mode stops, so editor sessions don't overwrite the save.
+- **When it saves:** at checkpoints, on every scene change (`FadeTransition.LoadScene`, `DungeonGenerator.SpawnPlayer`), and on Quit from the pause menu. It does **not** save when Play mode stops, so editor sessions don't overwrite the save.
 - **Writing is safe:** it writes a `.tmp` file and then `File.Replace`s the real one. An unreadable save is copied to `savegame.json.corrupt` and the game starts fresh.
 - **Loading:** the file is read once, when `SaveSystem` is first created (from `WorldStateManager.Awake` during Level0's load). `Hero.Start` then calls `SaveSystem.RestorePlayer`. That equips the saved gear *before* filling the inventory, because `EquipItem` removes the item from the inventory and would take a spare copy. It sets HP after equipping (so bonuses count) and moves the player to the checkpoint when it's in the current scene. **With no save, `Hero.Start` grants the starting kit** at full health.
 - **Items are saved by `items.json` id.** ScriptableObject items from `ItemVarients/` all report id 0, so they're skipped with a warning. IDs that no longer exist are skipped when loading.
@@ -390,10 +391,12 @@ Before this, most items had no price (unsellable, free in a shop), and only item
 - [x] **Loot by depth** (`37220c5`): loot tables unlock groups by dungeon level, the one table covers every item, and placed chests keep their contents instead of re-rolling on every visit (the village chest was a free item farm).
 - Balance is a first pass: prices, stock and the dungeon levels in `LootInventory_0` are all tunable without code.
 
+### 15. Scene transitions (branch `scene-transitions`)
+- [x] `LevelTransition` ran its fade coroutine on the exit object, which the scene load destroys, so the fade back never ran and `FadeTransition.FadeBack` patched over it. The transition now lives on the persistent `FadeTransition.LoadScene`, `FadeBack` is gone, and the re-entry guard is global, so an exit trigger the player spawns inside can't start a second transition. The unused `LevelTransition.spawnPoint` field was removed.
+
 ### Needs a design decision (not scheduled)
 - Legacy Input Manager: migrate to the Input System package.
 - No boss enemy, and the boss room is only an exit. `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
-- `LevelTransition` runs its fade coroutine on an object destroyed by the scene load, so `FadeTransition.FadeBack` exists as a workaround. The transition flow could live on the persistent `FadeTransition` instead.
 - Consider Git LFS for binary art before committing more vendor packs.
 
 ## Unity 6000.6 upgrade notes (2026-09-29)
