@@ -33,6 +33,8 @@ public class Health : MonoBehaviour
 
     public virtual void TakeDamage(float _damage)
     {
+        if (CurrentHealth <= 0)
+            return; // Already dead
         if (!entity.IsBlocking())
         {
             _damage = entity.TakeDamage(_damage);

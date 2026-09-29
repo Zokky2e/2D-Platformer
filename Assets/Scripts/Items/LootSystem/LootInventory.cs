@@ -31,7 +31,8 @@ public class LootInventory : ScriptableObject
             currentChance += loot.showChance;
             if (randomValue <= currentChance)
             {
-                items = ItemDatabase.Instance.GetItemsByIds(loot.itemIds.ToArray());
+                // First bucket that covers the roll wins
+                return ItemDatabase.Instance.GetItemsByIds(loot.itemIds.ToArray());
             }
         }
         return items;

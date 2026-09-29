@@ -21,6 +21,8 @@ public class PersistentPlayerHealth : Health
 
     public override void TakeDamage(float _damage)
     {
+        if (CurrentHealth <= 0)
+            return; // Already dead, death sequence is running
         base.TakeDamage(_damage);
         if (CurrentHealth == 0)
         {

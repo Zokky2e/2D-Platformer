@@ -250,10 +250,10 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 Found by reading the code after the Unity 6000.6 upgrade; **nothing here has been play-tested yet**. Items are grouped the way they are committed on the `unity-6000.6-upgrade` branch. Tick an item and note its commit when it lands; add new findings here instead of losing them.
 
 ### 1. Gameplay logic bugs
-- [ ] **Gold never changes.** In `InventorySystem.UpdateGold(int gold)`, `gold += gold;` updates the parameter, not the field, so buying is free and selling pays nothing.
-- [ ] **Loot roll always returns the last entry.** `LootInventory.GetLoot` doesn't stop at the first match, and `randomValue <= currentChance` stays true for every later entry.
-- [ ] **Dead entities keep taking damage.** `Health.TakeDamage` has no "already dead" guard. Below the fall threshold, `GameRespawn` deals 999 damage every `FixedUpdate`, so `PersistentPlayerHealth` starts a new death coroutine each physics step and re-forces the pause menu. Enemies re-trigger `Die()` and the `Death` animation on every hit.
-- [ ] **`EquipmentSystem.ApplyInitialStats` waits on `&&` instead of `||`.** It continues as soon as either the stats or the health component exists.
+- [x] **Gold never changes.** In `InventorySystem.UpdateGold(int gold)`, `gold += gold;` updates the parameter, not the field, so buying is free and selling pays nothing.
+- [x] **Loot roll always returns the last entry.** `LootInventory.GetLoot` doesn't stop at the first match, and `randomValue <= currentChance` stays true for every later entry.
+- [x] **Dead entities keep taking damage.** `Health.TakeDamage` has no "already dead" guard. Below the fall threshold, `GameRespawn` deals 999 damage every `FixedUpdate`, so `PersistentPlayerHealth` starts a new death coroutine each physics step and re-forces the pause menu. Enemies re-trigger `Die()` and the `Death` animation on every hit.
+- [x] **`EquipmentSystem.ApplyInitialStats` waits on `&&` instead of `||`.** It continues as soon as either the stats or the health component exists.
 
 ### 2. Returning to Level0 duplicates persistent objects
 - [ ] `InventoryUI`, `ShopUI` and `LootUI` check `GetComponent<Self>() != this`, which is never true, so they're never de-duplicated. Every return to Level0 adds another copy of each UI, all listening for input. `LootUI` checks for `InventoryUI` (copy-paste).

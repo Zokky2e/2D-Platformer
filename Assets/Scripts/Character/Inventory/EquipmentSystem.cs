@@ -21,7 +21,7 @@ public class EquipmentSystem : Singleton<EquipmentSystem>
 
     private IEnumerator ApplyInitialStats()
     {
-        while (player.stats == null && player.Health == null)
+        while (player.stats == null || player.Health == null)
         {
             yield return null; // Wait for next frame
         }

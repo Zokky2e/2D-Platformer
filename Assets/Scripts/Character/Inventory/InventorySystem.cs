@@ -26,9 +26,9 @@ public class InventorySystem : Singleton<InventorySystem>
         onInventoryChanged?.Invoke(); // Update UI when item is removed
     }
 
-    public void UpdateGold(int gold)
+    public void UpdateGold(int amount)
     {
-        gold += gold;  //positive to add, negative to remove
+        gold += amount;  //positive to add, negative to remove
         onInventoryChanged?.Invoke(); // Update UI when gold edited
     }
 
