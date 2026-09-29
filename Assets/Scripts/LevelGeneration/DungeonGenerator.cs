@@ -166,7 +166,7 @@ public class DungeonGenerator : MonoBehaviour
         return null;
     }
 
-    void SpawnTile(Room lastRoom, Node exitNode, bool isBossTile = false, bool fillEmpty = false)
+    void SpawnTile(Room lastRoom, Node exitNode, bool fillEmpty = false)
     {
         Room instatiateObject = null;
         Room newTile = null;
@@ -175,15 +175,13 @@ public class DungeonGenerator : MonoBehaviour
         // Find the best entrance node (the one closest to exitNode)
         Node bestEntrance = null;
         int checkTime = 0;
-        bool skipTile = false;
-        while (bestEntrance == null && checkTime < 10) 
+        while (bestEntrance == null && checkTime < 10)
         {
             checkTime++;
             Tuple<int, int> newTileLocation = GetNextLocation(lastRoom, exitNode);
             Vector3 offsetPosition = GetOffsetValue(lastRoom, exitNode);
             if (offsetPosition == Vector3.zero || occupiedTiles.Contains(newTileLocation))
             {
-                skipTile = true;
                 continue;
             }
             if (fillEmpty)
@@ -198,17 +196,9 @@ public class DungeonGenerator : MonoBehaviour
                     instatiateObject = ChooseRandomDungeonTile(lastRoom, exitNode);
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
 
-            if (occupiedTiles.Contains(newTileLocation))
-            {
-                activeNodes.Remove(exitNode);
-                activeNodes.Remove(exitNode.pairedNode);
-                skipTile = true;
-                break;
-            }
             AssignNodeDirections(newTile);
             nodes = newTile.GetComponentsInChildren<Node>();
             newTile.location = newTileLocation;
-            skipTile = false;
             foreach (Node node in nodes)
             {
                 if (node.isEntrance && node.pairedNode != null)
@@ -232,33 +222,30 @@ public class DungeonGenerator : MonoBehaviour
                     newTile.transform.position = Vector3.zero;
                 }
             }
-            if (checkTime == 10)
-            {
-                newTile = null;
-                DestroyImmediate(newTile);
-                return;
-            }
-            else if (skipTile) 
-            {
-                newTile = null;
-                DestroyImmediate(newTile);
-                continue;
-            }
+            if (bestEntrance != null)
+                break; // An entrance lines up; the tile is already moved into place
 
-            if (fillEmpty && !occupiedTiles.Contains(newTileLocation) && newTileLocation != new Tuple<int, int>(0, 0))
+            if (fillEmpty && newTileLocation != new Tuple<int, int>(0, 0))
             {
+                // Fillers (empty caps, boss room) are placed without a matching entrance
                 newTile.transform.position = offsetPosition;
+                occupiedTiles.Add(newTileLocation); // So no second filler lands on the same cell
                 CheckForNewCameraBounds(newTile.transform.position);
                 // Remove used exit from active list
                 activeNodes.Remove(exitNode);
                 activeNodes.Remove(exitNode.pairedNode);
                 break;
             }
-            if (bestEntrance == null)
-            {
-                Debug.Log("Failed to create");
-                Destroy(newTile); // If no match found, discard the tile
-            }
+
+            // No entrance lines up: discard the whole tile (destroying only the Room component left
+            // the tilemap behind at the origin) and roll again
+            Debug.Log("Failed to create");
+            DestroyImmediate(newTile.gameObject);
+            newTile = null;
+            nodes = null;
+
+            if (checkTime == 10 && !fillEmpty)
+                return; // Leave the exit open; a later pass or the fill phase deals with it
         }
         if (bestEntrance != null && bestEntrance.pairedNode != null)
         {
@@ -274,11 +261,6 @@ public class DungeonGenerator : MonoBehaviour
 
             CheckForNewCameraBounds(newTile.transform.position);
         }
-        if (skipTile) 
-        { 
-            newTile = null;
-            DestroyImmediate(newTile);
-        }
 
         // Remove used exit from active list
         activeNodes.Remove(exitNode);
@@ -290,7 +272,8 @@ public class DungeonGenerator : MonoBehaviour
             nodes = nodes.OrderBy(n => (int)n.shouldGoTo).ToArray();
             foreach (Node node in nodes)
             {
-                if (node.isExit && node != bestEntrance && node != bestEntrance.pairedNode)
+                bool isUsedEntrance = bestEntrance != null && (node == bestEntrance || node == bestEntrance.pairedNode);
+                if (node.isExit && !isUsedEntrance)
                 {
                     node.isExit = true;
                     node.isEntrance = false;
@@ -310,14 +293,14 @@ public class DungeonGenerator : MonoBehaviour
             {
                 Node nodeToExpand = activeNodes[0]; // Use the first available exit node
                 lastRoom = nodeToExpand.GetComponentInParent<Room>();
-                SpawnTile(lastRoom, nodeToExpand, i == numberOfTiles);
+                SpawnTile(lastRoom, nodeToExpand);
             }
         }
         while (activeNodes.Count > 0)
         {
             Node nodeToExpand = activeNodes[0];
             lastRoom = nodeToExpand.GetComponentInParent<Room>();
-            SpawnTile(lastRoom, nodeToExpand, false, true);
+            SpawnTile(lastRoom, nodeToExpand, fillEmpty: true);
         }
     }
 

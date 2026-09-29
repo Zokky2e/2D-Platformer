@@ -271,9 +271,11 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [x] **Patrol coroutines stack.** `StopCoroutine(Patrol())` creates a new enumerator and stops nothing, and a new `Patrol()` starts each time the player leaves detection range. Called every frame while chasing, it also allocates.
 
 ### 4. Dungeon generator
-- [ ] **Failed tiles are left in the scene at the origin.** `Destroy(newTile)` destroys only the `Room` component, not the tile GameObject, and `newTile = null; DestroyImmediate(newTile);` destroys nothing. This is the real cause of the "tiles spawning on vector zero - still buggy" commit.
-- [ ] Possible `NullReferenceException`: at the end of `SpawnTile`, `bestEntrance.pairedNode` is dereferenced even when no entrance matched (fill-phase boss room).
-- [ ] `SpawnTile`'s `isBossTile` parameter is unused.
+- [x] **Failed tiles are left in the scene at the origin.** `Destroy(newTile)` destroys only the `Room` component, not the tile GameObject, and `newTile = null; DestroyImmediate(newTile);` destroys nothing. This is the real cause of the "tiles spawning on vector zero - still buggy" commit.
+- [x] Possible `NullReferenceException`: at the end of `SpawnTile`, `bestEntrance.pairedNode` is dereferenced even when no entrance matched (fill-phase boss room).
+- [x] `SpawnTile`'s `isBossTile` parameter is unused.
+- [x] A tile that matched on the 10th attempt was still thrown away (the `checkTime == 10` branch returned before checking for a match), leaving a correctly placed but unregistered tile in the scene.
+- [x] Fill-phase tiles (empty caps, boss room) were never added to `occupiedTiles`, so two open exits facing the same cell could stack fillers there, for example a wall block on top of the boss room.
 
 ### 5. UI: event leaks and the unfinished loot window
 - [ ] Inventory, shop and loot UIs subscribe with a lambda but unsubscribe the method group, so they're never unsubscribed. `OnDisable` can throw if it runs before the subscription coroutine. `EquipmentUI` subscribes twice, so `UpdateUI` runs twice per change.
