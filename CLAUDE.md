@@ -90,7 +90,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 
 ### Singletons and persistence
 - `Core/Singleton.cs`: `Singleton<T>` looks up `Instance` with `FindAnyObjectByType` (`FindFirstObjectByType` is deprecated in 6000.6). **If none exists, it creates a new GameObject**, which hides missing-prefab mistakes. `Awake` calls `DontDestroyOnLoad` and destroys duplicates. Subclasses override `protected override void Awake()` and must call `base.Awake()`.
-- Singletons: `DialogSystem`, `PauseMenu`, `FadeTransition`, `GameRespawn`, `SensorManager`, `InventorySystem`, `EquipmentSystem`, `ItemDatabase`, `ItemSystem`, `ShopSystem`, `DungeonManager`, `WorldStateManager`. `ItemSystem`, `ShopSystem` and `DungeonManager` have no prefab and are always created lazily by the getter.
+- Singletons: `DialogSystem`, `PauseMenu`, `FadeTransition`, `GameRespawn`, `SensorManager`, `InventorySystem`, `EquipmentSystem`, `ItemDatabase`, `ItemSystem`, `ShopSystem`, `DungeonManager`, `WorldStateManager`, `SaveSystem`. `ItemSystem`, `ShopSystem`, `DungeonManager` and `SaveSystem` have no prefab and are always created lazily by the getter.
 - `PersistentPlayerHealth` (on the player) has its own static `Instance` and `DontDestroyOnLoad`. Other code reaches the player through it, for example `PersistentPlayerHealth.Instance.GetComponent<Hero>()` in `CameraFollow`.
 - The player GameObject carries **several singletons at once**: `Hero`, `PersistentPlayerHealth`, `CharacterStats`, `GameRespawn`, `SensorManager`, `WeaponSensor` (child `AttackSensor`), plus 5 `Sensor_HeroKnight` children. Their names must stay exactly `GroundSensor`, `WallSensor_R1/R2/L1/L2`, because `Hero.Start` looks them up with `transform.Find`.
 - InventoryUI, ShopUI and LootUI do their own `DontDestroyOnLoad` instead of using `Singleton<T>`.
@@ -165,11 +165,19 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - Trade is `MerchentTrade_Composite`: "Let's trade." dialog, then open a shop that sells potions 18, 19 and 20.
 - `DialogSystem` splits text into **pages on `\n`**, uses a typewriter effect, and advances on E or left click. `ShowDialog(name, text, onClose)`.
 - `Interactable` is added at runtime by `NPC`, `LootChest` and `RespawnCheckpoint`. It needs a trigger collider on the object and a player tagged `Player`. It spawns the `Resources/InteractKey` "E" prompt.
-- `WorldStateManager` is a set of string-keyed bool, int and string dictionaries saved as JSON to `Application.persistentDataPath/worldstate.json`. It saves on scene load, checkpoint use and dungeon spawn. Only the two merchant bools are used so far. **Inventory, gold, equipment and dungeon level are not persisted** (see "Needs a design decision" in the Audit backlog).
+- `WorldStateManager` holds string-keyed bool, int and string flags. Only the two merchant bools are used so far. It restores them from the save in `Awake`, before any `NPC.Start` reads them, and `SaveSystem` writes them (see "Save and load").
 
 ### Scene transitions and checkpoints
 - `LevelTransition` (on `Prefabs/Scening/ExitPoint.prefab`) triggers on the player, fades through `FadeTransition.FadeAndExecute`, loads `nextSceneName`, then moves the player to the GameObject named **`EntryPoint`** in the new scene. The prefab default `"Level2"` no longer exists; every instance overrides it.
-- `RespawnCheckpoint` (`Prefabs/Environment/Respawn Stone.prefab`) sets `GameRespawn`'s respawn transform on interaction, saves world state, and shows a dialog.
+- `RespawnCheckpoint` (`Prefabs/Environment/Respawn Stone.prefab`) records a checkpoint in `GameRespawn` on interaction, saves the game, and shows a dialog. `GameRespawn` keeps the checkpoint as **scene name plus position**, so it survives dungeon trips and save/load. Respawning uses the checkpoint while that scene is loaded, and otherwise the scene's `EntryPoint`.
+
+### Save and load (`Core/SaveSystem/`)
+- **What's saved:** `SaveSystem` writes `savegame.json` to `Application.persistentDataPath`. It holds the `SaveData` version, the world flags, and `PlayerSaveData`: gold, current HP, dungeon level, the IDs of equipped and inventory items, and the last checkpoint.
+- **When it saves:** at checkpoints, on every scene change (`LevelTransition`, `DungeonGenerator.SpawnPlayer`), and on Quit from the pause menu. It does **not** save when Play mode stops, so editor sessions don't overwrite the save.
+- **Writing is safe:** it writes a `.tmp` file and then `File.Replace`s the real one. An unreadable save is copied to `savegame.json.corrupt` and the game starts fresh.
+- **Loading:** the file is read once, when `SaveSystem` is first created (from `WorldStateManager.Awake` during Level0's load). `Hero.Start` then calls `SaveSystem.RestorePlayer`. That equips the saved gear *before* filling the inventory, because `EquipItem` removes the item from the inventory and would take a spare copy. It sets HP after equipping (so bonuses count) and moves the player to the checkpoint when it's in the current scene. **With no save, `Hero.Start` grants the starting kit** at full health.
+- **Items are saved by `items.json` id.** ScriptableObject items from `ItemVarients/` all report id 0, so they're skipped with a warning. IDs that no longer exist are skipped when loading.
+- **No main menu:** the game always continues the existing save. Quitting in the dungeon resumes in Level0, and the dungeon level stays where it was, so the next run is one level deeper.
 - `CameraFollow` lerps toward the player, clamped to `minBounds` and `maxBounds`. The dungeon generator rewrites the bounds as tiles are placed.
 
 ### Procedural dungeon (`LevelGeneration/`)
@@ -212,6 +220,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 
 - **Add an item**: append to `items.json` with a unique `id`, a `type` that matches the `ItemType` name (for example `"Weapon"`), a `spriteName` that exists in `Resources/Sprites` (or a sheet sub-sprite), `price`, `isSellable`, and effects. Use only supported `effectType`s, and put the matching `{placeholder}` in the description.
 - **Add an effect type**: subclass `ItemEffect<CharacterStats>` or `ItemEffect<Health>` in `Items/Effects/` (implement `AdjustDescription`, `ApplyEffect`, `RemoveEffect`, `UseItem`), then add a `case` in `RuntimeItem.ConvertCharacterStatsEffects` / `ConvertHealthEffects`. New stats need fields and `Total*` properties in `CharacterStats`.
+- **Save something new**: add a public field to `PlayerSaveData` (or use `WorldStateManager` flags for quest-style state), fill it in `SaveSystem.CapturePlayer`, and apply it in `SaveSystem.RestorePlayer`. Only use JSON-friendly types (no `Vector3` or Unity objects). Missing fields in older saves load as defaults, but renaming a field loses its data: bump `SaveSystem.CurrentVersion` and migrate instead.
 - **Add an NPC behavior**: subclass `NPCInteractionBehavior` with `[CreateAssetMenu(menuName = "NPC/Behaviors/...")]`, create the asset under `ScriptedItems/NPCBehaviors/<NPC>/`, and assign it to an NPC slot. Use `WorldStateManager` bools with unique, descriptive keys (for example `Merchant_Amulet_Given`) for one-time actions.
 - **Add a room**: create a 12x12 `.tmx` in `Assets/Sprites/Tilesets/` using `2D-Platformer-Tileset.tsx`. Make a prefab in `Prefabs/LevelGeneration/Rooms/` with the imported map, a `Room` component, and paired `Node`s at each opening, placed exactly where neighbouring rooms' nodes will sit. Then add it to `RoomGeneration.ruleEntries` in `RoomGenerator.unity`, both as an option under existing room types and as a source type with its own directions.
 - **Add enum values at the end only.** `RoomType`, `ItemType`, `NPCAction`, `NodeShouldGoTo` and `HeroStates` are serialized as integers in scenes, prefabs and assets, so inserting a value in the middle silently remaps existing data.
@@ -243,7 +252,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - No bosses, no boss AI, and the boss room is just an exit.
 - Only Bandit and Spiketrap enemies exist. The monster art packs are imported but unused.
 - No status effects: bleed, poison and burn are only description text. `BleedDamage` actually adds flat damage, and `BleedDuration` does nothing.
-- No meta-progression, no win condition, no story beyond the "Dark Lord" line, and no save/load of the player's progress.
+- No meta-progression, no win condition, and no story beyond the "Dark Lord" line.
 - Unity Behavior and NavMesh packages are installed but unused. The commit history shows they were tried and dropped in favour of the transform-based `Enemy` AI.
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are declared but unused.
 
@@ -316,11 +325,9 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 ### 11. Save system prerequisites
 - [x] **Starting equipment bonuses were applied twice.** `EquipmentSystem.ApplyInitialStats` waits for `Hero.Start`, then applied the effects of *whatever was equipped by then*, which is the starting kit `Hero.Start` had just equipped (and applied) through `EquipItem`. Players effectively started with 25 damage, 55 armor and 140 max HP instead of 20, 30 and 120, and unequipping only removed one copy. It now applies only the items that were assigned in the Inspector when it started.
 
+- [x] **Save/load implemented** (see "Save and load" under Architecture). It replaces the old `WorldStateManager` file I/O: `Awake` overwrote `worldstate.json` with empty state on every launch, `Load()` was never called, and `Load()` would have thrown anyway, because `WorldStateData` had no parameterless constructor.
+
 ### Needs a design decision (not scheduled)
-- **Save/load**:
-  - `WorldStateManager.Load()` is never called, and `Awake()` overwrites `worldstate.json` with empty state on every launch, so flags only last one session.
-  - Just turning loading on would be *worse*: the merchant flag would persist but the inventory wouldn't, so the amulet would be lost forever.
-  - It needs a real save of inventory, equipment, gold and dungeon level, or an explicit "no persistence" choice.
 - Status effects (bleed, poison, burn) are description text only. `BleedDamage` adds flat damage, and `BleedDuration` does nothing.
 - Many `items.json` entries reference sprites that don't exist, use unsupported effect types (`Buff`, `Shield`), show unfilled `{placeholders}`, or have no price (so they're unsellable).
 - `ShopSystem.BuyItem` ignores `ShopItemData.quantity` (infinite stock).

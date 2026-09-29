@@ -16,7 +16,12 @@ public class ItemSystem : Singleton<ItemSystem>
             return new List<Item>();
         }
 
-        return ItemDatabase.Instance.GetItemsByIds(itemIds);
+        List<Item> items = ItemDatabase.Instance.GetItemsByIds(itemIds);
+        // Ids missing from items.json (e.g. in an older save) would put null items in the inventory
+        int missing = items.RemoveAll(item => item == null);
+        if (missing > 0)
+            UnityEngine.Debug.LogWarning($"{missing} item id(s) not found in items.json were skipped");
+        return items;
     }
 
     public void AddToPlayerInventory(int[] itemIds)

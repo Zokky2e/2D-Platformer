@@ -1,21 +1,21 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.IO;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
+// Named flags for quest and dialog progress (e.g. "Merchant_Amulet_Given"). SaveSystem persists them.
 public class WorldStateManager : Singleton<WorldStateManager>
 {
 
     private Dictionary<string, bool> boolStates = new();
     private Dictionary<string, int> intStates = new();
     private Dictionary<string, string> stringStates = new();
-    [SerializeField] private string saveFileName = "worldstate.json";
 
     protected override void Awake()
     {
         base.Awake();
-        if (IsDuplicate) return; // A duplicate would overwrite the save file with its empty state
-        Save();
+        if (IsDuplicate) return;
+        // Restore flags before any NPC.Start reads them
+        WorldStateData saved = SaveSystem.Instance.LoadedData?.world;
+        if (saved != null)
+            LoadFromData(saved);
     }
 
     public void SetBool(string key, bool value) => boolStates[key] = value;
@@ -27,31 +27,12 @@ public class WorldStateManager : Singleton<WorldStateManager>
     public void SetString(string key, string value) => stringStates[key] = value;
     public string GetString(string key) => stringStates.TryGetValue(key, out var v) ? v : null;
 
+    public WorldStateData GetData() => new WorldStateData(boolStates, intStates, stringStates);
+
     public void LoadFromData(WorldStateData data)
     {
-        boolStates = new(data.boolStates);
-        intStates = new(data.intStates);
-        stringStates = new(data.stringStates);
-    }
-
-    public void Save()
-    {
-        var data = new WorldStateData(boolStates, intStates, stringStates);
-        var json = JsonConvert.SerializeObject(data, Formatting.Indented);
-        File.WriteAllText(Path.Combine(Application.persistentDataPath, saveFileName), json);
-        Debug.Log(json);
-    }
-
-    public void Load()
-    {
-        var path = Path.Combine(Application.persistentDataPath, saveFileName);
-        if (File.Exists(path))
-        {
-            var json = File.ReadAllText(path);
-            var data = JsonConvert.DeserializeObject<WorldStateData>(json);
-            boolStates = data.boolStates;
-            intStates = data.intStates;
-            stringStates = data.stringStates;
-        }
+        boolStates = new(data.boolStates ?? new());
+        intStates = new(data.intStates ?? new());
+        stringStates = new(data.stringStates ?? new());
     }
 }

@@ -55,6 +55,11 @@ public class Health : MonoBehaviour
         }
     }
 
+    public void SetHealth(float _health)
+    {
+        CurrentHealth = Mathf.Clamp(_health, 0, MaxHealth);
+    }
+
     public void AddHealth(float _healthAmount)
     {
         CurrentHealth = Mathf.Clamp(CurrentHealth + _healthAmount, 0, MaxHealth);

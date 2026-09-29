@@ -37,6 +37,6 @@ public class LevelTransition : MonoBehaviour
         GameRespawn.Instance.MoveToEntryPoint();
 
         SceneManager.sceneLoaded -= OnSceneLoaded; // Unsubscribe after setting position
-        WorldStateManager.Instance.Save();
+        SaveSystem.Instance.Save();
     }
 }

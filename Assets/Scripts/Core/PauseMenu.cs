@@ -73,6 +73,7 @@ public class PauseMenu : Singleton<PauseMenu>
     public void OnQuitGameClicked()
     {
         Resume();
+        SaveSystem.Instance.Save();
         Debug.Log("Quit Game");
         Application.Quit();
     }

@@ -13,10 +13,8 @@ class RespawnCheckpoint : MonoBehaviour
 
     private void SetPlayerRespawn()
     {
-        Debug.Log("Respawn point updated!");
-        // Implement the logic to update the player's respawn point
         GameRespawn.Instance.SetPlayerRespawn(transform);
-        WorldStateManager.Instance?.Save();
+        SaveSystem.Instance.Save();
         DialogSystem.Instance.ShowDialog(title, description, null);
     }
 }

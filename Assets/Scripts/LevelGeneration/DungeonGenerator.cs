@@ -327,6 +327,6 @@ public class DungeonGenerator : MonoBehaviour
             Debug.LogError("EntryPoint not found in the scene!");
             return;
         }
-        WorldStateManager.Instance.Save();
+        SaveSystem.Instance.Save();
     }
 }

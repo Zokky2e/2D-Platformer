@@ -153,9 +153,13 @@ public class Hero : MonoBehaviour, IEntity {
         m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
         state = new IdleState();
         state.startState(this);
-        //Add default items to player
-        ItemSystem.Instance.AddToPlayerInventory(new[] {18, 18, 19, 20 });
-        ItemSystem.Instance.AddAndEquipOnPlayer(new[] {69, 420, 1337});
+        // Continue the saved game, or start a new one with the default kit
+        if (!SaveSystem.Instance.RestorePlayer(this))
+        {
+            ItemSystem.Instance.AddToPlayerInventory(new[] {18, 18, 19, 20 });
+            ItemSystem.Instance.AddAndEquipOnPlayer(new[] {69, 420, 1337});
+            playerHealth.SetHealth(playerHealth.MaxHealth); // Full health including the kit's bonuses
+        }
     }
     void Update()
     {

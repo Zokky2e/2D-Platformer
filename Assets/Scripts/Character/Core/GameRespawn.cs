@@ -1,11 +1,16 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameRespawn : Singleton<GameRespawn>
 {
     public float threshold = -200f;
-    private Transform playerRespawn;
     private Vector3 startingPosition;
     private Health playerHealth;
+
+    // Last activated checkpoint, kept as scene + position rather than the checkpoint object so it
+    // survives scene changes and save/load. It only applies while that scene is loaded.
+    public string CheckpointScene { get; private set; }
+    public Vector3 CheckpointPosition { get; private set; }
 
     protected override void Awake()
     {
@@ -13,23 +18,27 @@ public class GameRespawn : Singleton<GameRespawn>
         if (IsDuplicate) return;
         playerHealth = GetComponent<Health>();
         startingPosition = transform.position;
-        playerRespawn = null;
     }
 
     public void SetPlayerRespawn(Transform newRespawnPoint)
     {
-        playerRespawn = newRespawnPoint;
+        SetCheckpoint(SceneManager.GetActiveScene().name, newRespawnPoint.position);
     }
 
-    // Moves the player to the scene's "EntryPoint" and makes it the fallback respawn position,
-    // since checkpoints from the previous scene no longer exist
+    public void SetCheckpoint(string sceneName, Vector3 position)
+    {
+        CheckpointScene = sceneName;
+        CheckpointPosition = position;
+    }
+
+    // Moves the player to the scene's "EntryPoint" and makes it the respawn position for this scene
+    // unless a checkpoint here was activated
     public bool MoveToEntryPoint()
     {
         GameObject entryPoint = GameObject.Find("EntryPoint");
         if (entryPoint == null)
             return false;
         startingPosition = entryPoint.transform.position;
-        playerRespawn = null;
         transform.position = startingPosition;
         return true;
     }
@@ -56,7 +65,8 @@ public class GameRespawn : Singleton<GameRespawn>
     {
 
         PersistentPlayerHealth.Instance.AddHealth(PersistentPlayerHealth.Instance.MaxHealth);
-        Vector3 respawnPosition = (playerRespawn != null) ? playerRespawn.position : startingPosition;
+        bool hasCheckpointHere = CheckpointScene == SceneManager.GetActiveScene().name;
+        Vector3 respawnPosition = hasCheckpointHere ? CheckpointPosition : startingPosition;
         transform.position = respawnPosition;
     }
 
