@@ -4,7 +4,6 @@ using UnityEngine;
 public class PersistentPlayerHealth : Health
 {
     public static PersistentPlayerHealth Instance;
-    [SerializeField] public Healthbar Healthbar;
     public new void Awake()
     {
         if (Instance == null)
@@ -32,13 +31,9 @@ public class PersistentPlayerHealth : Health
         }
     }
 
-    public void AddMaxHealth(float _maxHealth) 
+    public void AddMaxHealth(float _maxHealth)
     {
-        bonusHealth += _maxHealth;
-        if (Healthbar != null)
-        {
-            Healthbar.createBreakpoints();
-        }
+        bonusHealth += _maxHealth; // The HUD Healthbar picks up the new max on its own
     }
 
     IEnumerator DoDeathAnimation()

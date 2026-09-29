@@ -262,6 +262,11 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [x] **Respawn point after a scene change**: `GameRespawn.startingPosition` is recorded once, in Level0. Dying in the dungeon without a checkpoint teleports the player to Level0 coordinates. Use the `EntryPoint` the player was placed at.
 - [x] `LevelTransition` can fire more than once while its fade runs (no re-entry guard).
 
+### 2b. Health bars
+- [x] **Every enemy threw a `NullReferenceException` on spawn.** `FloatingHealthBar` inherits `Healthbar.Start`, which wrote the *player's* HP into `healthText`, and enemy bars have no `healthText`. The exception also stopped the enemy's breakpoints from being drawn. `Healthbar` now reads its assigned `entityHealth`, or the persistent player when none is set (the HUD). `healthText` is optional.
+- [x] HUD breakpoints were built only once in `Start`. `AddMaxHealth` (the only refresh path) is never called, because `HealthEffect` changes `bonusHealth` directly, so equipping HP gear left stale markers. The bar now rebuilds its breakpoints whenever max HP changes, and clears its `markers` list. The now-unused `PersistentPlayerHealth.Healthbar` reference was removed.
+- Note: enemy bars now actually draw their breakpoints (every 5 HP, per `Bandit.prefab`). Raise `breakpointEveryX` if that looks too dense.
+
 ### 3. Enemy AI
 - [ ] **Patrol coroutines stack.** `StopCoroutine(Patrol())` creates a new enumerator and stops nothing, and a new `Patrol()` starts each time the player leaves detection range. Called every frame while chasing, it also allocates.
 
@@ -282,14 +287,15 @@ Found by reading the code after the Unity 6000.6 upgrade; **nothing here has bee
 - [ ] `Hero.Update` calls `GetComponent<SpriteRenderer>()` every frame with input, box-casts `isGrounded()` twice for the same animator bool, and allocates a new `IdleState` every frame during dialog. `Hero.FixedUpdate` computes an unused `BoxCast`.
 - [ ] Animator parameters are set by string every frame. Cache `Animator.StringToHash` ids in `Hero`, `HeroState` and `Enemy`.
 - [ ] `DialogSystem` types by `text += letter` (a new string per character) and allocates a `WaitForSeconds` per character. Use TMP `maxVisibleCharacters` and a cached wait.
-- [ ] `Healthbar.Update` rebuilds the HP text string every frame. Only update it when the value changes.
+- [x] `Healthbar.Update` rebuilds the HP text string every frame. Only update it when the value changes.
 - [ ] `ItemDatabase.GetItemById` does a linear LINQ scan, which could be a dictionary. `RuntimeItem.SetSprite` calls `Resources.LoadAll` on a sheet for every item, which could be cached.
 
 ### 8. Item data (`StreamingAssets/items.json`)
 - [ ] Item 21 has a lowercase `"accessory"` type, and "Oakwood Shield" (id 4) is typed `Armor` although it carries `Block`.
 
 ### 9. Cleanup and repo hygiene
-- [ ] Unused `using System.Dynamic;` and `using Unity.VisualScripting;` in `Healthbar.cs`. `PlayerSpawnManager` is unused, since nothing attaches it.
+- [x] Unused `using System.Dynamic;` and `using Unity.VisualScripting;` in `Healthbar.cs` (removed with the 2b rewrite).
+- [ ] `PlayerSpawnManager` is unused, since nothing attaches it.
 - [ ] `UserSettings/` is per-user editor state (layouts, search settings) and is tracked. Untrack and ignore it, like the standard Unity `.gitignore` does, and add build-output ignores.
 
 ### Needs a design decision (not scheduled)

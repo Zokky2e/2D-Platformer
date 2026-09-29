@@ -1,11 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-
+﻿// World-space bar above an enemy; Healthbar does the work using the assigned entityHealth
 public class FloatingHealthBar : Healthbar
 {
-    new void Update()
-    {
-        healthValue.value = entityHealth.CurrentHealth / entityHealth.MaxHealth;
-    }
-
 }

@@ -1,24 +1,25 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
-using System.Dynamic;
-using System;
-using Unity.VisualScripting;
 
 public class Healthbar : MonoBehaviour
 {
-    public Health entityHealth;
+    public Health entityHealth; // Leave empty on the HUD to follow the persistent player
     public UnityEngine.UI.Slider healthValue;
     public RectTransform healthBarFill;
     public GameObject breakpointPrefab;
     public int breakpointEveryX = 25;
-    public TextMeshProUGUI healthText;
+    public TextMeshProUGUI healthText; // Optional, enemy bars have none
     public List<GameObject> markers = new List<GameObject>();
+
+    private float shownHealth = -1f;
+    private float shownMaxHealth = -1f;
+
+    private Health Source => entityHealth != null ? entityHealth : PersistentPlayerHealth.Instance;
 
     public void Start()
     {
         setHealthbar();
-        createBreakpoints();
     }
 
     public void Update()
@@ -28,12 +29,25 @@ public class Healthbar : MonoBehaviour
 
     private void setHealthbar()
     {
+        Health source = Source;
+        if (source == null)
+            return;
 
-        if (PersistentPlayerHealth.Instance != null)
+        // Equipment can change max health at any time, so rebuild the breakpoints when it does
+        bool maxHealthChanged = source.MaxHealth != shownMaxHealth;
+        if (maxHealthChanged)
         {
-            float healthPercent = PersistentPlayerHealth.Instance.CurrentHealth / PersistentPlayerHealth.Instance.MaxHealth;
-            healthText.text = PersistentPlayerHealth.Instance.CurrentHealth.ToString();
-            healthValue.value = healthPercent;
+            shownMaxHealth = source.MaxHealth;
+            createBreakpoints();
+        }
+
+        // Only touch the UI (and allocate the text) when something changed
+        if (maxHealthChanged || source.CurrentHealth != shownHealth)
+        {
+            shownHealth = source.CurrentHealth;
+            healthValue.value = shownHealth / shownMaxHealth;
+            if (healthText != null)
+                healthText.text = shownHealth.ToString();
         }
     }
 
@@ -44,10 +58,12 @@ public class Healthbar : MonoBehaviour
         {
             Destroy(marker);
         }
-        if (PersistentPlayerHealth.Instance != null)
+        markers.Clear();
+
+        Health source = Source;
+        if (source != null && breakpointPrefab != null && breakpointEveryX > 0)
         {
-            float maxHealth = PersistentPlayerHealth.Instance.MaxHealth;
-            float currentHealth = PersistentPlayerHealth.Instance.CurrentHealth;
+            float maxHealth = source.MaxHealth;
             int currentBreakpoint = breakpointEveryX;
             while (currentBreakpoint < maxHealth)
             {
