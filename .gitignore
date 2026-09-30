@@ -56,3 +56,7 @@ sysinfo.txt
 
 # Rider
 .idea/
+
+# Python bytecode (Tools/)
+__pycache__/
+*.pyc
