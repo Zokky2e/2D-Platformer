@@ -1,11 +1,13 @@
 using Assets.Scripts;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour, IEntity
 {
     [Header("General Settings")]
     public bool isTrap = false;
+    public bool spriteFacesRight = false; // The Bandit art faces left, the Monsters pack art faces right
 
     [Header("Patrol & Movement")]
     public Transform[] patrolPoints;
@@ -39,6 +41,8 @@ public class Enemy : MonoBehaviour, IEntity
             health.entity = this;
 
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        // Enemies placed or spawned without patrol points get none (the Bandit prefab lists two empty ones)
+        patrolPoints = patrolPoints.Where(point => point != null).ToArray();
 
         if (!isTrap)
             patrolRoutine = StartCoroutine(Patrol());
@@ -102,11 +106,18 @@ public class Enemy : MonoBehaviour, IEntity
     private void MoveTowards(Vector2 target)
     {
         target.y = transform.position.y;
-        Vector2 direction = target - (Vector2)transform.position;
+        FaceTowards(target.x);
         transform.position = Vector2.MoveTowards(transform.position, target, stats.TotalMoveSpeed * Time.deltaTime);
+    }
 
-        // Flip the sprite based on movement direction
-        spriteRenderer.flipX = direction.x > 0;
+    // The enemy sets its own facing; NPC doesn't flip enemies, since two scripts flipping the sprite drifted
+    // out of sync and could turn an enemy's back to the player
+    private void FaceTowards(float targetX)
+    {
+        float dx = targetX - transform.position.x;
+        if (Mathf.Abs(dx) < 0.01f)
+            return;
+        spriteRenderer.flipX = spriteFacesRight ? dx < 0 : dx > 0;
     }
 
     private void ChasePlayer()
@@ -122,6 +133,7 @@ public class Enemy : MonoBehaviour, IEntity
         else
         {
             animator.SetInteger(AnimatorParams.AnimState, 0); // Idle animation
+            FaceTowards(player.position.x);
 
             if (!isAttacking)
             {

@@ -334,7 +334,7 @@ PrefabInstance:
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[2].enemyPrefab
       value: 
-      objectReference: {fileID: 2528060356887685696, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      objectReference: {fileID: 2124872359060268585, guid: 90913a1f31064483572d2d7e36bf7fec, type: 3}
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[2].spawnChance
       value: 20
@@ -342,7 +342,7 @@ PrefabInstance:
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[3].enemyPrefab
       value: 
-      objectReference: {fileID: 2528060356887685696, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      objectReference: {fileID: 2066196740699186520, guid: 1f4915547cdd48dda43847ce97802716, type: 3}
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[3].spawnChance
       value: 20
@@ -350,10 +350,10 @@ PrefabInstance:
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[4].enemyPrefab
       value: 
-      objectReference: {fileID: 2528060356887685696, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      objectReference: {fileID: 8227124606569447043, guid: bbd2aef0794c6dcc2215207b73ad86d2, type: 3}
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[4].spawnChance
-      value: 20
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[5].enemyPrefab
@@ -361,7 +361,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
       propertyPath: enemies.Array.data[5].spawnChance
-      value: 20
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
+      propertyPath: enemies.Array.data[0].minDungeonLevel
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
+      propertyPath: enemies.Array.data[1].minDungeonLevel
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
+      propertyPath: enemies.Array.data[2].minDungeonLevel
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
+      propertyPath: enemies.Array.data[3].minDungeonLevel
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
+      propertyPath: enemies.Array.data[4].minDungeonLevel
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6311277608263419582, guid: f1e3e847352e9954c80d96d025a0c74b, type: 3}
+      propertyPath: enemies.Array.data[5].minDungeonLevel
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

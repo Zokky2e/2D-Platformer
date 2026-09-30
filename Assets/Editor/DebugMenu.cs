@@ -37,4 +37,36 @@ public static class DebugMenu
 
     [MenuItem("Tools/Debug/Give 100 Gold", true)]
     private static bool CanGiveGold() => Application.isPlaying;
+
+    [MenuItem("Tools/Debug/Spawn Enemy/Bandit")]
+    private static void SpawnBandit() => SpawnEnemy("Bandit");
+
+    [MenuItem("Tools/Debug/Spawn Enemy/Goblin")]
+    private static void SpawnGoblin() => SpawnEnemy("Goblin");
+
+    [MenuItem("Tools/Debug/Spawn Enemy/Mushroom")]
+    private static void SpawnMushroom() => SpawnEnemy("Mushroom");
+
+    [MenuItem("Tools/Debug/Spawn Enemy/Skeleton")]
+    private static void SpawnSkeleton() => SpawnEnemy("Skeleton");
+
+    [MenuItem("Tools/Debug/Spawn Enemy/Bandit", true)]
+    [MenuItem("Tools/Debug/Spawn Enemy/Goblin", true)]
+    [MenuItem("Tools/Debug/Spawn Enemy/Mushroom", true)]
+    [MenuItem("Tools/Debug/Spawn Enemy/Skeleton", true)]
+    private static bool CanSpawnEnemy() => Application.isPlaying && PersistentPlayerHealth.Instance != null;
+
+    // Drops an enemy from Prefabs/Enemies a few units in front of the player
+    private static void SpawnEnemy(string prefabName)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Enemies/{prefabName}.prefab");
+        if (prefab == null)
+        {
+            Debug.LogWarning($"No enemy prefab at Assets/Prefabs/Enemies/{prefabName}.prefab");
+            return;
+        }
+        Hero hero = PersistentPlayerHealth.Instance.GetComponent<Hero>();
+        Vector3 position = hero.transform.position + new Vector3(hero.FacingDirection * 3f, 0.5f, 0f);
+        Object.Instantiate(prefab, position, Quaternion.identity);
+    }
 }

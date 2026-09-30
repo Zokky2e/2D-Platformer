@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &4591951421535440664
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2528060356887685696, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Name
+      value: Mushroom
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211571613681256769, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7101812621276305736, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 4723107735738678597, guid: f8b30c2afe165d645b54d500a9c30862, type: 3}
+    - target: {fileID: 8182522716902466431, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: 0e877968bad1f704d1d37c83b2133a63, type: 2}
+    - target: {fileID: 8374226704506316806, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Size.x
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8374226704506316806, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Size.y
+      value: 1.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8374226704506316806, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Offset.x
+      value: 0.0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8374226704506316806, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4291413638491166557, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_Size.x
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: spriteFacesRight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7303822367880151215, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: baseHealth
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 1520711120491560709, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: facingToRight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1520711120491560709, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: npcName
+      value: Mushroom
+      objectReference: {fileID: 0}
+    - target: {fileID: 3932740519009429958, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: attackDelay
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: attackSpeedAnimation
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: attackRange
+      value: 1.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5900540177321249893, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: detectionRange
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8476736227906057191, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: baseMoveSpeed
+      value: 1.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8476736227906057191, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: baseDamage
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8476736227906057191, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: baseArmor
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8476736227906057191, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: poisonDamage
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8476736227906057191, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}
+      propertyPath: poisonDuration
+      value: 4
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 94cf7a688110a0a46b4572c3e50c54a6, type: 3}

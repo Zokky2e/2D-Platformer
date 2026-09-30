@@ -13,6 +13,7 @@ public class NPC : MonoBehaviour
     public bool facingToRight = true;
     private SpriteRenderer spriteRenderer;
     private Health health;
+    private Enemy enemy; // Enemies face their target themselves (Enemy.FaceTowards)
 
     [Header("NPC Quest/Dialogue State")]
     public bool isTrader = false;
@@ -35,6 +36,7 @@ public class NPC : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>(); // Get the SpriteRenderer component
         health = GetComponent<Health>();
+        enemy = GetComponent<Enemy>();
         
         if (onSpawnBehavior != null)
             onSpawnBehavior.Execute(this);
@@ -46,6 +48,8 @@ public class NPC : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D collision)
     {
+        if (enemy != null)
+            return;
         if (collision.tag == "Player")
         {
             Transform player = collision.transform;

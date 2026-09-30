@@ -1,5 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
+// Spawns one enemy at spawnPoint, picked by weight from the entries unlocked at the current dungeon level.
+// An entry without a prefab is a chance of no enemy.
 public class EnemyGenerator : MonoBehaviour
 {
     public EnemyType[] enemies; // Assign in Inspector
@@ -8,7 +12,8 @@ public class EnemyGenerator : MonoBehaviour
     public struct EnemyType
     {
         public GameObject enemyPrefab;
-        public float spawnChance; // Probability %
+        public float spawnChance; // Weight, relative to the other unlocked entries
+        public int minDungeonLevel; // Only spawns from this dungeon level on
     }
     public Transform spawnPoint; // Where the enemy appears
 
@@ -16,18 +21,17 @@ public class EnemyGenerator : MonoBehaviour
     {
         SpawnEnemy();
     }
+
     void SpawnEnemy()
     {
-        float totalChance = 0f;
-        foreach (var enemy in enemies)
-        {
-            totalChance += enemy.spawnChance;
-        }
+        int level = DungeonManager.Instance.DungeonLevel;
+        List<EnemyType> available = enemies.Where(enemy => enemy.minDungeonLevel <= level).ToList();
+        float totalChance = available.Sum(enemy => enemy.spawnChance);
 
         float randomValue = Random.Range(0f, totalChance);
         float currentChance = 0f;
 
-        foreach (var enemy in enemies)
+        foreach (var enemy in available)
         {
             currentChance += enemy.spawnChance;
             if (randomValue <= currentChance)
@@ -47,9 +51,5 @@ public class EnemyGenerator : MonoBehaviour
                 return;
             }
         }
-    }
-    void Update()
-    {
-        
     }
 }
