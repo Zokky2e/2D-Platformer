@@ -60,3 +60,7 @@ sysinfo.txt
 # Python bytecode (Tools/)
 __pycache__/
 *.pyc
+
+# Written by the Performance Testing package (a dependency) while building or running tests, then deleted
+Assets/Resources/PerformanceTestRun*.json
+Assets/Resources/PerformanceTestRun*.json.meta
