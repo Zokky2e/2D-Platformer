@@ -387,6 +387,7 @@ MonoBehaviour:
   jump_modifier_y: 16
   m_noBlood: 0
   m_slideDust: {fileID: 1038168246061390451, guid: 8b8c8cc6774fb074cb9139cc631b108e, type: 3}
+  swordLook: {fileID: 22100000, guid: 73ecf783869a46ba8331991b0f973d90, type: 2}
   daggerLook: {fileID: 22100000, guid: 62f4bc2001f24d9794732020c7f63f4b, type: 2}
   bowLook: {fileID: 22100000, guid: c4f0fe05c9574697b6ab04230b5d92d9, type: 2}
   staffLook: {fileID: 22100000, guid: 4f045b8f56854cc484d9be2f5feba4cf, type: 2}

@@ -71,7 +71,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 **HeroKnight exception:** the player prefab is the vendor's `Assets/Hero Knight - Pixel Art/Demo/HeroKnight.prefab`, modified in place. The vendor's `HeroKnight.cs` controller is not used. The project's `Hero.cs` and friends are attached instead, and only the vendor's `Sensor_HeroKnight` is reused. The vendor's animator controller (`Animations/HeroKnight_AnimController.controller`) is also **extended in place** (movement rework, 2026-10-01): a `LedgeGrab` bool parameter and `Ledge Grab` state, and a Wall Slide → Fall transition for letting go of a wall. The prefab's Rigidbody2D uses the pack's frictionless `Environment/Walls_noFriction` material.
 
 **Hero weapon looks** (2026-10-01): the hero appears holding the equipped weapon type. The design choice, made by the user, was one copy of the hero per type.
-- There are five looks: the vendor sheet for Sword (and Greatweapon), plus generated copies for Dagger, Bow, Staff and Wand.
+- There are five looks, all generated from the vendor sheet: Sword (also used by Greatweapon), Dagger, Bow, Staff and Wand. None of them has the shield: **the shield is its own layer** (see below).
 - `Tools/HeroWeapons/hero_weapon_sheets.py` (Python standard library) builds each copy from the vendor sheet. For every frame it:
   - finds the sword (the gold guard plus the straight lavender blade from it),
   - erases it,
@@ -80,18 +80,26 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 
   Only pixels that were transparent or part of the old sword get painted, so a hand or head that covered the sword also covers the new weapon.
 - The white hit-flash frames 45 and 48 borrow the sword's position from their matching frames. Frame 24, where the blade runs behind the body, has a manual entry in `OVERRIDES`.
+- **Shield layer** (`shield_masks`): the shield is cut out of every frame into `Assets/Resources/Hero/HeroKnight_Shield.png`, and removed from all five looks. It shares colours with the tunic and scarf, so it's found as a region of shield colours with no dark outline:
+  - taken whole where it stands alone (about 20 frames);
+  - split off at its narrowest point where it touches the body, using a minimum vertex cut seeded by matching the clean frames' shield shapes;
+  - boxed by hand in `SHIELD_BOXES` where it's edge-on or barely visible (overhead swings, ledge grab, wall slide);
+  - copied from the matching frame for the flash frames.
+
+  It's left in place in the rolls and the lying end of the death, where it can't be told apart (12 frames). Removed pixels that were enclosed by the body are patched with a neighbouring body colour. **The Sword look plus the shield layer reproduces the vendor sheet exactly** (checked pixel for pixel).
+- **Runtime:** `Hero.CreateShieldLayer` adds a child `ShieldLayer` SpriteRenderer, one sorting order above the hero. `LateUpdate` then shows the shield frame matching the hero's current frame, copying the flip and tint, but only while a shield is equipped and only over the five look sheets. Frames are matched by sprite name (`HeroKnight_<n>`), which every look sheet keeps from the vendor sheet.
 - Outputs:
-  - `Assets/Sprites/Hero/HeroKnight_<Weapon>.png`, sliced exactly like the vendor sheet
+  - `Assets/Sprites/Hero/HeroKnight_<Look>.png`, sliced exactly like the vendor sheet
   - the 15 hero clips copied into `Assets/Animations/Hero/<Weapon>/` and pointed at that sheet
   - one Animator Override Controller of `HeroKnight_AnimController` per weapon type
 
   Rerunning keeps the existing GUIDs. Run `python Tools/HeroWeapons/hero_weapon_sheets.py --preview <folder>` to also get contact sheets of every frame.
-- `Hero.UpdateWeaponLook` swaps the Animator's controller when the equipped weapon changes (`daggerLook`, `bowLook`, `staffLook`, `wandLook` on the prefab; the sword look is the prefab's own controller). It keeps the animator parameters across the swap, because swapping resets them.
+- `Hero.UpdateWeaponLook` swaps the Animator's controller when the equipped weapon changes (`swordLook`, `daggerLook`, `bowLook`, `staffLook`, `wandLook` on the prefab), and records whether a shield is equipped. It keeps the animator parameters across the swap, because swapping resets them.
 - **Limits:**
   - Every weapon uses the sword's poses, so the bow is swung before it shoots.
   - The weapons are plain placeholder pixel art; redraw them by editing `WEAPONS` in the tool and rerunning it.
-  - The no-blood death and no-effect block clips use other vendor sheets and still show the sword. Neither is used today.
-  - **The shield is still drawn into every frame**, even with a bow or staff. The plan is to cut it into an overlay layer that shows only while a shield is equipped; that needs the body patched where the shield covered it.
+  - The no-blood death and no-effect block clips use other vendor sheets and still show the sword and shield. Neither is used today.
+  - Without a shield, a sliver of it can remain in the roll frames and on the lying body at the end of the death animation.
 
 ## Running the game
 
@@ -342,7 +350,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - Two ScriptableObject files don't match their class names: `DIalogBehavior.cs` contains `ShowDialogBehavior`, and `CompositeBehavior.cs` contains `CompositeNPCBehavior`. Unity expects them to match for ScriptableObject assets, so if those assets show "missing script" after the Unity upgrade, this is why.
 - When editing `.unity` or `.prefab` YAML directly, references are `{fileID, guid}` pairs. Look up the GUID in the matching `.meta` file. Prefer telling the user what to change in the Editor over hand-editing complex scenes.
 - `ItemLoader` reads `StreamingAssets/items.json` with `File.ReadAllText`. That works on desktop, which is the current build target, but not on Android or WebGL, where StreamingAssets must be read with `UnityWebRequest`.
-- Lookups by name or tag are fragile: `"Player"` tag, `"EntryPoint"` GameObject, `"InteractKey"` and `"Sprites/..."` Resources paths, sensor child names, and UXML element names.
+- Lookups by name or tag are fragile: the hero's sprite names (`HeroKnight_<n>`, used to sync the shield layer) and `Resources/Hero/HeroKnight_Shield`, the `"Player"` tag, `"EntryPoint"` GameObject, `"InteractKey"` and `"Sprites/..."` Resources paths, sensor child names, and UXML element names.
 - Commit messages in this repo are short, lowercase, present-participle summaries ("implementing chest UI", "fixing camera follow in dungeon").
 
 ## Status: what's done vs. missing
@@ -565,7 +573,7 @@ Design choice (made by the user): turn the imported Monsters pack into enemies; 
 
 ### 22. Hero weapon art (branch `hero-weapon-art`)
 - [x] Dagger, Bow, Staff and Wand copies of the hero sheet and animations, swapped by weapon type (see "Hero weapon looks" near the top).
-- [ ] **Shield overlay**: cut the shield out of the frames into a layer shown only while a shield is equipped, and patch the torso where it overlapped.
+- [x] **Shield overlay**: the shield is its own layer, shown only while a shield is equipped (see "Hero weapon looks"). With a shield equipped the hero looks exactly like the vendor art.
 - **Not play-tested yet.** Look at every animation with each weapon, and watch for leftover sword pixels or weapons in odd places.
 
 ### Needs a design decision (not scheduled)

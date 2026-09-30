@@ -5,8 +5,13 @@ guard plus the straight lavender blade from it), erases it, and draws another we
 angle. Only pixels that were transparent or part of the old sword are painted, so body parts that covered the
 sword still cover the new weapon. Swing trails are kept (Dagger), turned magic blue (Staff, Wand) or removed (Bow).
 
+The shield is cut out of every frame too (see shield_masks) into its own sheet, which Hero draws on top only
+while a shield is equipped. So the looks have no shield, and with the shield layer they match the vendor sheet.
+
 Outputs (GUIDs in existing .meta files are kept, so regenerating doesn't break references):
-  Assets/Sprites/Hero/HeroKnight_<Weapon>.png (+ .meta sliced like the original sheet)
+  Assets/Resources/Hero/HeroKnight_Shield.png (+ .meta): the shield layer
+  Assets/Sprites/Hero/HeroKnight_<Look>.png (+ .meta sliced like the original sheet), for Sword, Dagger, Bow,
+    Staff and Wand
   Assets/Animations/Hero/<Weapon>/HeroKnight_<Weapon>_<Clip>.anim (the hero clips, pointed at the new sheet)
   Assets/Animations/Hero/<Weapon>/HeroKnight_<Weapon>.overrideController (of HeroKnight_AnimController)
 
@@ -23,6 +28,7 @@ SOURCE_SHEET = os.path.join(VENDOR, 'Sprites', 'HeroKnight.png')
 SOURCE_GUID = 'ae297123f091bbf4e8f1835eb98fb293'          # HeroKnight.png
 SHEET_DIR = os.path.join(ROOT, 'Assets', 'Sprites', 'Hero')
 ANIM_DIR = os.path.join(ROOT, 'Assets', 'Animations', 'Hero')
+SHIELD_SHEET = os.path.join(ROOT, 'Assets', 'Resources', 'Hero', 'HeroKnight_Shield.png')
 FW, FH, COLS, FRAMES = 100, 55, 10, 90
 
 
@@ -360,48 +366,53 @@ MAGIC = {(190, 194, 236): (120, 215, 250), (127, 136, 171): (60, 140, 210), (241
          (215, 211, 214): (170, 235, 255), (174, 212, 229): (140, 225, 255)}
 
 
-def build(sheet, weapon, report=None):
+def build(sheet, weapon, shield, report=None):
+    """One look: the vendor frames without the shield and, except for the Sword, with the sword replaced."""
     out = [row[:] for row in sheet]
-    for i in range(90):
+    for i in range(FRAMES):
         fx, fy = (i % COLS) * FW, (i // COLS) * FH
         frame = [row[fx:fx + FW] for row in sheet[fy:fy + FH]]
-        flash = i in FLASH_FRAMES
-        source = frame
-        if flash:
-            j = FLASH_FRAMES[i]
-            sx, sy = (j % COLS) * FW, (j // COLS) * FH
-            source = [row[sx:sx + FW] for row in sheet[sy:sy + FH]]
-        found = find_sword(source, OVERRIDES.get(FLASH_FRAMES.get(i, i)))
-        if found is None:
-            if report is not None:
-                report.append(i)
-            continue
-        guard, blade, grip, d, length = found
-        removed = set(guard) | set(blade)
-        if flash:  # Erase the silhouette's sword where the matching frame had it (plus a pixel around)
-            removed = {(x + dx, y + dy) for x, y in removed for dx in (-1, 0, 1) for dy in (-1, 0, 1)
-                       if 0 <= x + dx < FW and 0 <= y + dy < FH and rgb(frame[y + dy][x + dx]) == FLASH}
-            removed -= body_core(frame, removed)
         new = [row[:] for row in frame]
-        for x, y in removed:
-            new[y][x] = (0, 0, 0, 0)
-        # Loose blade-coloured specks just past the old tip, which the blade band missed
-        for comp in components(new, BLADE):
-            if len(comp) <= 4 and body_contact(new, comp) == 0 and all(
-                    abs((x + 0.5 - grip[0]) * d[1] - (y + 0.5 - grip[1]) * d[0]) <= 3.5
-                    and length - 3 <= (x + 0.5 - grip[0]) * d[0] + (y + 0.5 - grip[1]) * d[1] <= length + 8
-                    for x, y in comp):
-                for x, y in comp:
-                    new[y][x] = (0, 0, 0, 0)
-                    removed.add((x, y))
-        if i in ATTACK_FRAMES and not flash:
-            trail = trails(new)
-            for x, y in trail:
-                if weapon == 'Bow':
-                    new[y][x] = (0, 0, 0, 0)
-                elif weapon in ('Staff', 'Wand'):
-                    new[y][x] = MAGIC[rgb(new[y][x])] + (255,)
-        draw_weapon(new, weapon, grip, d, removed, flash)
+        shield_pixels = set(shield.get(i, ()))
+        found = None
+        if weapon != 'Sword':
+            flash = i in FLASH_FRAMES
+            source = frame
+            if flash:
+                j = FLASH_FRAMES[i]
+                sx, sy = (j % COLS) * FW, (j // COLS) * FH
+                source = [row[sx:sx + FW] for row in sheet[sy:sy + FH]]
+            found = find_sword(source, OVERRIDES.get(FLASH_FRAMES.get(i, i)))
+            if found is None and report is not None:
+                report.append(i)
+        if found is None:
+            remove_shield(new, shield_pixels)
+        else:
+            guard, blade, grip, d, length = found
+            removed = set(guard) | set(blade)
+            if flash:  # Erase the silhouette's sword where the matching frame had it (plus a pixel around)
+                removed = {(x + dx, y + dy) for x, y in removed for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                           if 0 <= x + dx < FW and 0 <= y + dy < FH and rgb(frame[y + dy][x + dx]) == FLASH}
+                removed -= body_core(frame, removed)
+            for x, y in removed:
+                new[y][x] = (0, 0, 0, 0)
+            # Loose blade-coloured specks just past the old tip, which the blade band missed
+            for comp in components(new, BLADE):
+                if len(comp) <= 4 and body_contact(new, comp) == 0 and all(
+                        abs((x + 0.5 - grip[0]) * d[1] - (y + 0.5 - grip[1]) * d[0]) <= 3.5
+                        and length - 3 <= (x + 0.5 - grip[0]) * d[0] + (y + 0.5 - grip[1]) * d[1] <= length + 8
+                        for x, y in comp):
+                    for x, y in comp:
+                        new[y][x] = (0, 0, 0, 0)
+                        removed.add((x, y))
+            remove_shield(new, shield_pixels - removed)
+            if i in ATTACK_FRAMES and not flash:
+                for x, y in trails(new):
+                    if weapon == 'Bow':
+                        new[y][x] = (0, 0, 0, 0)
+                    elif weapon in ('Staff', 'Wand'):
+                        new[y][x] = MAGIC[rgb(new[y][x])] + (255,)
+            draw_weapon(new, weapon, grip, d, removed, flash)
         for y in range(FH):
             out[fy + y][fx:fx + FW] = new[y]
     return out
@@ -416,6 +427,172 @@ def body_core(frame, removed):
         if solid >= 20:
             keep.add((x, y))
     return keep
+
+
+# ---- Shield: cut out of every frame into its own layer ----
+# The shield shares its colours with the tunic and scarf, but it has no dark outline: it is a region of these
+# colours bounded by its lavender rim or empty space. Where it touches the body it is split off at the
+# narrowest point (a minimum vertex cut), seeded by matching the shield shapes found in the clean frames.
+SHIELD_COLOURS = {(190, 194, 236), (127, 136, 171), (43, 72, 141), (154, 32, 16), (58, 20, 12), (166, 21, 8)}
+N4 = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+# Frames where the shield is edge-on or mostly hidden, so no template matches: boxes (x0, y0, x1, y1,
+# inclusive) whose shield-coloured pixels are the shield
+SHIELD_BOXES = {
+    19: [(44, 24, 45, 35)], 31: [(44, 24, 45, 35)],
+    36: [(42, 21, 44, 33), (45, 21, 47, 22)],
+    51: [(58, 24, 60, 36)],
+    80: [(54, 7, 60, 14)], 81: [(54, 7, 60, 14)], 82: [(54, 7, 60, 14)], 83: [(54, 7, 60, 14)], 84: [(54, 7, 60, 14)],
+    85: [(54, 8, 58, 13)], 86: [(54, 8, 58, 13)], 87: [(54, 8, 58, 13)], 88: [(54, 8, 58, 13)], 89: [(54, 8, 58, 13)],
+}
+BOX_COLOURS = SHIELD_COLOURS - {(166, 21, 8)} | {(241, 241, 241), (215, 211, 214)}  # Not the blood's red
+
+
+def colour_regions(frame, colours):
+    seen, out = set(), []
+    for y in range(FH):
+        for x in range(FW):
+            if (x, y) in seen or rgb(frame[y][x]) not in colours:
+                continue
+            stack, region = [(x, y)], []
+            seen.add((x, y))
+            while stack:
+                cx, cy = stack.pop()
+                region.append((cx, cy))
+                for dx, dy in N4:
+                    nx, ny = cx + dx, cy + dy
+                    if 0 <= nx < FW and 0 <= ny < FH and (nx, ny) not in seen and rgb(frame[ny][nx]) in colours:
+                        seen.add((nx, ny))
+                        stack.append((nx, ny))
+            out.append(region)
+    return out
+
+
+def is_whole_shield(frame, region):
+    xs, ys = [p[0] for p in region], [p[1] for p in region]
+    colours = [rgb(frame[y][x]) for x, y in region]
+    blue = colours.count((43, 72, 141))
+    red = colours.count((154, 32, 16)) + colours.count((166, 21, 8))
+    rim = colours.count((190, 194, 236)) + colours.count((127, 136, 171))
+    return 25 <= len(region) <= 110 and blue >= 5 and red >= 5 and rim >= 6 \
+        and max(ys) - min(ys) >= 9 and max(xs) - min(xs) <= 8
+
+
+def match_template(frame, templates):
+    best_score, best = 0, None
+    for template in templates:
+        w = max(p[0] for p, _ in template) + 1
+        h = max(p[1] for p, _ in template) + 1
+        for oy in range(0, FH - h + 1):
+            for ox in range(25, min(FW - w + 1, 80)):
+                hits = [(ox + dx, oy + dy) for (dx, dy), colour in template if rgb(frame[oy + dy][ox + dx]) == colour]
+                if len(hits) / len(template) > best_score:
+                    best_score, best = len(hits) / len(template), hits
+    return best_score, best
+
+
+def min_cut_side(nodes, sources, sinks, max_flow=12):
+    """Pixels on the source side of a minimum vertex cut in the 4-connected graph of `nodes`."""
+    big = 10 ** 9
+    cap, adj = {}, {}
+
+    def edge(u, v, c):
+        cap[(u, v)] = cap.get((u, v), 0) + c
+        cap.setdefault((v, u), 0)
+        adj.setdefault(u, set()).add(v)
+        adj.setdefault(v, set()).add(u)
+
+    for p in nodes:  # Each pixel is split into in -> out with capacity 1, so cutting it costs 1
+        edge((p, 0), (p, 1), big if p in sources or p in sinks else 1)
+        for dx, dy in N4:
+            q = (p[0] + dx, p[1] + dy)
+            if q in nodes:
+                edge((p, 1), (q, 0), big)
+    for p in sources:
+        edge('S', (p, 0), big)
+    for p in sinks:
+        edge((p, 1), 'T', big)
+    for _ in range(max_flow):
+        parent, queue = {'S': None}, ['S']
+        while queue and 'T' not in parent:
+            u = queue.pop(0)
+            for v in adj.get(u, ()):
+                if v not in parent and cap[(u, v)] > 0:
+                    parent[v] = u
+                    queue.append(v)
+        if 'T' not in parent:
+            break
+        v = 'T'
+        while parent[v] is not None:
+            u = parent[v]
+            cap[(u, v)] -= 1
+            cap[(v, u)] += 1
+            v = u
+    reach, queue = {'S'}, ['S']
+    while queue:
+        u = queue.pop(0)
+        for v in adj.get(u, ()):
+            if v not in reach and cap[(u, v)] > 0:
+                reach.add(v)
+                queue.append(v)
+    return {p for p in nodes if (p, 0) in reach and cap[((p, 0), (p, 1))] > 0 or (p, 1) in reach}
+
+
+def shield_masks(sheet):
+    """The shield's pixels in every frame of the vendor sheet (empty where it can't be told apart)."""
+    frames = [get_frame(sheet, i) for i in range(FRAMES)]
+    masks, templates, seen_templates = {}, [], set()
+    for i, frame in enumerate(frames):
+        whole = [r for r in colour_regions(frame, SHIELD_COLOURS) if is_whole_shield(frame, r)]
+        if whole:
+            region = max(whole, key=len)
+            masks[i] = set(region)
+            x0, y0 = min(p[0] for p in region), min(p[1] for p in region)
+            template = tuple(sorted(((x - x0, y - y0), rgb(frame[y][x])) for x, y in region))
+            if template not in seen_templates:
+                seen_templates.add(template)
+                templates.append(template)
+    for i, frame in enumerate(frames):
+        if i in masks or i in FLASH_FRAMES:
+            continue
+        if i in SHIELD_BOXES:
+            masks[i] = {(x, y) for x0, y0, x1, y1 in SHIELD_BOXES[i] for y in range(y0, y1 + 1)
+                        for x in range(x0, x1 + 1) if rgb(frame[y][x]) in BOX_COLOURS}
+            continue
+        score, matched = match_template(frame, templates)
+        if score < 0.45:
+            masks[i] = set()  # Hidden, rotated or lying under the body (rolls, the end of the death)
+            continue
+        region = set()
+        for r in colour_regions(frame, SHIELD_COLOURS):
+            if set(r) & set(matched):
+                region |= set(r)
+        near = {(x + dx, y + dy) for x, y in matched for dx in range(-2, 3) for dy in range(-2, 3)}
+        masks[i] = min_cut_side(region, set(matched) & region, {p for p in region if p not in near})
+    for flash, source in FLASH_FRAMES.items():  # Same pose: the silhouette's pixels where the shield was
+        masks[flash] = {p for p in masks.get(source, ()) if frames[flash][p[1]][p[0]][3]}
+    return masks
+
+
+def remove_shield(frame, mask):
+    """Clears the shield's pixels and patches the ones enclosed by the body with a neighbouring body colour."""
+    for x, y in mask:
+        frame[y][x] = (0, 0, 0, 0)
+    for _ in range(3):
+        patched = False
+        for x, y in mask:
+            if frame[y][x][3]:
+                continue
+            def body(dx, dy):
+                return any(0 <= x + k * dx < FW and 0 <= y + k * dy < FH and frame[y + k * dy][x + k * dx][3]
+                           and (x + k * dx, y + k * dy) not in mask for k in (1, 2))
+            if (body(1, 0) and body(-1, 0)) or (body(0, 1) and body(0, -1)):
+                neighbours = [frame[y + dy][x + dx] for dx, dy in N8
+                              if 0 <= x + dx < FW and 0 <= y + dy < FH and frame[y + dy][x + dx][3]]
+                if neighbours:
+                    frame[y][x] = max(set(neighbours), key=neighbours.count)
+                    patched = True
+        if not patched:
+            break
 
 
 # ---- Unity assets ----
@@ -501,13 +678,33 @@ AnimatorOverrideController:
     return native_meta(controller, 22100000)
 
 
+def write_shield_layer(sheet, shield):
+    """The shield's pixels alone, in the same slicing, loaded by Hero from Resources."""
+    layer = [[(0, 0, 0, 0)] * len(sheet[0]) for _ in sheet]
+    for i, mask in shield.items():
+        fx, fy = (i % COLS) * FW, (i // COLS) * FH
+        for x, y in mask:
+            layer[fy + y][fx + x] = sheet[fy + y][fx + x]
+    folder_meta(os.path.dirname(SHIELD_SHEET))
+    os.makedirs(os.path.dirname(SHIELD_SHEET), exist_ok=True)
+    write_png(SHIELD_SHEET, layer)
+    source_meta = open(SOURCE_SHEET + '.meta', encoding='utf-8').read()
+    source_meta = re.sub(r'^AssetOrigin:\n(?:  .*\n)*', '', source_meta, flags=re.M)
+    guid = existing_guid(SHIELD_SHEET + '.meta')
+    write_text(SHIELD_SHEET + '.meta', re.sub(r'^guid: \w+', f'guid: {guid}', source_meta, count=1, flags=re.M))
+    return layer
+
+
 def main():
     preview = sys.argv[sys.argv.index('--preview') + 1] if '--preview' in sys.argv else None
     controller_guid = existing_guid(os.path.join(VENDOR, 'Animations', 'HeroKnight_AnimController.controller.meta'))
     sheet = read_png(SOURCE_SHEET)
-    for weapon in WEAPONS:
+    shield = shield_masks(sheet)
+    print('shield found in', sum(1 for m in shield.values() if m), 'of', FRAMES, 'frames')
+    layer = write_shield_layer(sheet, shield)
+    for weapon in ['Sword'] + list(WEAPONS):
         missing = []
-        result = build(sheet, weapon, missing)
+        result = build(sheet, weapon, shield, missing)
         guid = write_unity_assets(weapon, result, controller_guid)
         print(f'{weapon}: controller {guid}' + (f', no sword found in frames {missing}' if missing else ''))
         if preview:
@@ -515,6 +712,11 @@ def main():
             for part in range(3):
                 frames = [get_frame(result, i) for i in range(part * 30, part * 30 + 30)]
                 write_png(os.path.join(preview, f'{weapon}_{part}.png'), zoom(frames))
+                if weapon == 'Sword':  # And with the shield layer on top, which should match the vendor sheet
+                    shielded = [[l if l[3] else b for b, l in zip(brow, lrow)] for brow, lrow in zip(
+                        (r for f in frames for r in f), (r for k in range(part * 30, part * 30 + 30) for r in get_frame(layer, k)))]
+                    shielded = [shielded[k * FH:(k + 1) * FH] for k in range(30)]
+                    write_png(os.path.join(preview, f'Sword_with_shield_{part}.png'), zoom(shielded))
 
 
 if __name__ == '__main__':

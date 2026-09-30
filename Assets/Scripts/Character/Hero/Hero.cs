@@ -75,12 +75,22 @@ public class Hero : MonoBehaviour, IEntity {
     private const float LedgeGrabRange = 0.3f;
 
     [Header("Weapon looks")]
-    [Tooltip("The hero's animations holding each weapon type: override controllers made by Tools/HeroWeapons. The sword look is the prefab's own controller, which greatweapons use too")]
+    [Tooltip("The hero's animations holding each weapon type, without the shield: override controllers made by Tools/HeroWeapons. Greatweapons use the sword look")]
+    [SerializeField] RuntimeAnimatorController swordLook;
     [SerializeField] RuntimeAnimatorController daggerLook;
     [SerializeField] RuntimeAnimatorController bowLook;
     [SerializeField] RuntimeAnimatorController staffLook;
     [SerializeField] RuntimeAnimatorController wandLook;
-    private RuntimeAnimatorController swordLook;
+    private RuntimeAnimatorController baseLook; // The prefab's controller, if a look is missing
+
+    // The shield is its own layer (Resources/Hero/HeroKnight_Shield, made by Tools/HeroWeapons), drawn over
+    // the hero's current frame while a shield is equipped
+    private static readonly HashSet<string> LookSheets = new HashSet<string>
+        { "HeroKnight_Sword", "HeroKnight_Dagger", "HeroKnight_Bow", "HeroKnight_Staff", "HeroKnight_Wand" };
+    private SpriteRenderer m_shieldLayer;
+    private Sprite[] m_shieldFrames;
+    private readonly Dictionary<Sprite, int> m_frameNumbers = new Dictionary<Sprite, int>();
+    private bool m_hasShield;
 
     [SerializeField] bool       m_noBlood = false;
     public bool NoBlood
@@ -201,7 +211,7 @@ public class Hero : MonoBehaviour, IEntity {
     void Start ()
     {
         m_animator = GetComponent<Animator>();
-        swordLook = m_animator.runtimeAnimatorController;
+        baseLook = m_animator.runtimeAnimatorController;
         m_body2d = GetComponent<Rigidbody2D>();
         boxCollider = GetComponent<BoxCollider2D>();
         m_spriteRenderer = GetComponent<SpriteRenderer>();
@@ -227,8 +237,59 @@ public class Hero : MonoBehaviour, IEntity {
             ItemSystem.Instance.AddAndEquipOnPlayer(new[] {69, 420, 1337});
             playerHealth.SetHealth(playerHealth.MaxHealth); // Full health including the kit's bonuses
         }
+        CreateShieldLayer();
         EquipmentSystem.Instance.OnEquipmentChanged += UpdateWeaponLook;
         UpdateWeaponLook();
+    }
+
+    private void CreateShieldLayer()
+    {
+        Sprite[] sprites = Resources.LoadAll<Sprite>("Hero/HeroKnight_Shield");
+        if (sprites.Length == 0)
+            return;
+        m_shieldFrames = new Sprite[sprites.Length];
+        foreach (Sprite sprite in sprites)
+        {
+            int frame = FrameNumber(sprite);
+            if (frame >= 0 && frame < m_shieldFrames.Length)
+                m_shieldFrames[frame] = sprite;
+        }
+        GameObject layer = new GameObject("ShieldLayer");
+        layer.transform.SetParent(transform, false);
+        m_shieldLayer = layer.AddComponent<SpriteRenderer>();
+        m_shieldLayer.sharedMaterial = m_spriteRenderer.sharedMaterial;
+        m_shieldLayer.sortingLayerID = m_spriteRenderer.sortingLayerID;
+        m_shieldLayer.sortingOrder = m_spriteRenderer.sortingOrder + 1;
+        m_shieldLayer.enabled = false;
+    }
+
+    // Frame number from the sprite's name ("HeroKnight_12"): every look sheet keeps the vendor sheet's names
+    private int FrameNumber(Sprite sprite)
+    {
+        if (!m_frameNumbers.TryGetValue(sprite, out int frame))
+        {
+            string name = sprite.name;
+            if (!int.TryParse(name.Substring(name.LastIndexOf('_') + 1), out frame))
+                frame = -1;
+            m_frameNumbers[sprite] = frame;
+        }
+        return frame;
+    }
+
+    // After the Animator has picked this frame's sprite
+    private void LateUpdate()
+    {
+        if (m_shieldLayer == null)
+            return;
+        Sprite current = m_spriteRenderer.sprite;
+        int frame = current != null && LookSheets.Contains(current.texture.name) ? FrameNumber(current) : -1;
+        bool show = m_hasShield && frame >= 0 && frame < m_shieldFrames.Length && m_shieldFrames[frame] != null;
+        m_shieldLayer.enabled = show;
+        if (!show)
+            return;
+        m_shieldLayer.sprite = m_shieldFrames[frame];
+        m_shieldLayer.flipX = m_spriteRenderer.flipX;
+        m_shieldLayer.color = m_spriteRenderer.color; // Hit flash and status effect tints
     }
 
     private void OnDestroy()
@@ -240,6 +301,7 @@ public class Hero : MonoBehaviour, IEntity {
     // Shows the hero holding the equipped weapon type by swapping in that type's copy of the animations
     private void UpdateWeaponLook()
     {
+        m_hasShield = EquipmentSystem.Instance.GetItem(EquipmentSlot.Shield) != null;
         Item weapon = EquipmentSystem.Instance.GetItem(EquipmentSlot.Weapon);
         RuntimeAnimatorController look = (weapon != null ? weapon.WeaponType : WeaponType.Sword) switch
         {
@@ -250,7 +312,7 @@ public class Hero : MonoBehaviour, IEntity {
             _ => swordLook,
         };
         if (look == null)
-            look = swordLook;
+            look = swordLook != null ? swordLook : baseLook;
         if (m_animator.runtimeAnimatorController == look)
             return;
 
