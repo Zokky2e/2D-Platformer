@@ -8,6 +8,12 @@ public class SensorManager : Singleton<SensorManager>
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
+    private void OnDestroy()
+    {
+        // The event is static: without this, a player destroyed by New Game threw on every later scene load
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         // Reset sensors to avoid references to destroyed objects

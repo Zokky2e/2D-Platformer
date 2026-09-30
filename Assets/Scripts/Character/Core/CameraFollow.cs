@@ -22,9 +22,12 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!player) 
+        if (!player)
         {
-            player = PersistentPlayerHealth.Instance.GetComponent<Hero>().transform;
+            // Missing for a frame after New Game destroys the player, until Level0 reloads with a new one
+            if (PersistentPlayerHealth.Instance == null)
+                return;
+            player = PersistentPlayerHealth.Instance.transform;
         }
         // Update camera zoom
         cam.orthographicSize = camHalfHeight - cameraZoom;
