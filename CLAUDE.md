@@ -38,11 +38,11 @@ Only `Assets/Scripts`, `Assets/Editor` and the content folders listed below are 
 
 ```
 Assets/
-  Scripts/                     <- ALL game code (~70 files, ~4.6k lines)
-    Core/                      Singleton<T>, DialogSystem, Interactable, PauseMenu, CoreUI,
-                               PersistentPlayerHealth, SensorManager, SaveSystem/WorldState*
+  Scripts/                     <- ALL game code (~80 files, ~6k lines)
+    Core/                      Singleton<T>, GameInput, SafeEvent, DialogSystem, Interactable, PauseMenu,
+                               CoreUI, PersistentPlayerHealth, SensorManager, SaveSystem/WorldState*
     Character/
-      Hero/                    Hero (player controller), HeroState (FSM), WeaponSensor
+      Hero/                    Hero (player controller), HeroState (FSM), WeaponSensor, Projectile
       Enemies/                 Enemy (patrol/chase/attack/trap), EnemyGenerator
       Core/                    CharacterStats, CameraFollow, FadeTransition, GameRespawn,
                                LevelTransition, NPC, IEntity, AnimatorParams (cached animator ids),
@@ -50,27 +50,29 @@ Assets/
       Inventory/               InventorySystem, EquipmentSystem, InventoryUI, EquipmentUI
     Health/                    Health, Healthbar (player HUD), FloatingHealthBar (enemies)
     Items/                     Item, RuntimeItem, ItemData, ItemLoader, ItemDatabase, ItemSystem,
-                               Collectable, ItemGrid + ItemTooltip (shared item-window UI),
+                               WeaponType, Collectable, ItemGrid + ItemTooltip (shared item-window UI),
                                Effects/*, ItemVarients/* (sic), LootSystem/*, TradeSystem/*
     LevelGeneration/           DungeonGenerator, DungeonManager, RoomGeneration (rules), Room, Node
     WorldObjects/              RespawnCheckpoint
-  Editor/DungeonGeneratorEditor.cs   Inspector buttons "Expand Dungeon" / "Expand Dungeon To Max"
+  Editor/                      DungeonGeneratorEditor (Inspector buttons "Expand Dungeon" / "Expand Dungeon
+                               To Max"), SaveGameMenu (Tools > Save Game), DebugMenu (Tools > Debug)
   Sprites/Hero/, Animations/Hero/   The hero's per-weapon sprite sheets and animations (generated, see below)
-Tools/HeroWeapons/            Python generator for those (outside Assets, so Unity ignores it)
+  Animations/Enemies/          The monster enemies' clips and override controllers
   Levels/                      Level0.unity (hub), RoomGenerator.unity (dungeon)
   Prefabs/                     Player-facing prefabs (see "Prefab map")
   ScriptedItems/               ScriptableObject assets: NPC behaviors, shop and loot tables
   StreamingAssets/items.json   THE item database (data-driven)
-  Resources/                   Loaded by name at runtime: InteractKey, PatrolPoint, Sprites/*
+  Resources/                   Loaded by name at runtime: InteractKey, PatrolPoint, Sprites/*, Hero/ (shield layer)
   Sprites/                     UI sprites + Tilesets/ (Tiled .tmx rooms, .tsx tileset, autotile rules)
   UI Toolkit/                  PanelSettings + runtime theme
+Tools/HeroWeapons/             Python generator of the hero's weapon looks (outside Assets, so Unity ignores it)
 ```
 
-Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art` (enemies), `Merchant - Pixel Art`, `Cainos` (village props, including the `Chest` script used by loot chests), `2D Pixel Art Platformer Biome - American Forest`, `RPG Icons Pixel Art`, `JohnFarmer` (keyboard key sprites for tutorial signs), `Violet Theme Ui`, `NaughtyAttributes`, `TextMesh Pro`, and `Imported Assets/` (Monsters Creatures Fantasy, a simple UI pack, and a Pet Cats pack, which were imported but not used yet, probably meant for future monsters and bosses).
+Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art` (enemies), `Merchant - Pixel Art`, `Cainos` (village props, including the `Chest` script used by loot chests), `2D Pixel Art Platformer Biome - American Forest`, `RPG Icons Pixel Art`, `JohnFarmer` (keyboard key sprites for tutorial signs), `Violet Theme Ui`, `NaughtyAttributes`, `TextMesh Pro`, and `Imported Assets/` (Monsters Creatures Fantasy, whose Goblin, Mushroom and Skeleton are enemies now, plus a simple UI pack and a Pet Cats pack, both unused).
 
-**HeroKnight exception:** the player prefab is the vendor's `Assets/Hero Knight - Pixel Art/Demo/HeroKnight.prefab`, modified in place. The vendor's `HeroKnight.cs` controller is not used. The project's `Hero.cs` and friends are attached instead, and only the vendor's `Sensor_HeroKnight` is reused. The vendor's animator controller (`Animations/HeroKnight_AnimController.controller`) is also **extended in place** (movement rework, 2026-10-01): a `LedgeGrab` bool parameter and `Ledge Grab` state, and a Wall Slide → Fall transition for letting go of a wall. The prefab's Rigidbody2D uses the pack's frictionless `Environment/Walls_noFriction` material.
+**HeroKnight exception:** the player prefab is the vendor's `Assets/Hero Knight - Pixel Art/Demo/HeroKnight.prefab`, modified in place. The vendor's `HeroKnight.cs` controller is not used. The project's `Hero.cs` and friends are attached instead, and only the vendor's `Sensor_HeroKnight` is reused. The vendor's animator controller (`Animations/HeroKnight_AnimController.controller`) is also **extended in place** (movement rework, 2026-09-30): a `LedgeGrab` bool parameter and `Ledge Grab` state, and a Wall Slide → Fall transition for letting go of a wall. The prefab's Rigidbody2D uses the pack's frictionless `Environment/Walls_noFriction` material.
 
-**Hero weapon looks** (2026-10-01): the hero appears holding the equipped weapon type. The design choice, made by the user, was one copy of the hero per type.
+**Hero weapon looks** (2026-09-30): the hero appears holding the equipped weapon type. The design choice, made by the user, was one copy of the hero per type.
 - There are five looks, all generated from the vendor sheet: Sword (also used by Greatweapon), Dagger, Bow, Staff and Wand. None of them has the shield: **the shield is its own layer** (see below).
 - `Tools/HeroWeapons/hero_weapon_sheets.py` (Python standard library) builds each copy from the vendor sheet. For every frame it:
   - finds the sword (the gold guard plus the straight lavender blade from it),
@@ -126,7 +128,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - `Core/Singleton.cs`: `Singleton<T>` looks up `Instance` with `FindAnyObjectByType` (`FindFirstObjectByType` is deprecated in 6000.6). **If none exists, it creates a new GameObject.** Singletons meant to work that way (no prefab) are marked `[AutoCreatedSingleton]`: `ItemSystem`, `ShopSystem`, `DungeonManager`, `SaveSystem`. For any other type it logs a warning ("No X found, so an empty one was created"), which points at a missing or destroyed prefab. `HasInstance` checks for an instance without creating one; use it in `OnDestroy`. `Awake` calls `DontDestroyOnLoad` and destroys duplicates. Subclasses override `protected override void Awake()` and must call `base.Awake()`.
 - Singletons: `DialogSystem`, `PauseMenu`, `FadeTransition`, `GameRespawn`, `SensorManager`, `InventorySystem`, `EquipmentSystem`, `ItemDatabase`, `ItemSystem`, `ShopSystem`, `DungeonManager`, `WorldStateManager`, `SaveSystem`. `ItemSystem`, `ShopSystem`, `DungeonManager` and `SaveSystem` have no prefab and are always created lazily by the getter.
 - `PersistentPlayerHealth` (on the player) has its own static `Instance` and `DontDestroyOnLoad`. Other code reaches the player through it, for example `PersistentPlayerHealth.Instance.GetComponent<Hero>()` in `CameraFollow`.
-- The player GameObject carries **several singletons at once**: `Hero`, `PersistentPlayerHealth`, `CharacterStats`, `GameRespawn`, `SensorManager`, `WeaponSensor` (child `AttackSensor`), plus 5 `Sensor_HeroKnight` children. Their names must stay exactly `GroundSensor`, `WallSensor_R1/R2/L1/L2`, because `Hero.Start` looks them up with `transform.Find`. Only `WallSensor_R2/L2` are still used, as spawn points for the wall-slide dust; ground and wall detection are casts in `Hero` now.
+- The player GameObject carries **several singletons at once**: `Hero`, `PersistentPlayerHealth`, `CharacterStats`, `GameRespawn`, `SensorManager`, `WeaponSensor` (child `AttackSensor`), plus 5 `Sensor_HeroKnight` children (`GroundSensor`, `WallSensor_R1/R2/L1/L2`). Only `WallSensor_R2/L2` are still used, as spawn points for the wall-slide dust, and `Hero.Start` finds them by name with `transform.Find`, so those two names must stay. Ground and wall detection are casts in `Hero` now; the other three sensors are unused vendor leftovers.
 - InventoryUI, ShopUI and LootUI do their own `DontDestroyOnLoad` instead of using `Singleton<T>`, and expose the kept copy as a static `Instance` (used by `OpenShopBehavior` and `LootChest`).
 
 ### UI state and pausing
@@ -144,7 +146,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - `isGrounded()` box-casts a strip 0.04 narrower than the collider, so walls beside the hero don't count as ground.
   - `WallSide` is ±1 when raycasts at a quarter of the body height *and* near the top both hit a wall on that side. A platform corner reaching only part of the body is a ledge, not a wall.
 - Horizontal velocity is set in `Hero.FixedUpdate` from `stats.TotalMoveSpeed`, except during `Roll`, `Dead`, `LedgeGrab`, and for `wallJumpControlLock` seconds after a wall jump.
-- **Movement (rework of 2026-10-01; tuning fields are on the `Hero` component, grouped as Jump feel, Walls and Ledges):**
+- **Movement (rework of 2026-09-30; tuning fields are on the `Hero` component, grouped as Jump feel, Walls and Ledges):**
   - *Jump*: `m_jumpForce` 9 (apex about 4.1 units). **Coyote time** (0.1 s) allows a jump just after running off an edge. The **jump buffer** (0.12 s) makes a press just before landing still jump. Releasing Space while rising multiplies the upward speed by `jumpCutMultiplier` (0.5), giving **variable jump height**. Landing only counts when not rising, so the state can't flip back to Idle on the frame after takeoff.
   - *Wall slide*: touching a wall while falling and not steering away caps the fall at `wallSlideSpeed` (2.5) and faces the wall (WallSlide animation). Steering away lets go.
   - *Wall jump*: Space while touching a wall (or within coyote time of touching one) launches at `wallJumpVelocity` (6 away, 9 up). Steering is ignored for `wallJumpControlLock` (0.2 s) so holding toward the wall can't cancel the push; afterwards the hero can drift back to climb the same wall or reach the opposite one.
@@ -190,7 +192,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   | Wand | Spark Wand | 0.45 s | 1.3 | – | no | magic bolt, 4 mana |
 
   - `AttackingState` plays one swing per click and chains the Attack1-2-3 combo. A click during a swing starts the next swing when the swing time is up. Each swing **strikes** once, 0.18 s into the swing divided by the animation speed (`Hero.Strike`).
-  - A melee strike hits every enemy inside the `AttackSensor` hitbox (widened forward by reach) once, through a physics overlap query (`WeaponSensor.Strike`). Before 2026-10-01 hits came from trigger-stay callbacks: a whole combo could only damage once, and a sleeping physics body could miss.
+  - A melee strike hits every enemy inside the `AttackSensor` hitbox (widened forward by reach) once, through a physics overlap query (`WeaponSensor.Strike`). Before the weapon types, hits came from trigger-stay callbacks: a whole combo could only damage once, and a sleeping physics body could miss.
   - A ranged strike launches a `Projectile`: it moves by raycasts, hits the first living enemy or wall, and uses code-drawn pixel sprites until there's projectile art. Arrows deal `TotalDamage`; magic bolts deal `TotalDamage + TotalMagicPower` and cost mana. Without enough mana, a staff or wand strikes as a melee weapon instead.
   - Both kinds apply the wearer's bleed, poison and burn through `CharacterStats.ApplyOnHitEffects` when a hit lands. The hitbox turns with the hero's facing.
   - **Two-handed rule** (`EquipmentSystem.EquipItem`): equipping a two-handed weapon puts the shield back in the inventory, and equipping a shield puts a two-handed weapon back. So no blocking with bows, staffs or the cleaver.
@@ -202,7 +204,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - It moves by setting `transform.position` directly, not through the Rigidbody, and only horizontally (it used to float up toward a jumping player). When the player is straight above and out of reach, it stands still.
   - With no patrol points it stands still until the player comes within `detectionRange`, and returns to idle after a chase.
 - Enemy prefabs: `Prefabs/Enemies/Bandit.prefab` (100 HP, speed 2, damage 15, armor 5, attackDelay 5.5) and `Spiketrap.prefab`. The Bandit also has an `NPC` component, but `NPC` doesn't flip enemies: `Enemy.FaceTowards` owns the facing, because the two scripts flipping the sprite drifted out of sync and could turn an enemy's back to the player. `Enemy.spriteFacesRight` says which way the art faces (Bandit art faces left, Monsters pack art right). Patrol points that are empty are dropped in `Enemy.Start`, so an enemy placed or spawned without them just stands guard.
-- **Monster enemies** (added 2026-10-01) are prefab variants of `Bandit` built from the Monsters Creatures Fantasy pack. They share the Bandit's AI and animator logic, and differ in art, collider, stats and on-hit effect:
+- **Monster enemies** (added 2026-09-30) are prefab variants of `Bandit` built from the Monsters Creatures Fantasy pack. They share the Bandit's AI and animator logic, and differ in art, collider, stats and on-hit effect:
 
   | Prefab | HP | Damage | Armor | Speed | Attack delay / range | Detection | On hit | Appears from dungeon level |
   |---|---|---|---|---|---|---|---|---|
@@ -298,7 +300,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   4. **Fill phase**: while exits remain open, the first open exit facing **Right** gets the `bossRoom` and every other exit gets an `empty` cap.
   5. If the fill phase found no open right-facing exit for the boss room, the dungeon would have no exit, so `ClearDungeon` destroys the layout and `BuildDungeon` tries again (up to 5 attempts, logging a warning each time). The dungeon level only goes up once.
   6. It moves the player to the `EntryPoint` inside `startRoom`.
-- **Room mix** (2026-10-01): `DungeonManager.EnemyRoomTarget` and `LootRoomTarget` set how many enemy and loot rooms a run aims for.
+- **Room mix** (2026-09-30): `DungeonManager.EnemyRoomTarget` and `LootRoomTarget` set how many enemy and loot rooms a run aims for.
   - Enemy rooms: `EnemyRoomBaseCount` (4) plus 2 per level after the first, at most 40% of `DungeonSize`.
   - Loot rooms: `LootRoomBaseCount` (3) plus 1 every second level, at most 20% of `DungeonSize`.
   - `DungeonGenerator.RoomWeight` multiplies a rule's weight by `overTargetWeight` (0.1) once that room type has reached its target. While a type is short and the expansion steps left barely cover what's missing, it multiplies by `catchUpWeight` (10) instead.
@@ -351,12 +353,12 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - When editing `.unity` or `.prefab` YAML directly, references are `{fileID, guid}` pairs. Look up the GUID in the matching `.meta` file. Prefer telling the user what to change in the Editor over hand-editing complex scenes.
 - `ItemLoader` reads `StreamingAssets/items.json` with `File.ReadAllText`. That works on desktop, which is the current build target, but not on Android or WebGL, where StreamingAssets must be read with `UnityWebRequest`.
 - Lookups by name or tag are fragile: the hero's sprite names (`HeroKnight_<n>`, used to sync the shield layer) and `Resources/Hero/HeroKnight_Shield`, the `"Player"` tag, `"EntryPoint"` GameObject, `"InteractKey"` and `"Sprites/..."` Resources paths, sensor child names, and UXML element names.
-- Commit messages in this repo are short, lowercase, present-participle summaries ("implementing chest UI", "fixing camera follow in dungeon").
+- Commit messages: the 2025 history uses short, lowercase, present-participle summaries ("implementing chest UI"). Since 2026-09-29 commits use a capitalised imperative summary ("Rework the hero's jumping, wall and ledge movement") and a body saying why. Each feature goes on its own topic branch, and branches are merged into `main` only when the user asks.
 
 ## Status: what's done vs. missing
 
 **Working, or mostly working:**
-- Movement, wall slide and wall jump, roll, 3-hit combo, block with a shield
+- Movement, wall slide and wall jump, ledge grab, roll, 3-hit combo, block with a shield
 - Health with armor, i-frames, HUD, enemy health bars
 - Death, respawn, checkpoints, pause menu, fade transitions
 - Merchant quest-style intro, dialog system, world-state flags
@@ -367,8 +369,9 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - Procedural dungeon with enemy, loot and parkour rooms that grows each run
 - Save and load, status effects (bleed, poison, burn), shield, mana, magic power and agility stats (added 2026-09-29)
 - Every item has an icon and a price, and can be found in the shop or in chests (2026-09-29)
+- Helmet, gloves and two accessory slots; weapon types with arrows and magic bolts, each shown in the hero's hands; Goblin, Mushroom and Skeleton enemies; per-level enemy and loot room targets (2026-09-30)
 
-Everything added on 2026-09-29 compiles. The first play-test (2026-09-30) found the bugs listed under "Play-test bugs" in the audit backlog; equipment, the shop and the inventory windows are **not reliable** until they're fixed.
+Everything compiles. The first play-test (2026-09-30) found the bugs listed under "Play-test bugs" in the audit backlog, and all of them were fixed the same day, along with the movement rework and the features in backlog groups 18–22. **None of that has been play-tested yet**, so a second play-test is the next step.
 
 **Unfinished, where work stopped in May 2025:**
 - One boss, the Bandit Chief, which is a stronger Bandit with the same AI. There is no boss-specific attack pattern.
@@ -501,8 +504,8 @@ Design choice (made by the user): migrate with the same keys and feel, no gamepa
 - [x] Blocking now ends whenever the right button isn't held, instead of on the frame it's released, so a release missed during a skipped frame can't leave the hero stuck blocking.
 - [ ] **For the user:** play-test movement feel, then switch *Active Input Handling* to *Input System Package (New)*. Gamepad support means adding bindings to `GameInput`'s properties (for example `Gamepad.current?.buttonSouth`).
 
-### Play-test bugs (reported 2026-09-30, not fixed yet)
-Found by the user in the first play-test of everything above. Each entry has the symptom, then what the code confirms or what is only suspected. **P2–P5 were fixed together by the inventory and equipment refactor** (2026-10-01, see "Planned features").
+### Play-test bugs (reported 2026-09-30, all fixed the same day, not play-tested yet)
+Found by the user in the first play-test of everything above. Each entry has the symptom, then what the code confirms or what is only suspected. **P2–P5 were fixed together by the inventory and equipment refactor** (see "Planned features").
 
 - [x] **P1. Enemy health bar breakpoints are drawn in the wrong place** (fixed in `a37dcd2`: markers are anchored and stretched to the fill, and the Bandit's `breakpointEveryX` is 25). The markers start in the middle of the bar and run past its right end, as a dense black comb (19 markers at every 5 HP on a 100 HP Bandit, 4 on the Bandit Chief).
   - Likely cause: `Healthbar.CreateBreakpoint` sets `localPosition.x = normalizedPos * healthBarFill.rect.width`, which assumes x = 0 is the fill's left edge. That holds for the HUD bar but not the enemy bar (`InterfaceGraphics/Healthbar.prefab`), whose fill appears to be centered. Position markers from `rect.xMin` or with anchors instead.
@@ -529,7 +532,7 @@ Found by the user in the first play-test of everything above. Each entry has the
   - `StatusEffects.Awake` records the sprite's *current* color (red) as the base color, and every flash end resets the sprite to it.
   - Fix: capture `Color.white` or the prefab color, not the current color, or keep the base color outside the flash. The same can happen to enemies hit during a flash.
 
-### Movement problems (reported 2026-09-30, reworked 2026-10-01 on branch `playtest-fixes`, not play-tested yet)
+### Movement problems (reported and reworked 2026-09-30 on branch `playtest-fixes`, not play-tested yet)
 The user found reaching upper platforms very hard: it took 5-6 wall jumps, there's no jump across from a wall, and the hero can get stuck hanging with no way to jump. **The user wants all movement issues reworked.** What the code shows (`HeroState.cs` `JumpingState`, `Hero.FixedUpdate`):
 - [x] **P8. Wall jumps never pushed away from the wall.** Fixed by the wall-jump steering lock (see "Player"). What was wrong:
   - `JumpingState.Jump` sets x velocity to `-facing * JumpModifierX` (32), but `Hero.FixedUpdate` overwrites x with `horizontalInput * TotalMoveSpeed` on the next physics step. Only `Roll` and `Dead` are exempt (`noMovementStates`).
@@ -549,7 +552,7 @@ The user found reaching upper platforms very hard: it took 5-6 wall jumps, there
   - a single wall-detection method: `Hero` computes `m_isWallSliding` from the four wall sensors but never uses it, while `JumpingState` uses the box-cast
 - [x] **P13. The pause menu's New Game button called `OnRespawnClicked`** instead of `OnNewGameClicked` (fixed in `5d7956e`).
 
-### 18. Found while fixing the play-test bugs (2026-10-01)
+### 18. Found while fixing the play-test bugs (2026-09-30)
 - [x] **The dungeon could have no exit.** The boss room (the only way back to Level0) was only placed if an open exit facing right was left for the fill phase. If the layout used them all up, the player was trapped. The generator now rebuilds such layouts (see "Procedural dungeon", step 5).
 
 ### 19. Monster enemies (branch `monsters`)
@@ -584,7 +587,7 @@ Design choice (made by the user): turn the imported Monsters pack into enemies; 
 
 Bigger pieces of work the user has asked for. Each needs a design pass (ask the user) before implementation.
 
-### 1. Movement rework (implemented 2026-10-01, needs play-testing)
+### 1. Movement rework (implemented 2026-09-30, needs play-testing)
 Design choices (made by the user): slide down walls slowly, wall jumps always push away, grab ledges and pull up, and add coyote time, jump buffering and variable jump height. No air attacks or double jump. See "Player: `Hero` + `HeroState` FSM" for how it works and P8–P12 for what it fixed. **Play-test checklist:**
 - the ledge-hang pose lines up with the ledge (tune `ledgeHangOffset` on the Hero component)
 - wall slide speed, wall jump strength and the steering lock feel right
@@ -593,7 +596,7 @@ Design choices (made by the user): slide down walls slowly, wall jumps always pu
 - rolling and dying don't slide oddly with the frictionless collider
 
 ### 2. Inventory and equipment refactor
-Requested by the user on 2026-09-30. It bundles the inventory play-test bugs with two design changes. **Parts a) and b) were implemented on 2026-10-01** (design choices by the user: Helmet and Gloves slots and two interchangeable accessory slots, no boots, weapon types later). They're described under "Inventory, equipment, shop, loot" and need play-testing. Part c) is still open.
+Requested by the user on 2026-09-30. It bundles the inventory play-test bugs with two design changes. **Parts a) and b) were implemented the same day** (design choices by the user: Helmet and Gloves slots and two interchangeable accessory slots, no boots, weapon types later). They're described under "Inventory, equipment, shop, loot" and need play-testing. Part c) was done the same day, except for real per-type poses.
 
 **a) Fix the inventory bugs as one rework** (P2–P5), done:
 - Swapping gear must remove the old item's effects.
@@ -610,7 +613,7 @@ The rework should make the systems the single source of truth. Each window shoul
 - `EquipmentUI.uxml` has four fixed slot elements (`Weapon`, `Shield`, `Armor`, `Accessory`) plus labels, and `EquipmentUI` queries them by name. It needs the new slots and default icons (the Violet Theme UI `White Icons` folder has more).
 - **Saves already work**: `PlayerSaveData.equippedItemIds` is a plain id list and `RestorePlayer` re-equips each through `EquipItem`, so new slots need no save migration.
 
-**c) Weapon types with their own animations.** The mechanics were done on 2026-10-01 (see "Player attacks"; design choice by the user: bow, staff and wand fire projectiles). Still open: animations per type, since the art decision below is still waiting. The original plan: The weapons are already different kinds: Broadsword, Crimson Blade and Emberfang (swords), Venomfang Dagger (dagger), Giant's Cleaver (heavy two-hander), Elven Longbow (bow), Staff of Frostbite (staff) and Spark Wand (wand). All of them currently swing the same sword combo (`Attack1-3`), and the hero sprite always shows the same sword.
+**c) Weapon types with their own animations.** The mechanics were done on 2026-09-30 (see "Player attacks"; design choice by the user: bow, staff and wand fire projectiles). The art is done too: the hero holds each weapon type (see "Hero weapon looks"; design choice by the user: one copy of the hero per type). Still open: poses per type, since every type plays the sword's swings (the bow is swung before it shoots). The original plan: The weapons are already different kinds: Broadsword, Crimson Blade and Emberfang (swords), Venomfang Dagger (dagger), Giant's Cleaver (heavy two-hander), Elven Longbow (bow), Staff of Frostbite (staff) and Spark Wand (wand). All of them currently swing the same sword combo (`Attack1-3`), and the hero sprite always shows the same sword.
 - Data: add a weapon type to items (for example `"weaponType": "Sword" | "Dagger" | "Greatweapon" | "Bow" | "Staff" | "Wand"` in `items.json`, mapped to an enum in `RuntimeItem`).
 - Combat: the type should choose the attack animation set, attack speed and range (`WeaponSensor` hitbox), and possibly shield compatibility, since two-handers and bows can't be used with a shield. Bows need projectiles, and staffs or wands are the natural first users of the mana foundation (`Mana.TrySpend`, `CharacterStats.TotalMagicPower`).
 - **Art was the blocker** (resolved by the weapon-look copies, see "Hero weapon looks"): the Hero Knight pack only has sword animations, with the sword baked into the sprite sheet. Options to discuss with the user:
@@ -642,8 +645,8 @@ The upgrade from 6000.0.33f1 needed these changes. **Vendor code was patched loc
 - **Policy: only commit vendor assets the game actually uses.** Vendor packs are imported whole into `Assets/`, but only the files that tracked scenes, prefabs and UI reference (directly or through other referenced assets) get committed, together with their `.meta` and parent-folder `.meta` files. Mostly or fully untracked packs: `Assets/RPG Icons Pixel Art/` (73 MB, unused), `Assets/Violet Theme Ui/` (a few icons and the red progress bar used), `Assets/Imported Assets/` (one icon sheet used, plus the Goblin, Mushroom and Skeleton sheets the monster enemies use), `Assets/JohnFarmer/Keyboard Keys & Mouse Sprites/` (a few key sprites used), and `Assets/NaughtyAttributes/` (unused, carries a local 6000.6 patch).
 - **Before committing, check that new references resolve.** A fresh clone only has tracked files, so a scene or prefab pointing at an untracked asset breaks. Resolve the referenced GUIDs (`[0-9a-f]{32}` in YAML and UXML) against `.meta` files, and commit any untracked dependency. The 2026-09-29 baseline did this with a small script that walks references transitively.
 - Never commit `Assets/JohnFarmer/Keyboard Keys & Mouse Sprites/PSB File~/` (~335 MB of unused Photoshop source). It is in `.gitignore`.
-- `.gitignore` excludes `Library/`, `Temp/`, `Logs/`, `obj/`, `.vs/`, `.idea/`, `UserSettings/` (per-user, untracked since 2026-09-29), build output, `*.csproj`, `*.sln`, and TextMesh Pro Examples. Binary files go through **Git LFS** (see below).
-- **Git LFS** (since 2026-10-01, branch `git-lfs`): `.gitattributes` routes images (png, jpg, psd, psb, tga, …), audio, video, 3D models, fonts, archives (including `.unitypackage`), native libraries and PDFs through LFS. Unity's text assets (`.unity`, `.prefab`, `.asset`, `.meta`, `.anim`, …) stay in plain git so they can be diffed and merged; the project uses text serialization, so don't add them to LFS.
+- `.gitignore` excludes `Library/`, `Temp/`, `Logs/`, `obj/`, `.vs/`, `.idea/`, `UserSettings/` (per-user, untracked since 2026-09-29), build output, `*.csproj`, `*.sln`, TextMesh Pro Examples, Python bytecode, and `Assets/Resources/PerformanceTestRun*.json`. The Performance Testing package (pulled in as a dependency) writes those while building or running tests and deletes them afterwards; a pair left over from a May 2025 build was untracked on 2026-09-30. Binary files go through **Git LFS** (see below).
+- **Git LFS** (since 2026-09-30, branch `git-lfs`): `.gitattributes` routes images (png, jpg, psd, psb, tga, …), audio, video, 3D models, fonts, archives (including `.unitypackage`), native libraries and PDFs through LFS. Unity's text assets (`.unity`, `.prefab`, `.asset`, `.meta`, `.anim`, …) stay in plain git so they can be diffed and merged; the project uses text serialization, so don't add them to LFS.
   - This clone was set up with `git lfs install --local`, so the hooks live in `.git/hooks` and the filter in `.git/config`. On another machine, install Git LFS and run `git lfs install` once before cloning; without it, the binaries check out as small pointer files.
   - The 111 binaries that were already tracked were converted in one commit (`git add --renormalize`). **History was not rewritten**: commits before that, including the 99 already on GitHub (`origin/main`), still contain their binaries directly. Rewriting them (`git lfs migrate import`) would need a force-push, and the saving is small (about 8 MB of art).
   - The first push after this uploads the LFS objects. Check the GitHub account's LFS storage and bandwidth quota before committing large packs.
