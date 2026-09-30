@@ -22,6 +22,7 @@ class WeaponSensor : MonoBehaviour
     // Damages each enemy in reach once. Reach stretches the hitbox forward (1 = its size on the prefab)
     public void Strike(float damage, float reach)
     {
+        FaceWithHero(); // The hero may have turned toward the cursor this frame, before this Update ran
         Vector2 localCenter = hitbox.offset + new Vector2(hitbox.size.x * (reach - 1f) * 0.5f, 0f);
         Vector2 center = transform.TransformPoint(localCenter);
         Vector3 scale = transform.lossyScale;
@@ -39,6 +40,11 @@ class WeaponSensor : MonoBehaviour
     }
 
     public void Update()
+    {
+        FaceWithHero();
+    }
+
+    private void FaceWithHero()
     {
         float rotationAngle = player.FacingDirection == -1 ? 180f : 0f;
         transform.rotation = Quaternion.Euler(0, rotationAngle, 0);

@@ -531,9 +531,9 @@ public class Hero : MonoBehaviour, IEntity {
         }
     }
 
-    // The moment an attack connects. Bows loose an arrow toward the cursor, and magic weapons a bolt straight
-    // ahead (paid in mana; without enough, the staff or wand just hits like a melee weapon). Everything else
-    // hits what's within reach
+    // The moment an attack connects. Bows loose an arrow and magic weapons a bolt toward the cursor (paid in
+    // mana; without enough, the staff or wand just hits like a melee weapon). Everything else hits what's
+    // within reach on the side the hero faces, which is the cursor's side while attacking
     public void Strike(WeaponProfile weapon)
     {
         bool shoots = weapon.Projectile != ProjectileKind.None
@@ -543,7 +543,7 @@ public class Hero : MonoBehaviour, IEntity {
             float damage = stats.TotalDamage;
             if (weapon.Projectile == ProjectileKind.MagicBolt)
                 damage += stats.TotalMagicPower;
-            Vector2 direction = weapon.AimsAtCursor ? AimDirection : new Vector2(m_facingDirection, 0f);
+            Vector2 direction = AimDirection;
             Projectile.Launch(weapon.Projectile, AimOrigin + direction * 0.6f, direction, damage, stats, m_spriteRenderer);
         }
         else if (m_weaponSensor != null)
