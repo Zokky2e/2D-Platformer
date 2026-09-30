@@ -129,8 +129,8 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - I-frames with a red flash and ignored Player/Enemy layer collision **only run when the configured player layer is layer 6** (hard-coded check).
 - Hero `TakeDamage` returns 0 while in Block or Roll.
 - Player defaults: 100 HP, speed 4, damage 15, armor 5. With the starting kit that becomes 120 HP, 20 damage and 30 armor.
-- HUD `Healthbar` reads `PersistentPlayerHealth.Instance` and draws a breakpoint marker every 25 HP (`createBreakpoints`, which is re-run when max HP changes). The HP text shows the shield as `95 (+30)`.
-- **The mana bar is created in code.** In `Start`, the HUD's health bar (`resource = Health`, no `entityHealth`) clones itself right below as a `resource = Mana` bar with the blue fill (`manaFillSprite`, which is Violet's `Progress Bar Blue_0`, set in `UI.prefab`). There's no mana bar object in any prefab. To restyle or move it, change the clone code in `Healthbar.CreateManaBar`, or turn off `spawnManaBar` and build one in the Editor.
+- HUD `Healthbar` reads `PersistentPlayerHealth.Instance` and draws a breakpoint marker every `breakpointEveryX` HP (50 on the HUD in `UI.prefab`, 25 on the Bandit, 50 on the Bandit Chief). `createBreakpoints` re-runs when max HP changes. Markers are anchored to a fraction of the fill's width and stretched to its height, so they work with any fill layout. The HP text shows the shield as `95 (+30)`.
+- **The mana bar is created in code.** In `Start`, the HUD's health bar (`resource = Health`, no `entityHealth`) clones itself right below as a `resource = Mana` bar with the blue fill (`manaFillSprite`, which is Violet's `Progress Bar Blue_0`, set in `UI.prefab`). The copy hides the heart (`healthIcon`) and HP number (`healthText`) it cloned, so it's a plain bar with no number. There's no mana bar object in any prefab. To restyle or move it, change the clone code in `Healthbar.CreateManaBar`, or turn off `spawnManaBar` and build one in the Editor.
 - Death: `PersistentPlayerHealth` waits 2 s, then force-opens the pause menu, whose Respawn button calls `GameRespawn.RespawnPlayer` (fade, full heal, teleport to the checkpoint or the start position). Falling below `GameRespawn.threshold` (−200 in Level0, −15 on the prefab) calls `Health.Kill()`.
 
 ### Combat and enemies
@@ -205,8 +205,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - **Loading:** the file is read once, when `SaveSystem` is first created (from `WorldStateManager.Awake` during Level0's load). `Hero.Start` then calls `SaveSystem.RestorePlayer`. That equips the saved gear *before* filling the inventory, because `EquipItem` removes the item from the inventory and would take a spare copy. It sets HP after equipping (so bonuses count) and moves the player to the checkpoint when it's in the current scene. **With no save, `Hero.Start` grants the starting kit** at full health.
 - **Items are saved by `items.json` id.** ScriptableObject items from `ItemVarients/` all report id 0, so they're skipped with a warning. IDs that no longer exist are skipped when loading.
 - **No main menu:** the game always continues the existing save. Quitting in the dungeon resumes in Level0, and the dungeon level stays where it was, so the next run is one level deeper.
-- **New game:** `SaveSystem.StartNewGame()` deletes the save, destroys the game's objects in the DontDestroyOnLoad scene (only roots with game scripts, so package helpers survive), and loads build index 0 (Level0) so everything is rebuilt. The pause menu exposes it as `PauseMenu.OnNewGameClicked()`. **A New Game button exists** (added by the user on 2026-09-30, meant for future features such as a main menu). It's `NewGameButton`, added in `Level0.unity` as a scene override on the `PauseMenuCanvas` instance, not in the prefab itself.
-  - **Bug:** its OnClick calls `PauseMenu.OnRespawnClicked`, apparently copied from the Respawn button. It must call `OnNewGameClicked` (P13).
+- **New game:** `SaveSystem.StartNewGame()` deletes the save, destroys the game's objects in the DontDestroyOnLoad scene (only roots with game scripts, so package helpers survive), and loads build index 0 (Level0) so everything is rebuilt. The pause menu exposes it as `PauseMenu.OnNewGameClicked()`. The **New Game button** (added by the user on 2026-09-30, meant for future features such as a main menu) is `NewGameButton`, added in `Level0.unity` as a scene override on the `PauseMenuCanvas` instance, not in the prefab itself. It starts a new game straight away, with no confirmation.
 - **Editor tools**, under **Tools → Save Game**: *Delete Save File* (with confirmation), *Open Save Folder*, and *Start New Game* (Play mode only). **Tools → Debug** (Play mode) can give the status effect weapons, all items, and 100 gold. Use *Delete Save File* to test the new-game path, because stopping Play mode doesn't reset the save. A `worldstate.json` in the same folder is left over from the old system and is unused.
 - `CameraFollow` lerps toward the player, clamped to `minBounds` and `maxBounds`. The dungeon generator rewrites the bounds as tiles are placed.
 
@@ -420,7 +419,7 @@ Design choice (made by the user): migrate with the same keys and feel, no gamepa
 ### Play-test bugs (reported 2026-09-30, not fixed yet)
 Found by the user in the first play-test of everything above. Each entry has the symptom, then what the code confirms or what is only suspected. **P2–P5 are to be fixed as part of the inventory and equipment refactor** (see "Planned features"), not one by one.
 
-- [ ] **P1. Enemy health bar breakpoints are drawn in the wrong place.** The markers start in the middle of the bar and run past its right end, as a dense black comb (19 markers at every 5 HP on a 100 HP Bandit, 4 on the Bandit Chief).
+- [x] **P1. Enemy health bar breakpoints are drawn in the wrong place** (fixed in `a37dcd2`: markers are anchored and stretched to the fill, and the Bandit's `breakpointEveryX` is 25). The markers start in the middle of the bar and run past its right end, as a dense black comb (19 markers at every 5 HP on a 100 HP Bandit, 4 on the Bandit Chief).
   - Likely cause: `Healthbar.CreateBreakpoint` sets `localPosition.x = normalizedPos * healthBarFill.rect.width`, which assumes x = 0 is the fill's left edge. That holds for the HUD bar but not the enemy bar (`InterfaceGraphics/Healthbar.prefab`), whose fill appears to be centered. Position markers from `rect.xMin` or with anchors instead.
   - Also raise the Bandit's `breakpointEveryX` from 5 (for example to 25).
 - [ ] **P2. Gear swaps never remove the old item's stats.** Confirmed in code: `EquipmentSystem.EquipItem` → `Swap` puts the old item back in the inventory but never calls its `RemoveEffects`. Equipping Thief's Gloves over Leather Armor therefore kept the armor's +20 armor and +10 HP and added the gloves' stats on top.
@@ -439,8 +438,8 @@ Found by the user in the first play-test of everything above. Each entry has the
     - a refresh that throws partway
 
     Check with a debugger or logs, starting with `InventorySystem.Instance` versus each window's cached `inventory`/`playerInventory`, and how many `InventoryUI`/`ShopUI` objects exist after a return to Level0.
-- [ ] **P6. The HUD mana bar shows a red heart with "999".** Confirmed: `Healthbar.CreateManaBar` clones the whole HP bar, including the heart icon and the HP text. It only unhooks the text (`healthText = null`), so the text keeps the prefab's placeholder "999". The clone should hide or destroy those children, or show mana in its own text.
-- [ ] **P7. The hero stays tinted red after being hit by a bleed.** Confirmed sequence:
+- [x] **P6. The HUD mana bar shows a red heart with "999"** (fixed in `a37dcd2`: new `Healthbar.healthIcon` reference, and the copy hides both). Confirmed: `Healthbar.CreateManaBar` clones the whole HP bar, including the heart icon and the HP text. It only unhooks the text (`healthText = null`), so the text keeps the prefab's placeholder "999". The clone should hide or destroy those children, or show mana in its own text.
+- [x] **P7. The hero stays tinted red after being hit by a bleed** (fixed in `fb9f565`: `Health.BaseColor` is recorded at spawn, and both the i-frame flash and `StatusEffects` restore it). Confirmed sequence:
   - `Health.TakeDamage` starts the i-frame flash, which sets the sprite red before its first yield. `Enemy.DealDamage` then calls `ApplyOnHitEffects`, which adds `StatusEffects` to the hero.
   - `StatusEffects.Awake` records the sprite's *current* color (red) as the base color, and every flash end resets the sprite to it.
   - Fix: capture `Color.white` or the prefab color, not the current color, or keep the base color outside the flash. The same can happen to enemies hit during a flash.
@@ -463,7 +462,7 @@ The user found reaching upper platforms very hard: it took 5-6 wall jumps, there
   - a controlled wall slide instead of a full stop
   - air attacks (every state transition goes through Idle)
   - a single wall-detection method: `Hero` computes `m_isWallSliding` from the four wall sensors but never uses it, while `JumpingState` uses the box-cast
-- [ ] **P13. The pause menu's New Game button calls `OnRespawnClicked`** instead of `OnNewGameClicked` (see "Save and load").
+- [x] **P13. The pause menu's New Game button called `OnRespawnClicked`** instead of `OnNewGameClicked` (fixed in `5d7956e`).
 
 ### Needs a design decision (not scheduled)
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
