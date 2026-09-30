@@ -53,6 +53,8 @@ public static class GameInput
     }
 
     public static bool JumpPressed => WasPressed(Keys?.spaceKey);
+    public static bool JumpHeld => Keys != null && Keys.spaceKey.isPressed; // Releasing early cuts a jump short
+    public static bool DownHeld => Keys != null && (Keys.sKey.isPressed || Keys.downArrowKey.isPressed); // Drop from a ledge
     public static bool RollPressed => WasPressed(Keys?.leftShiftKey);
     public static bool AttackPressed => WasPressed(Pointer?.leftButton);
     public static bool BlockPressed => WasPressed(Pointer?.rightButton);

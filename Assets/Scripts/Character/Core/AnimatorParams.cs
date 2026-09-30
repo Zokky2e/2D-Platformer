@@ -8,6 +8,7 @@ public static class AnimatorParams
     public static readonly int Grounded = Animator.StringToHash("Grounded");
     public static readonly int AirSpeedY = Animator.StringToHash("AirSpeedY");
     public static readonly int WallSlide = Animator.StringToHash("WallSlide");
+    public static readonly int LedgeGrab = Animator.StringToHash("LedgeGrab");
     public static readonly int Jump = Animator.StringToHash("Jump");
     public static readonly int Roll = Animator.StringToHash("Roll");
     public static readonly int Attack = Animator.StringToHash("Attack"); // Enemies

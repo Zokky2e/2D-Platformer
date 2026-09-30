@@ -19,6 +19,11 @@ public class HeroState
         m_body2d = hero.Body2D;
     }
 
+    // Called when the hero leaves this state for any reason (including dialog and death), to undo its setup
+    virtual public void exitState()
+    {
+    }
+
     virtual public HeroState handleInput()
     {
         return this;
@@ -26,6 +31,9 @@ public class HeroState
     virtual public void Update()
     {
     }
+
+    // True while the state sets the facing direction itself instead of following the steering
+    virtual public bool ControlsFacing => false;
 
     public HeroStates GetCurrentState()
     {
@@ -48,9 +56,14 @@ public class IdleState : HeroState
         {
             return new DeadState();
         }
-        if (GameInput.JumpPressed)
+        // Also a press made just before landing, and a jump just after running off a ledge (coyote time)
+        if (hero.JumpBuffered)
         {
             return new JumpingState();
+        }
+        if (!hero.IsGrounded)
+        {
+            return new JumpingState(AirStart.Fall);
         }
 
         if (GameInput.AttackPressed)
@@ -77,71 +90,204 @@ public class IdleState : HeroState
     }
 }
 
+// How the hero got into the air
+public enum AirStart
+{
+    Fall,     // Walked off an edge or dropped from a ledge
+    Jump,     // Jumped from the ground (or within coyote time)
+    WallJump  // Jumped off a wall or away from a ledge
+}
+
+// In the air: jumping, falling, wall sliding and wall jumping
 public class JumpingState : HeroState
 {
+    private readonly AirStart start;
+    private readonly int startWallSide;
+    private bool usedGroundJump; // The ground (or coyote) jump is spent for this time in the air
+    private bool canCutJump;     // Rising from a jump: releasing Space now cuts it short
+    private bool isWallSliding;
 
-    public JumpingState() : base(HeroStates.Jump) { }
-    private float m_wallCooldown = 0.0f;
+    public JumpingState(AirStart start = AirStart.Jump, int wallSide = 0) : base(HeroStates.Jump)
+    {
+        this.start = start;
+        startWallSide = wallSide;
+    }
+
+    public override bool ControlsFacing => isWallSliding || hero.HorizontalControlLocked;
+
     override public HeroState handleInput()
     {
-        if (hero.isGrounded()) return new IdleState();
+        // Landed. Only when not rising: right after takeoff the ground is still within reach of the check
+        if (hero.IsGrounded && m_body2d.linearVelocity.y <= 0.01f)
+            return new IdleState();
+        // Catch a ledge on the way down, unless steering away from it
+        if (m_body2d.linearVelocity.y <= 0f && hero.CanGrabLedge && !hero.HorizontalControlLocked
+            && GameInput.HorizontalRaw != -hero.FacingDirection
+            && hero.FindLedge(hero.FacingDirection, out Hero.Ledge ledge))
+            return new LedgeGrabState(ledge);
         return this;
     }
+
     public override void startState(Hero hero)
     {
         base.startState(hero);
-        Jump();
+        m_body2d.gravityScale = hero.Gravity;
+        if (start == AirStart.Jump)
+            TryGroundJump();
+        else if (start == AirStart.WallJump)
+            WallJump(startWallSide);
+    }
+
+    public override void exitState()
+    {
+        m_animator.SetBool(AnimatorParams.WallSlide, false);
     }
 
     public override void Update()
     {
         base.Update();
-        m_wallCooldown += Time.deltaTime;
-        if (m_wallCooldown > 1f)
+        if (hero.JumpBuffered)
         {
-            if (hero.onWall() && !hero.isGrounded())
-            {
-                m_animator.SetBool(AnimatorParams.WallSlide, true);
-                m_body2d.linearVelocity = Vector2.zero;
-            }
-            else
-            {
-                m_animator.SetBool(AnimatorParams.WallSlide, false);
-            }
-                m_body2d.gravityScale = hero.Gravity;
+            if (!usedGroundJump && hero.InCoyoteTime)
+                TryGroundJump();
+            else if (hero.RecentWallSide != 0)
+                WallJump(hero.RecentWallSide);
+            // Otherwise the press stays buffered for a moment, so it fires if the hero lands in time
         }
-        else if (GameInput.JumpPressed)
+        UpdateWallSlide();
+        if (canCutJump)
         {
-            Jump();
+            Vector2 velocity = m_body2d.linearVelocity;
+            if (velocity.y <= 0f)
+                canCutJump = false;
+            else if (!GameInput.JumpHeld)
+            {
+                m_body2d.linearVelocity = new Vector2(velocity.x, velocity.y * hero.JumpCutMultiplier);
+                canCutJump = false;
+            }
         }
     }
 
-    private void Jump()
+    private void TryGroundJump()
     {
+        if (usedGroundJump || !(hero.IsGrounded || hero.InCoyoteTime))
+            return;
+        hero.ConsumeJumpBuffer();
+        usedGroundJump = true;
+        canCutJump = true;
+        m_animator.SetTrigger(AnimatorParams.Jump);
+        m_body2d.linearVelocity = new Vector2(m_body2d.linearVelocity.x, hero.JumpForce);
+    }
+
+    // Up and away from the wall on the given side. Steering is locked for a moment (Hero.FixedUpdate), so
+    // holding toward the wall doesn't cancel the push; after that the hero can drift back to climb it
+    private void WallJump(int wallSide)
+    {
+        hero.ConsumeJumpBuffer();
+        hero.StartWallJump(wallSide);
+        usedGroundJump = true;
+        canCutJump = true;
+        isWallSliding = false;
         m_animator.SetBool(AnimatorParams.WallSlide, false);
+        m_animator.SetTrigger(AnimatorParams.Jump);
+        m_body2d.linearVelocity = new Vector2(-wallSide * hero.WallJumpVelocity.x, hero.WallJumpVelocity.y);
+    }
+
+    // Sliding means touching a wall while falling without steering away from it; the fall speed is capped
+    private void UpdateWallSlide()
+    {
+        int wall = hero.WallSide;
+        isWallSliding = wall != 0 && m_body2d.linearVelocity.y <= 0f
+            && GameInput.HorizontalRaw != -wall && !hero.JustWallJumpedFrom(wall);
+        if (isWallSliding)
+        {
+            hero.SetFacing(wall);
+            Vector2 velocity = m_body2d.linearVelocity;
+            if (velocity.y < -hero.WallSlideSpeed)
+                m_body2d.linearVelocity = new Vector2(velocity.x, -hero.WallSlideSpeed);
+        }
+        m_animator.SetBool(AnimatorParams.WallSlide, isWallSliding);
+    }
+}
+
+// Hanging from a ledge. Jump, or holding toward the ledge, pulls up onto it; down drops; jump while holding
+// away from the ledge jumps off it
+public class LedgeGrabState : HeroState
+{
+    private const float MinHangBeforeClimb = 0.2f; // So a direction held while falling doesn't skip the hang
+    private const float ClimbUpShare = 0.6f;       // Part of the pull-up spent rising beside the wall
+
+    private readonly Hero.Ledge ledge;
+    private float hangTime;
+    private float climbTime = -1f; // Below 0 until the pull-up starts
+
+    public LedgeGrabState(Hero.Ledge ledge) : base(HeroStates.LedgeGrab)
+    {
+        this.ledge = ledge;
+    }
+
+    public override bool ControlsFacing => true;
+
+    public override void startState(Hero hero)
+    {
+        base.startState(hero);
+        hero.SetFacing(ledge.side);
+        m_body2d.gravityScale = 0f;
+        m_body2d.linearVelocity = Vector2.zero;
+        hero.Teleport(ledge.hangPosition);
+        m_animator.SetBool(AnimatorParams.WallSlide, false);
+        m_animator.SetBool(AnimatorParams.LedgeGrab, true);
+    }
+
+    public override void exitState()
+    {
         m_body2d.gravityScale = hero.Gravity;
-        if (hero.isGrounded())
+        m_animator.SetBool(AnimatorParams.LedgeGrab, false);
+    }
+
+    override public HeroState handleInput()
+    {
+        if (climbTime >= 0f)
+            return climbTime >= hero.PullUpDuration ? new IdleState() : this;
+
+        float steering = GameInput.HorizontalRaw;
+        if (GameInput.DownHeld)
         {
-            m_animator.SetTrigger(AnimatorParams.Jump);
-            m_body2d.linearVelocity = new Vector2(m_body2d.linearVelocity.x, hero.JumpForce);
-            hero.GroundSensor.Disable(0.2f);
+            hero.BlockLedgeGrab();
+            return new JumpingState(AirStart.Fall);
         }
-        else if (hero.onWall() && !hero.isGrounded())
+        if (hero.JumpBuffered && steering == -ledge.side)
         {
-            if (hero.HorizontalInput == 0)
-            {
-                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(hero.FacingDirection) * 6, 0);
-            }
-            else
-            {
-                m_animator.SetTrigger(AnimatorParams.Jump);
-                m_body2d.gravityScale = 5f;
-                m_body2d.linearVelocity = new Vector2(-Mathf.Sign(hero.FacingDirection) * hero.JumpModifierX, hero.JumpModifierY);
-            }
-            m_animator.SetBool(AnimatorParams.WallSlide, false);
-            m_body2d.gravityScale = hero.Gravity;
-            m_wallCooldown = 0;
+            hero.BlockLedgeGrab();
+            return new JumpingState(AirStart.WallJump, ledge.side);
         }
+        if (ledge.canClimb && (hero.JumpBuffered || (steering == ledge.side && hangTime >= MinHangBeforeClimb)))
+        {
+            hero.ConsumeJumpBuffer();
+            climbTime = 0f;
+        }
+        return this;
+    }
+
+    public override void Update()
+    {
+        base.Update();
+        hangTime += Time.deltaTime;
+        m_body2d.linearVelocity = Vector2.zero;
+        if (climbTime < 0f)
+            return;
+
+        // Up beside the wall first, then over onto the ledge, so the collider never cuts through the corner
+        climbTime += Time.deltaTime;
+        float t = Mathf.Clamp01(climbTime / hero.PullUpDuration);
+        Vector2 besideTop = new Vector2(ledge.hangPosition.x, ledge.climbPosition.y);
+        Vector2 position = t < ClimbUpShare
+            ? Vector2.Lerp(ledge.hangPosition, besideTop, t / ClimbUpShare)
+            : Vector2.Lerp(besideTop, ledge.climbPosition, (t - ClimbUpShare) / (1f - ClimbUpShare));
+        if (t >= 1f)
+            hero.Teleport(position); // Physics must see the final spot before the next ground check
+        else
+            hero.transform.position = position;
     }
 }
 
@@ -215,7 +361,6 @@ public class BlockingState : HeroState
     {
         if (!GameInput.BlockHeld) // Not "released this frame", which a skipped frame could miss
         {
-            m_animator.SetBool(AnimatorParams.IdleBlock, false);
             return new IdleState();
         }
         return this;
@@ -225,6 +370,11 @@ public class BlockingState : HeroState
         base.startState(hero);
         m_animator.SetTrigger(AnimatorParams.Block);
         m_animator.SetBool(AnimatorParams.IdleBlock, true);
+    }
+
+    public override void exitState()
+    {
+        m_animator.SetBool(AnimatorParams.IdleBlock, false); // Also when a dialog or death interrupts the block
     }
 }
 
@@ -238,7 +388,6 @@ public class RollingState : HeroState
         // Disable rolling if timer extends duration
         if (m_rollCurrentTime > m_rollDuration)
         {
-            m_body2d.gravityScale = hero.Gravity;
             return new IdleState();
         }
         return this;
@@ -248,6 +397,11 @@ public class RollingState : HeroState
         base.startState(hero);
         m_animator.SetTrigger(AnimatorParams.Roll);
         Roll(hero);
+    }
+
+    public override void exitState()
+    {
+        m_body2d.gravityScale = hero.Gravity; // Also when a dialog interrupts the roll
     }
 
     public override void Update()
@@ -281,5 +435,7 @@ public class DeadState : HeroState
         base.startState(hero);
         m_animator.SetBool(AnimatorParams.NoBlood, hero.NoBlood);
         m_animator.SetTrigger(AnimatorParams.Death);
+        // Steering stops while dead, and the hero's collider is frictionless, so stop here instead of sliding
+        m_body2d.linearVelocity = new Vector2(0f, m_body2d.linearVelocity.y);
     }
 }

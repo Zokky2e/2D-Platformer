@@ -66,7 +66,7 @@ Assets/
 
 Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art` (enemies), `Merchant - Pixel Art`, `Cainos` (village props, including the `Chest` script used by loot chests), `2D Pixel Art Platformer Biome - American Forest`, `RPG Icons Pixel Art`, `JohnFarmer` (keyboard key sprites for tutorial signs), `Violet Theme Ui`, `NaughtyAttributes`, `TextMesh Pro`, and `Imported Assets/` (Monsters Creatures Fantasy, a simple UI pack, and a Pet Cats pack, which were imported but not used yet, probably meant for future monsters and bosses).
 
-**HeroKnight exception:** the player prefab is the vendor's `Assets/Hero Knight - Pixel Art/Demo/HeroKnight.prefab`, modified in place. The vendor's `HeroKnight.cs` controller is not used. The project's `Hero.cs` and friends are attached instead, and only the vendor's `Sensor_HeroKnight` is reused.
+**HeroKnight exception:** the player prefab is the vendor's `Assets/Hero Knight - Pixel Art/Demo/HeroKnight.prefab`, modified in place. The vendor's `HeroKnight.cs` controller is not used. The project's `Hero.cs` and friends are attached instead, and only the vendor's `Sensor_HeroKnight` is reused. The vendor's animator controller (`Animations/HeroKnight_AnimController.controller`) is also **extended in place** (movement rework, 2026-10-01): a `LedgeGrab` bool parameter and `Ledge Grab` state, and a Wall Slide → Fall transition for letting go of a wall. The prefab's Rigidbody2D uses the pack's frictionless `Environment/Walls_noFriction` material.
 
 ## Running the game
 
@@ -78,7 +78,8 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 | Input | Action | Where |
 |---|---|---|
 | A/D, arrow keys | Move, smoothed like the old `Input.GetAxis` (ramps at 3/s, snaps to 0 on reversing) | `Hero.Update` (`GameInput.Horizontal`) |
-| Space | Jump / wall jump | `IdleState` → `JumpingState` |
+| Space | Jump (hold for full height, tap for a short hop), wall jump, pull up onto a ledge | `IdleState` → `JumpingState`, `LedgeGrabState` |
+| S, down arrow | Drop from a ledge | `LedgeGrabState` |
 | Left Shift | Roll (damage immune while rolling) | `RollingState` |
 | Left mouse | Attack (3-hit combo `Attack1..3`); also advances dialog | `AttackingState`, `DialogSystem` |
 | Right mouse (hold) | Block. **Only works if the equipped item has a `Block` effect** (`stats.canUseBlock`) | `BlockingState` |
@@ -92,7 +93,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - `Core/Singleton.cs`: `Singleton<T>` looks up `Instance` with `FindAnyObjectByType` (`FindFirstObjectByType` is deprecated in 6000.6). **If none exists, it creates a new GameObject**, which hides missing-prefab mistakes. `Awake` calls `DontDestroyOnLoad` and destroys duplicates. Subclasses override `protected override void Awake()` and must call `base.Awake()`.
 - Singletons: `DialogSystem`, `PauseMenu`, `FadeTransition`, `GameRespawn`, `SensorManager`, `InventorySystem`, `EquipmentSystem`, `ItemDatabase`, `ItemSystem`, `ShopSystem`, `DungeonManager`, `WorldStateManager`, `SaveSystem`. `ItemSystem`, `ShopSystem`, `DungeonManager` and `SaveSystem` have no prefab and are always created lazily by the getter.
 - `PersistentPlayerHealth` (on the player) has its own static `Instance` and `DontDestroyOnLoad`. Other code reaches the player through it, for example `PersistentPlayerHealth.Instance.GetComponent<Hero>()` in `CameraFollow`.
-- The player GameObject carries **several singletons at once**: `Hero`, `PersistentPlayerHealth`, `CharacterStats`, `GameRespawn`, `SensorManager`, `WeaponSensor` (child `AttackSensor`), plus 5 `Sensor_HeroKnight` children. Their names must stay exactly `GroundSensor`, `WallSensor_R1/R2/L1/L2`, because `Hero.Start` looks them up with `transform.Find`.
+- The player GameObject carries **several singletons at once**: `Hero`, `PersistentPlayerHealth`, `CharacterStats`, `GameRespawn`, `SensorManager`, `WeaponSensor` (child `AttackSensor`), plus 5 `Sensor_HeroKnight` children. Their names must stay exactly `GroundSensor`, `WallSensor_R1/R2/L1/L2`, because `Hero.Start` looks them up with `transform.Find`. Only `WallSensor_R2/L2` are still used, as spawn points for the wall-slide dust; ground and wall detection are casts in `Hero` now.
 - InventoryUI, ShopUI and LootUI do their own `DontDestroyOnLoad` instead of using `Singleton<T>`.
 
 ### UI state and pausing
@@ -103,13 +104,23 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - Item grids and tooltips are built in C# by the shared `ItemGrid.Build` (slots, hover, click, selection highlight) and `ItemTooltip` (Show, Hide, MoveTo). Each window keeps its own `UpdateTooltipPosition`, because their layouts need different hand-tuned offsets.
 
 ### Player: `Hero` + `HeroState` FSM
-- `HeroStates` enum: `Idle, Run, Jump, Roll, Attack, Block, Dead`. `Run` has no state class; running is handled in `Hero.Update` by setting animator `AnimState=1`.
-- Each state class (`IdleState`, `JumpingState`, `AttackingState`, `BlockingState`, `RollingState`, `DeadState` in `HeroState.cs`) returns the next state from `handleInput()`, and `Hero.handleInput` swaps it in when the enum differs. **Almost every transition goes through Idle**, so you can't attack in the air, for example.
-- Horizontal velocity is set in `Hero.FixedUpdate` from `stats.TotalMoveSpeed`, except during `Roll` and `Dead`.
-- Wall mechanics are in `JumpingState`: box-cast `onWall()`, wall slide (velocity zeroed), and a wall jump that uses `jump_modifier_x/y` (32/16 on the prefab). The 1 s `m_wallCooldown` gates wall sticking.
+- `HeroStates` enum: `Idle, Run, Jump, Roll, Attack, Block, Dead, LedgeGrab`. `Run` has no state class; running is handled in `Hero.Update` by setting animator `AnimState=1`. `Jump` means "in the air" (jumping, falling, wall sliding).
+- Each state class (`IdleState`, `JumpingState`, `LedgeGrabState`, `AttackingState`, `BlockingState`, `RollingState`, `DeadState` in `HeroState.cs`) returns the next state from `handleInput()`, and `Hero.ChangeState` swaps it in when the enum differs. That calls the old state's `exitState()` (undoing its gravity, animator bools and so on, even when a dialog or death interrupts it) and the new state's `startState()`. `ControlsFacing` lets a state set the facing itself (wall slide, ledge, wall-jump lock) instead of following the steering.
+- Ground states (attack, block, roll) are only reachable from `Idle`, which only exists on the ground: the hero can't attack or roll in the air. `Hero.handleInput` switches to `DeadState` from any state when health hits 0.
+- `Hero.Update` reads input, records a Space press for the jump buffer, and checks contacts once per frame (`UpdateContacts`) before running the state:
+  - `isGrounded()` box-casts a strip 0.04 narrower than the collider, so walls beside the hero don't count as ground.
+  - `WallSide` is ±1 when raycasts at a quarter of the body height *and* near the top both hit a wall on that side. A platform corner reaching only part of the body is a ledge, not a wall.
+- Horizontal velocity is set in `Hero.FixedUpdate` from `stats.TotalMoveSpeed`, except during `Roll`, `Dead`, `LedgeGrab`, and for `wallJumpControlLock` seconds after a wall jump.
+- **Movement (rework of 2026-10-01; tuning fields are on the `Hero` component, grouped as Jump feel, Walls and Ledges):**
+  - *Jump*: `m_jumpForce` 9 (apex about 4.1 units). **Coyote time** (0.1 s) allows a jump just after running off an edge. The **jump buffer** (0.12 s) makes a press just before landing still jump. Releasing Space while rising multiplies the upward speed by `jumpCutMultiplier` (0.5), giving **variable jump height**. Landing only counts when not rising, so the state can't flip back to Idle on the frame after takeoff.
+  - *Wall slide*: touching a wall while falling and not steering away caps the fall at `wallSlideSpeed` (2.5) and faces the wall (WallSlide animation). Steering away lets go.
+  - *Wall jump*: Space while touching a wall (or within coyote time of touching one) launches at `wallJumpVelocity` (6 away, 9 up). Steering is ignored for `wallJumpControlLock` (0.2 s) so holding toward the wall can't cancel the push; afterwards the hero can drift back to climb the same wall or reach the opposite one.
+  - *Ledge grab* (`LedgeGrabState`): falling past a platform edge whose top is level with the hero's hands (within 0.3 below `ledgeHangOffset`) on the facing side snaps the hero to hang (`Hero.FindLedge`, LedgeGrab animation). Space, or holding toward the ledge for 0.2 s, pulls up over `pullUpDuration`: first up beside the wall, then over, so the collider never cuts the corner. It won't pull up if something blocks the space on top. S or down drops, and Space while holding away jumps off. Regrabbing is blocked for `ledgeRegrabDelay` after dropping or jumping off.
+  - Position snaps go through `Hero.Teleport`, which calls `Physics2D.SyncTransforms()` because Auto Sync Transforms is off.
+  - The hero's Rigidbody2D is frictionless, because steering pushes into walls every physics step and friction used to brake the fall or stick the hero to walls and corners. `DeadState` zeroes the horizontal speed so a dead hero doesn't slide.
 - The hero can't move while `DialogSystem.DialogActive` (it is forced back to Idle).
 - **Starting kit** is hard-coded in `Hero.Start`: inventory gets item ids `18, 18, 19, 20` (heal potions), and equipment gets `69, 420, 1337` (Basic Metal Shield, Broadsword, Leather Armor). The easter-egg ids are intentional.
-- Animator parameters used: `AnimState`, `Grounded`, `AirSpeedY`, `WallSlide`, `Jump`, `Roll`, `Attack1-3`, `Block`, `IdleBlock`, `Hurt`, `Death`, `Revive`, `noBlood`.
+- Animator parameters used: `AnimState`, `Grounded`, `AirSpeedY`, `WallSlide`, `LedgeGrab`, `Jump`, `Roll`, `Attack1-3`, `Block`, `IdleBlock`, `Hurt`, `Death`, `Revive`, `noBlood`.
 
 ### Stats, health and damage
 - `CharacterStats` holds base plus bonus values for move speed, jump height, damage, armor and **magic power** (unused until spells exist). It also has **agility**, where each point adds `MoveSpeedPerAgility` (0.1) to move speed, a `canUseBlock` flag, and **on-hit status effects**: `bleed`/`poison`/`burn` `Damage` (per second) and `Duration` (seconds), mostly set by equipment. `TotalJumpHeight` is **unused**; jumping uses `Hero.m_jumpForce`.
@@ -444,19 +455,19 @@ Found by the user in the first play-test of everything above. Each entry has the
   - `StatusEffects.Awake` records the sprite's *current* color (red) as the base color, and every flash end resets the sprite to it.
   - Fix: capture `Color.white` or the prefab color, not the current color, or keep the base color outside the flash. The same can happen to enemies hit during a flash.
 
-### Movement problems (reported 2026-09-30, next topic to work on)
+### Movement problems (reported 2026-09-30, reworked 2026-10-01 on branch `playtest-fixes`, not play-tested yet)
 The user found reaching upper platforms very hard: it took 5-6 wall jumps, there's no jump across from a wall, and the hero can get stuck hanging with no way to jump. **The user wants all movement issues reworked.** What the code shows (`HeroState.cs` `JumpingState`, `Hero.FixedUpdate`):
-- [ ] **P8. Wall jumps never push away from the wall.** Confirmed:
+- [x] **P8. Wall jumps never pushed away from the wall.** Fixed by the wall-jump steering lock (see "Player"). What was wrong:
   - `JumpingState.Jump` sets x velocity to `-facing * JumpModifierX` (32), but `Hero.FixedUpdate` overwrites x with `horizontalInput * TotalMoveSpeed` on the next physics step. Only `Roll` and `Dead` are exempt (`noMovementStates`).
   - The push therefore lasts one step. With the key held toward the wall, a wall jump only goes up the same wall, which is why reaching a ledge takes a chain of wall jumps followed by steering onto it while falling.
   - `gravityScale = 5f` in the same branch is dead code, overwritten two lines later.
-- [ ] **P9. Stuck hanging on a wall or ledge, unable to jump.** Confirmed:
+- [x] **P9. Stuck hanging on a wall or ledge, unable to jump.** Fixed: walls are slid down instead of stuck to, jumping works at any time, corners are ledges to grab, and the hero is frictionless. What was wrong:
   - After 1 s in `JumpingState` (`m_wallCooldown > 1`), touching a wall sets the velocity to zero every frame, so there's no slide and the hero hangs indefinitely.
   - Jump input is only read in the `else if` branch that runs while the cooldown is ≤ 1 s. Once the hero has hung (or fallen) for more than 1 s, jumping is impossible until grounded. Chained wall jumps only work because each resets the cooldown.
   - Platform **corners count as walls**: `Hero.onWall()` box-casts the whole collider 0.1 units in the facing direction. A falling hero that catches a platform's side edge hangs there, as in the user's screenshot of the hero stuck on a platform corner.
-- [ ] **P10. The hero may drop out of `JumpingState` right after takeoff** (suspected, depends on frame rate). `JumpingState.handleInput` returns to Idle as soon as `isGrounded()` is true, which is a 0.05-unit box-cast down. At high frame rates, several `Update`s can run before the physics step moves the hero, so the state flips back to Idle mid-air. Wall sliding and wall jumping then only happen through `IdleState` → `JumpingState` on a later Space press.
-- [ ] **P11. Jump height is fixed at about 4 tiles.** `m_jumpForce` 9 with gravity scale 1 gives an apex of about 4.1 units. `CharacterStats.TotalJumpHeight` is unused. Check platform spacing in Level0 and the parkour rooms against it.
-- [ ] **P12. Missing platformer basics** to consider in the rework:
+- [x] **P10. The hero may have dropped out of `JumpingState` right after takeoff** (fixed: landing needs a non-rising velocity) (suspected, depends on frame rate). `JumpingState.handleInput` returns to Idle as soon as `isGrounded()` is true, which is a 0.05-unit box-cast down. At high frame rates, several `Update`s can run before the physics step moves the hero, so the state flips back to Idle mid-air. Wall sliding and wall jumping then only happen through `IdleState` → `JumpingState` on a later Space press.
+- [x] **P11. Jump height is fixed at about 4 tiles.** Kept: `m_jumpForce` 9 gives an apex of about 4.1 units, but a ledge grab at the apex now reaches platform tops about 5.4 units above the takeoff floor (the hands are at the collider's top, 1.26 above the feet). `CharacterStats.TotalJumpHeight` is still unused. Raise `m_jumpForce` if platforms still feel out of reach.
+- [x] **P12. Missing platformer basics.** Done: coyote time, jump buffering, variable jump height, a controlled wall slide, one wall-detection method. Not done, by design choice: air attacks and double jump. The list was:
   - coyote time and jump buffering
   - variable jump height (release to cut the jump)
   - a controlled wall slide instead of a full stop
@@ -473,8 +484,13 @@ The user found reaching upper platforms very hard: it took 5-6 wall jumps, there
 
 Bigger pieces of work the user has asked for. Each needs a design pass (ask the user) before implementation.
 
-### 1. Movement rework (next up)
-Fix and redesign the hero's jumping and wall mechanics. The problems and missing basics are P8–P12 under "Movement problems" in the audit backlog.
+### 1. Movement rework (implemented 2026-10-01, needs play-testing)
+Design choices (made by the user): slide down walls slowly, wall jumps always push away, grab ledges and pull up, and add coyote time, jump buffering and variable jump height. No air attacks or double jump. See "Player: `Hero` + `HeroState` FSM" for how it works and P8–P12 for what it fixed. **Play-test checklist:**
+- the ledge-hang pose lines up with the ledge (tune `ledgeHangOffset` on the Hero component)
+- wall slide speed, wall jump strength and the steering lock feel right
+- short hops versus full jumps
+- walking off edges, and standing right at a platform's edge
+- rolling and dying don't slide oddly with the frictionless collider
 
 ### 2. Inventory and equipment refactor
 Requested by the user on 2026-09-30. It bundles the inventory play-test bugs with two design changes.
