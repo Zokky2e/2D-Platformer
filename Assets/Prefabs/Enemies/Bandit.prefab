@@ -293,7 +293,7 @@ MonoBehaviour:
   healthValue: {fileID: 5001078101175405076}
   healthBarFill: {fileID: 2387846844685852296}
   breakpointPrefab: {fileID: 4424713766388526111, guid: 773c6142ef1753f40b80ce5e0dc80024, type: 3}
-  breakpointEveryX: 5
+  breakpointEveryX: 25
   healthText: {fileID: 0}
   markers: []
 --- !u!1 &7751856460835462829

@@ -659,6 +659,7 @@ MonoBehaviour:
   breakpointPrefab: {fileID: 4424713766388526111, guid: 773c6142ef1753f40b80ce5e0dc80024, type: 3}
   breakpointEveryX: 50
   healthText: {fileID: 2426808283866503733}
+  healthIcon: {fileID: 5073653832378195581}
   markers: []
   manaFillSprite: {fileID: 6085736671657559080, guid: 6119f52e1327e7142ace21eddd69fe50, type: 3}
 --- !u!114 &3708113990325133039 stripped

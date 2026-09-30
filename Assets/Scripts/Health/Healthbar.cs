@@ -19,6 +19,7 @@ public class Healthbar : MonoBehaviour
     public GameObject breakpointPrefab;
     public int breakpointEveryX = 25;
     public TextMeshProUGUI healthText; // Optional, enemy bars have none
+    public GameObject healthIcon; // Optional (the HUD's heart); hidden on the mana bar copy
     public List<GameObject> markers = new List<GameObject>();
 
     [Header("HUD mana bar")]
@@ -113,12 +114,17 @@ public class Healthbar : MonoBehaviour
         }
     }
 
+    // Anchored at a fraction of the fill's width and stretched to its height, so the marker lands in the
+    // right place whatever the fill's pivot and size (the enemy bars' fill is centered, the HUD's isn't)
     private void CreateBreakpoint(float normalizedPos)
     {
-
-        GameObject marker = Instantiate(breakpointPrefab, healthBarFill);
-        marker.transform.localPosition = new Vector3(normalizedPos * healthBarFill.rect.width, 0, 0);
-        markers.Add(marker);
+        RectTransform marker = (RectTransform)Instantiate(breakpointPrefab, healthBarFill).transform;
+        marker.anchorMin = new Vector2(normalizedPos, 0f);
+        marker.anchorMax = new Vector2(normalizedPos, 1f);
+        marker.pivot = new Vector2(0.5f, 0.5f);
+        marker.anchoredPosition = Vector2.zero;
+        marker.sizeDelta = new Vector2(marker.sizeDelta.x, 0f);
+        markers.Add(marker.gameObject);
     }
 
     // Duplicates this bar (same frame and style) below itself and points the copy at the player's mana
@@ -127,7 +133,13 @@ public class Healthbar : MonoBehaviour
         Healthbar manaBar = Instantiate(this, transform.parent);
         manaBar.name = "Manabar";
         manaBar.resource = BarResource.Mana; // Set before its Start, so it doesn't spawn another bar
-        manaBar.healthText = null; // The HP text isn't part of the bar
+        // The heart and HP number belong to the health bar. The copy's references point at its own copies
+        if (manaBar.healthText != null)
+            manaBar.healthText.gameObject.SetActive(false);
+        if (manaBar.healthIcon != null)
+            manaBar.healthIcon.SetActive(false);
+        manaBar.healthText = null;
+        manaBar.healthIcon = null;
         manaBar.breakpointEveryX = 0;
         manaBar.markers = new List<GameObject>();
 
