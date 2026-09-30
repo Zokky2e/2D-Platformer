@@ -20,7 +20,6 @@ public class StatusEffects : MonoBehaviour
 
     private Health health;
     private SpriteRenderer spriteRenderer;
-    private Color baseColor = Color.white;
     private readonly Dictionary<StatusEffectType, Coroutine> active = new();
 
     public bool IsAffectedBy(StatusEffectType type) => active.ContainsKey(type);
@@ -41,8 +40,6 @@ public class StatusEffects : MonoBehaviour
     {
         health = GetComponent<Health>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null)
-            baseColor = spriteRenderer.color;
     }
 
     private void OnDisable()
@@ -50,7 +47,7 @@ public class StatusEffects : MonoBehaviour
         // Coroutines stop with the object
         active.Clear();
         if (spriteRenderer != null)
-            spriteRenderer.color = baseColor;
+            spriteRenderer.color = health.BaseColor;
     }
 
     private void Begin(StatusEffectType type, float damagePerSecond, float duration)
@@ -78,7 +75,9 @@ public class StatusEffects : MonoBehaviour
             yield break;
         spriteRenderer.color = tint;
         yield return new WaitForSeconds(FlashDuration);
-        spriteRenderer.color = baseColor;
+        // Health's color, not the color when this component was added: that can be mid-flash (the hit that
+        // applies the effect also starts the i-frame flash), which would leave the sprite tinted for good
+        spriteRenderer.color = health.BaseColor;
     }
 
     private static Color TintFor(StatusEffectType type) => type switch

@@ -30,6 +30,7 @@ public class Health : MonoBehaviour
     public float iFramesDuration;
     public int numberOffFlashes;
     private SpriteRenderer spriteRend;
+    public Color BaseColor { get; private set; } = Color.white; // Sprite color before any flash or tint effect
     [SerializeField] private LayerMask playerLayer;
     [SerializeField] private LayerMask enemyLayer;
 
@@ -42,6 +43,8 @@ public class Health : MonoBehaviour
         CurrentHealth = MaxHealth;
         CurrentShield = MaxShield;
         spriteRend = GetComponent<SpriteRenderer>();
+        if (spriteRend != null)
+            BaseColor = spriteRend.color; // Recorded at spawn, before anything can be flashing
         playerLayerNumber = (int)Math.Log(playerLayer.value, 2);
         enemyLayerNumber = (int)Math.Log(enemyLayer.value, 2);
     }
@@ -157,7 +160,7 @@ public class Health : MonoBehaviour
             {
                 spriteRend.color = new Color(1, 0, 0, 0.9f);
                 yield return new WaitForSeconds(iFramesDuration / (numberOffFlashes * 2));
-                spriteRend.color = Color.white;
+                spriteRend.color = BaseColor;
                 yield return new WaitForSeconds(iFramesDuration / (numberOffFlashes * 2));
             }
             Physics2D.IgnoreLayerCollision(playerLayerNumber, enemyLayerNumber, false);
