@@ -10,18 +10,18 @@ AnimatorOverrideController:
   m_Controller: {fileID: 9100000, guid: b95265f99b6d90e438df1308a89c8bab, type: 2}
   m_Clips:
   - m_OriginalClip: {fileID: 7400000, guid: 5ebd92ec0147c7d4dac5630b51456c5f, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: d75df7ee5c1faa9f52135cb13ccc38b7, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 99c4a3071a6b47940a8c670ca5065e9e, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: 6a1ebf4e9e2b85c4dbeebc58d8f911ca, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: d75df7ee5c1faa9f52135cb13ccc38b7, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 99c4a3071a6b47940a8c670ca5065e9e, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: c2755e67fa2a27c4784f3f25fb5572ef, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: a1cc719db7052664941707dc8770f0b6, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 7fa10a6ed6d170b44929372fd40b7365, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: f50ea1e86c917ee4a886801ca2d6f4c2, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: d2edd018cbf9952fe408726b64551fdf, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 4e8ec84f4ace3454bbc4cb2d58b2e323, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: f4d08aca8d9c8b24f969b71bcb299c54, type: 2}
     m_OverrideClip: {fileID: 7400000, guid: 302f0ae02661ddfe99635f3e1fc4be40, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: e38cb418ab88f9346b0ebccb770105ee, type: 2}
     m_OverrideClip: {fileID: 7400000, guid: ad000eac13f329c0bbb0d683c286c20e, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: 8e501a4decb168e48bb9b17dc0ea2b53, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: d75df7ee5c1faa9f52135cb13ccc38b7, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 99c4a3071a6b47940a8c670ca5065e9e, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: d756094fc5e8c594ba2e2ba808fe9a90, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: d75df7ee5c1faa9f52135cb13ccc38b7, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 99c4a3071a6b47940a8c670ca5065e9e, type: 2}
