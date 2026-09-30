@@ -319,7 +319,6 @@ public class DungeonGenerator : MonoBehaviour
 
             // No entrance lines up: discard the whole tile (destroying only the Room component left
             // the tilemap behind at the origin) and roll again
-            Debug.Log("Failed to create");
             spawnedRooms.Remove(newTile.gameObject);
             DestroyImmediate(newTile.gameObject);
             newTile = null;

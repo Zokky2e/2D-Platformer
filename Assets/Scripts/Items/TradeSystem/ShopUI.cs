@@ -210,7 +210,6 @@ public class ShopUI : MonoBehaviour
     {
         if (selectedItem == null || !selectedSlot.isPlayerInventory)
             return;
-        Debug.Log($"Selling {selectedItem.Name}");
         if (ShopSystem.Instance.SellItem(selectedItem))
             ClearSelection();
         Refresh();
@@ -220,7 +219,6 @@ public class ShopUI : MonoBehaviour
     {
         if (selectedItem == null || selectedSlot.isPlayerInventory)
             return;
-        Debug.Log($"Buying {selectedItem.Name}");
         if (ShopSystem.Instance.BuyItem(shopInventory, selectedItem))
             ClearSelection();
         Refresh();

@@ -117,17 +117,8 @@ public class Hero : MonoBehaviour, IEntity {
             return m_body2d;
         }
     }
-    private Sensor_HeroKnight   m_groundSensor;
-    public Sensor_HeroKnight GroundSensor
-    {
-        get
-        {
-            return m_groundSensor;
-        }
-    }
-    private Sensor_HeroKnight   m_wallSensorR1;
+    // Where the wall-slide dust appears. Ground and wall contacts are casts (UpdateContacts), not sensors
     private Sensor_HeroKnight   m_wallSensorR2;
-    private Sensor_HeroKnight   m_wallSensorL1;
     private Sensor_HeroKnight   m_wallSensorL2;
     private BoxCollider2D boxCollider;
     private SpriteRenderer m_spriteRenderer;
@@ -219,10 +210,7 @@ public class Hero : MonoBehaviour, IEntity {
         stats = GetComponent<CharacterStats>();
         playerHealth.entity = this;
         m_body2d.gravityScale = gravity;
-        m_groundSensor = transform.Find("GroundSensor").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorR1 = transform.Find("WallSensor_R1").GetComponent<Sensor_HeroKnight>();
         m_wallSensorR2 = transform.Find("WallSensor_R2").GetComponent<Sensor_HeroKnight>();
-        m_wallSensorL1 = transform.Find("WallSensor_L1").GetComponent<Sensor_HeroKnight>();
         m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
         state = new IdleState();
         state.startState(this);
