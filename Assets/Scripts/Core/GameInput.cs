@@ -64,6 +64,10 @@ public static class GameInput
     public static bool InventoryPressed => WasPressed(Keys?.iKey);
     public static bool CancelPressed => WasPressed(Keys?.escapeKey); // Pause, or close an open window
 
+    // The mouse cursor in screen pixels, for aiming. HasPointer is false without a mouse
+    public static bool HasPointer => Pointer != null;
+    public static Vector2 PointerPosition => Pointer != null ? Pointer.position.ReadValue() : Vector2.zero;
+
     private static bool WasPressed(ButtonControl button) => button != null && button.wasPressedThisFrame;
 
     private static float SmoothAxis(float value, float target, float deltaTime)

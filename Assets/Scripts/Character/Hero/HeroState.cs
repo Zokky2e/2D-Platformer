@@ -326,9 +326,18 @@ public class AttackingState : HeroState
         m_animator.speed = 1f;
     }
 
+    // A bow faces where it aims, so the hero can back away from an enemy while shooting at it
+    public override bool ControlsFacing => weapon.AimsAtCursor;
+
     override public void Update()
     {
         base.Update();
+        if (weapon.AimsAtCursor)
+        {
+            float aimX = hero.AimDirection.x;
+            if (Mathf.Abs(aimX) > 0.01f) // Aiming straight up or down keeps the current facing
+                hero.SetFacing(aimX > 0f ? 1 : -1);
+        }
         timeSinceSwing += Time.deltaTime;
         if (GameInput.AttackPressed && !PauseMenu.GameIsPaused && Time.frameCount != swingStartFrame)
             nextSwingQueued = true;

@@ -116,7 +116,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 | Space | Jump (hold for full height, tap for a short hop), wall jump, pull up onto a ledge | `IdleState` → `JumpingState`, `LedgeGrabState` |
 | S, down arrow | Drop from a ledge | `LedgeGrabState` |
 | Left Shift | Roll (damage immune while rolling) | `RollingState` |
-| Left mouse | Attack with the equipped weapon (3-swing combo `Attack1..3`; bows, staffs and wands shoot); also advances dialog | `AttackingState`, `DialogSystem` |
+| Left mouse | Attack with the equipped weapon (3-swing combo `Attack1..3`; bows shoot toward the mouse cursor, staffs and wands straight ahead); also advances dialog | `AttackingState`, `DialogSystem` |
 | Right mouse (hold) | Block. **Only works if the equipped item has a `Block` effect** (`stats.canUseBlock`) | `BlockingState` |
 | E | Interact (NPC, chest, checkpoint), advance dialog | `Interactable`, `DialogSystem` |
 | I | Open inventory | `InventoryUI` |
@@ -140,7 +140,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 
 ### Player: `Hero` + `HeroState` FSM
 - `HeroStates` enum: `Idle, Run, Jump, Roll, Attack, Block, Dead, LedgeGrab`. `Run` has no state class; running is handled in `Hero.Update` by setting animator `AnimState=1`. `Jump` means "in the air" (jumping, falling, wall sliding).
-- Each state class (`IdleState`, `JumpingState`, `LedgeGrabState`, `AttackingState`, `BlockingState`, `RollingState`, `DeadState` in `HeroState.cs`) returns the next state from `handleInput()`, and `Hero.ChangeState` swaps it in when the enum differs. That calls the old state's `exitState()` (undoing its gravity, animator bools and so on, even when a dialog or death interrupts it) and the new state's `startState()`. `ControlsFacing` lets a state set the facing itself (wall slide, ledge, wall-jump lock) instead of following the steering.
+- Each state class (`IdleState`, `JumpingState`, `LedgeGrabState`, `AttackingState`, `BlockingState`, `RollingState`, `DeadState` in `HeroState.cs`) returns the next state from `handleInput()`, and `Hero.ChangeState` swaps it in when the enum differs. That calls the old state's `exitState()` (undoing its gravity, animator bools and so on, even when a dialog or death interrupts it) and the new state's `startState()`. `ControlsFacing` lets a state set the facing itself (wall slide, ledge, wall-jump lock, aiming a bow) instead of following the steering.
 - Ground states (attack, block, roll) are only reachable from `Idle`, which only exists on the ground: the hero can't attack or roll in the air. `Hero.handleInput` switches to `DeadState` from any state when health hits 0.
 - `Hero.Update` reads input, records a Space press for the jump buffer, and checks contacts once per frame (`UpdateContacts`) before running the state:
   - `isGrounded()` box-casts a strip 0.04 narrower than the collider, so walls beside the hero don't count as ground.
@@ -187,13 +187,14 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   | Sword | Broadsword, Crimson Blade, Emberfang | 0.5 s | 1 | 1 | no | melee |
   | Dagger | Venomfang Dagger | 0.3 s | 1.6 | 0.7 | no | melee |
   | Greatweapon | Giant's Cleaver | 0.85 s | 0.65 | 1.4 | yes | melee |
-  | Bow | Elven Longbow | 0.7 s | 1 | – | yes | arrow (14 u/s, range 12) |
+  | Bow | Elven Longbow | 0.7 s | 1 | – | yes | arrow toward the mouse cursor (14 u/s, range 12) |
   | Staff | Staff of Frostbite | 0.8 s | 0.9 | – | yes | magic bolt, 8 mana (10 u/s, range 9) |
   | Wand | Spark Wand | 0.45 s | 1.3 | – | no | magic bolt, 4 mana |
 
   - `AttackingState` plays one swing per click and chains the Attack1-2-3 combo. A click during a swing starts the next swing when the swing time is up. Each swing **strikes** once, 0.18 s into the swing divided by the animation speed (`Hero.Strike`).
   - A melee strike hits every enemy inside the `AttackSensor` hitbox (widened forward by reach) once, through a physics overlap query (`WeaponSensor.Strike`). Before the weapon types, hits came from trigger-stay callbacks: a whole combo could only damage once, and a sleeping physics body could miss.
-  - A ranged strike launches a `Projectile`: it moves by raycasts, hits the first living enemy or wall, and uses code-drawn pixel sprites until there's projectile art. Arrows deal `TotalDamage`; magic bolts deal `TotalDamage + TotalMagicPower` and cost mana. Without enough mana, a staff or wand strikes as a melee weapon instead.
+  - A ranged strike launches a `Projectile`: it flies in a straight line by raycasts, hits the first living enemy or wall, and uses code-drawn pixel sprites (turned to its direction) until there's projectile art. Arrows deal `TotalDamage`; magic bolts deal `TotalDamage + TotalMagicPower` and cost mana. Without enough mana, a staff or wand strikes as a melee weapon instead.
+  - **Arrows are aimed with the mouse** (`WeaponProfile.AimsAtCursor`, true for bows): each one flies from the hero's chest toward the cursor (`Hero.AimDirection`, via `GameInput.PointerPosition`) and keeps going for its full range. During a bow swing the hero faces the cursor but still moves where it's steered, so it can back away from an enemy while shooting at it. Magic bolts fly straight ahead; making them aim too is a matter of widening `AimsAtCursor`.
   - Both kinds apply the wearer's bleed, poison and burn through `CharacterStats.ApplyOnHitEffects` when a hit lands. The hitbox turns with the hero's facing.
   - **Two-handed rule** (`EquipmentSystem.EquipItem`): equipping a two-handed weapon puts the shield back in the inventory, and equipping a shield puts a two-handed weapon back. So no blocking with bows, staffs or the cleaver.
   - Weapon tooltips end with the type's summary line.
@@ -584,6 +585,7 @@ Design choice (made by the user): turn the imported Monsters pack into enemies; 
   - `SensorManager` subscribed to the static `SceneManager.sceneLoaded` and never unsubscribed, so the destroyed player's handler ran and threw on that scene load and on every later one. It now unsubscribes in `OnDestroy`. **Anything that subscribes to a static event must unsubscribe in `OnDestroy`.**
   - `CameraFollow` read the destroyed player in the frame between the destroy and the reload. It now waits for the new player.
 - [x] **The Goblin lost its idle, run and attack animations.** Its three clips had the same GUIDs as the `Animations`, `Enemies` and `Goblin` folder metas, because the script that generated the monster assets drew GUIDs from a seeded random generator. Unity reassigned all six on import, which left the Goblin's override controller pointing at GUIDs that no longer existed. Fixed by keeping Unity's new GUIDs and repointing the controller.
+- [x] **Arrows shoot toward the mouse cursor** (requested by the user), in a straight line in any direction, and the hero faces the cursor while shooting, so it can run one way and shoot the other. Magic bolts still fly straight ahead.
 
 ### Needs a design decision (not scheduled)
 - More bosses, or boss attack patterns. Monster bosses could now be made like the Bandit Chief, from the monster prefabs. The Skeleton's unused `Shield` and every monster's `Attack2` sheet could give them a block or a second attack.

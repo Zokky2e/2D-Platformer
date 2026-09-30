@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// An arrow or magic bolt fired by the hero. It flies straight and hits the first living enemy or wall in its
-// path, applying the shooter's on-hit effects (poison, bleed, burn). It casts a ray each frame instead of
-// using a collider, so it can't tunnel through thin walls at speed. The sprites are drawn in code until
-// there is projectile art.
+// An arrow or magic bolt fired by the hero. It flies in a straight line, in any direction (arrows are aimed at
+// the mouse cursor), and hits the first living enemy or wall in its path, applying the shooter's on-hit
+// effects (poison, bleed, burn). It casts a ray each frame instead of using a collider, so it can't tunnel
+// through thin walls at speed. The sprites are drawn in code until there is projectile art.
 public class Projectile : MonoBehaviour
 {
     private const float PixelsPerUnit = 32f; // Same as the hero art
@@ -15,20 +15,22 @@ public class Projectile : MonoBehaviour
     private float damage;
     private float speed;
     private float range;
-    private int direction;
+    private Vector2 direction; // Unit length
     private float travelled;
     private CharacterStats shooter;
     private ContactFilter2D filter;
     private int groundLayer;
 
-    public static void Launch(ProjectileKind kind, Vector2 origin, int direction, float damage, CharacterStats shooter,
+    public static void Launch(ProjectileKind kind, Vector2 origin, Vector2 direction, float damage, CharacterStats shooter,
         SpriteRenderer drawAbove)
     {
+        direction = direction.sqrMagnitude > 0f ? direction.normalized : Vector2.right;
         GameObject projectileObject = new GameObject(kind.ToString());
         projectileObject.transform.position = origin;
+        // The sprites point right; turn them to the flight direction
+        projectileObject.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
         SpriteRenderer renderer = projectileObject.AddComponent<SpriteRenderer>();
         renderer.sprite = SpriteFor(kind);
-        renderer.flipX = direction < 0;
         renderer.sortingLayerID = drawAbove.sortingLayerID;
         renderer.sortingOrder = drawAbove.sortingOrder + 1;
 
@@ -50,9 +52,8 @@ public class Projectile : MonoBehaviour
     {
         float step = speed * Time.deltaTime;
         Vector2 position = transform.position;
-        Vector2 heading = new Vector2(direction, 0f);
 
-        Physics2D.Raycast(position, heading, filter, hits, step);
+        Physics2D.Raycast(position, direction, filter, hits, step);
         hits.Sort((a, b) => a.distance.CompareTo(b.distance));
         foreach (RaycastHit2D hit in hits)
         {
@@ -72,7 +73,7 @@ public class Projectile : MonoBehaviour
             }
         }
 
-        transform.position = position + heading * step;
+        transform.position = position + direction * step;
         travelled += step;
         if (travelled >= range)
             Destroy(gameObject);

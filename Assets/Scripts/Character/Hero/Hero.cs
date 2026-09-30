@@ -512,8 +512,28 @@ public class Hero : MonoBehaviour, IEntity {
         }
     }
 
-    // The moment an attack connects. Bows loose an arrow and magic weapons a bolt (paid in mana; without
-    // enough, the staff or wand just hits like a melee weapon). Everything else hits what's within reach
+    // Chest height, where shots start from (0.6 units out along their direction)
+    private Vector2 AimOrigin => (Vector2)transform.position + new Vector2(0f, 0.7f);
+
+    // From the hero's chest toward the mouse cursor, or straight ahead without a mouse
+    public Vector2 AimDirection
+    {
+        get
+        {
+            Camera cam = Camera.main;
+            if (cam != null && GameInput.HasPointer)
+            {
+                Vector2 toCursor = (Vector2)cam.ScreenToWorldPoint(GameInput.PointerPosition) - AimOrigin;
+                if (toCursor.sqrMagnitude > 0.01f)
+                    return toCursor.normalized;
+            }
+            return new Vector2(m_facingDirection, 0f);
+        }
+    }
+
+    // The moment an attack connects. Bows loose an arrow toward the cursor, and magic weapons a bolt straight
+    // ahead (paid in mana; without enough, the staff or wand just hits like a melee weapon). Everything else
+    // hits what's within reach
     public void Strike(WeaponProfile weapon)
     {
         bool shoots = weapon.Projectile != ProjectileKind.None
@@ -523,8 +543,8 @@ public class Hero : MonoBehaviour, IEntity {
             float damage = stats.TotalDamage;
             if (weapon.Projectile == ProjectileKind.MagicBolt)
                 damage += stats.TotalMagicPower;
-            Vector2 origin = (Vector2)transform.position + new Vector2(m_facingDirection * 0.6f, 0.7f);
-            Projectile.Launch(weapon.Projectile, origin, m_facingDirection, damage, stats, m_spriteRenderer);
+            Vector2 direction = weapon.AimsAtCursor ? AimDirection : new Vector2(m_facingDirection, 0f);
+            Projectile.Launch(weapon.Projectile, AimOrigin + direction * 0.6f, direction, damage, stats, m_spriteRenderer);
         }
         else if (m_weaponSensor != null)
         {

@@ -31,6 +31,9 @@ public readonly struct WeaponProfile
     public readonly string Summary;       // Shown at the end of the weapon's tooltip
 
     public float StrikeTime => BaseStrikeTime / AnimationSpeed;
+    // Shoots toward the mouse cursor, and the hero faces the cursor while swinging. Other ranged weapons shoot
+    // straight ahead
+    public bool AimsAtCursor => Projectile == ProjectileKind.Arrow;
 
     private WeaponProfile(float swingTime, float animationSpeed, float reach, bool twoHanded,
         ProjectileKind projectile, float manaCost, string summary)
@@ -51,7 +54,7 @@ public readonly struct WeaponProfile
         WeaponType.Greatweapon => new WeaponProfile(0.85f, 0.65f, 1.4f, true, ProjectileKind.None, 0f,
             "Greatweapon: two-handed, slow, long reach"),
         WeaponType.Bow => new WeaponProfile(0.7f, 1f, 1f, true, ProjectileKind.Arrow, 0f,
-            "Bow: two-handed, shoots arrows"),
+            "Bow: two-handed, shoots arrows where you aim"),
         WeaponType.Staff => new WeaponProfile(0.8f, 0.9f, 1f, true, ProjectileKind.MagicBolt, 8f,
             "Staff: two-handed, casts magic bolts (8 mana), stronger with magic power"),
         WeaponType.Wand => new WeaponProfile(0.45f, 1.3f, 1f, false, ProjectileKind.MagicBolt, 4f,
