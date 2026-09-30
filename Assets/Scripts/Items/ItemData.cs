@@ -7,6 +7,7 @@ public class ItemData
     public string name;
     public string description;
     public ItemType type;
+    public WeaponType weaponType; // Weapons only; Sword when missing
     public string spriteName;
     public int price;
     public bool isSellable;

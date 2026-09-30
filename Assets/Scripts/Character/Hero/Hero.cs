@@ -114,6 +114,8 @@ public class Hero : MonoBehaviour, IEntity {
     private BoxCollider2D boxCollider;
     private SpriteRenderer m_spriteRenderer;
     private Health playerHealth;
+    private Mana m_mana;
+    private WeaponSensor m_weaponSensor;
     public CharacterStats stats;
 
     public Health Health
@@ -206,8 +208,9 @@ public class Hero : MonoBehaviour, IEntity {
         state = new IdleState();
         state.startState(this);
         // Mana isn't on the prefab yet; it must exist before equipment with mana bonuses is applied
-        if (!TryGetComponent(out Mana _))
-            gameObject.AddComponent<Mana>();
+        if (!TryGetComponent(out m_mana))
+            m_mana = gameObject.AddComponent<Mana>();
+        m_weaponSensor = GetComponentInChildren<WeaponSensor>();
         // Continue the saved game, or start a new one with the default kit
         if (!SaveSystem.Instance.RestorePlayer(this))
         {
@@ -387,6 +390,36 @@ public class Hero : MonoBehaviour, IEntity {
         SetFacing(-wallSide);
         m_wallJumpSide = wallSide;
         m_controlLockUntil = Time.time + wallJumpControlLock;
+    }
+
+    // How the equipped weapon attacks (no weapon fights like a sword)
+    public WeaponProfile Weapon
+    {
+        get
+        {
+            Item weapon = EquipmentSystem.Instance.GetItem(EquipmentSlot.Weapon);
+            return WeaponProfile.For(weapon != null ? weapon.WeaponType : WeaponType.Sword);
+        }
+    }
+
+    // The moment an attack connects. Bows loose an arrow and magic weapons a bolt (paid in mana; without
+    // enough, the staff or wand just hits like a melee weapon). Everything else hits what's within reach
+    public void Strike(WeaponProfile weapon)
+    {
+        bool shoots = weapon.Projectile != ProjectileKind.None
+            && (weapon.ManaCost <= 0f || (m_mana != null && m_mana.TrySpend(weapon.ManaCost)));
+        if (shoots)
+        {
+            float damage = stats.TotalDamage;
+            if (weapon.Projectile == ProjectileKind.MagicBolt)
+                damage += stats.TotalMagicPower;
+            Vector2 origin = (Vector2)transform.position + new Vector2(m_facingDirection * 0.6f, 0.7f);
+            Projectile.Launch(weapon.Projectile, origin, m_facingDirection, damage, stats, m_spriteRenderer);
+        }
+        else if (m_weaponSensor != null)
+        {
+            m_weaponSensor.Strike(stats.TotalDamage, weapon.Reach);
+        }
     }
 
     public bool CanMove()

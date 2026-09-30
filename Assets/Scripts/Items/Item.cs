@@ -25,6 +25,8 @@ public abstract class Item : ScriptableObject
 
     [SerializeField] protected ItemType _type;
 
+    [SerializeField] protected WeaponType _weaponType;
+
     [SerializeField] protected int _price;
 
     [SerializeField] protected bool _isSellable;
@@ -35,6 +37,7 @@ public abstract class Item : ScriptableObject
     public string FixedDescription => _description;
     [HideInInspector] public string Description = "";
     public ItemType Type => _type;
+    public WeaponType WeaponType => _weaponType; // Only meaningful for weapons
     public int Price => _price;
     public bool IsSellable => _isSellable;
 
@@ -65,6 +68,8 @@ public abstract class Item : ScriptableObject
         {
             newDescription = effect.AdjustDescription(newDescription);
         }
+        if (Type == ItemType.Weapon)
+            newDescription += "\n\n" + WeaponProfile.For(WeaponType).Summary;
         Description = newDescription;
     }
 

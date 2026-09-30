@@ -81,7 +81,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 | Space | Jump (hold for full height, tap for a short hop), wall jump, pull up onto a ledge | `IdleState` → `JumpingState`, `LedgeGrabState` |
 | S, down arrow | Drop from a ledge | `LedgeGrabState` |
 | Left Shift | Roll (damage immune while rolling) | `RollingState` |
-| Left mouse | Attack (3-hit combo `Attack1..3`); also advances dialog | `AttackingState`, `DialogSystem` |
+| Left mouse | Attack with the equipped weapon (3-swing combo `Attack1..3`; bows, staffs and wands shoot); also advances dialog | `AttackingState`, `DialogSystem` |
 | Right mouse (hold) | Block. **Only works if the equipped item has a `Block` effect** (`stats.canUseBlock`) | `BlockingState` |
 | E | Interact (NPC, chest, checkpoint), advance dialog | `Interactable`, `DialogSystem` |
 | I | Open inventory | `InventoryUI` |
@@ -123,7 +123,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - Animator parameters used: `AnimState`, `Grounded`, `AirSpeedY`, `WallSlide`, `LedgeGrab`, `Jump`, `Roll`, `Attack1-3`, `Block`, `IdleBlock`, `Hurt`, `Death`, `Revive`, `noBlood`.
 
 ### Stats, health and damage
-- `CharacterStats` holds base plus bonus values for move speed, jump height, damage, armor and **magic power** (unused until spells exist). It also has **agility**, where each point adds `MoveSpeedPerAgility` (0.1) to move speed, a `canUseBlock` flag, and **on-hit status effects**: `bleed`/`poison`/`burn` `Damage` (per second) and `Duration` (seconds), mostly set by equipment. `TotalJumpHeight` is **unused**; jumping uses `Hero.m_jumpForce`.
+- `CharacterStats` holds base plus bonus values for move speed, jump height, damage, armor and **magic power** (added to magic bolt damage). It also has **agility**, where each point adds `MoveSpeedPerAgility` (0.1) to move speed, a `canUseBlock` flag, and **on-hit status effects**: `bleed`/`poison`/`burn` `Damage` (per second) and `Duration` (seconds), mostly set by equipment. `TotalJumpHeight` is **unused**; jumping uses `Hero.m_jumpForce`.
 - Armor formula: `damage * (1 - armor / (armor + 50))`, floored (`CalculateDamage`).
 - `Health` has `baseHealth + bonusHealth = MaxHealth`, `CurrentHealth`, and delegates to `IEntity` (`Hero` or `Enemy`) for `IsBlocking`, `TakeDamage` (returns the final damage) and `Die`. It has three damage paths:
   - `Health.TakeDamage(float)` **returns whether the hit landed**. A hit doesn't land if it was blocked or rolled through, fully absorbed by armor, landed during i-frames, or the target was already dead.
@@ -136,7 +136,7 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   - The **temporary shield** comes from consumables (`AddTemporaryShield(amount, duration)`), doesn't recharge, and expires after its duration. The timer uses scaled time, so it doesn't run while menus are open.
 
   A hit that's fully absorbed counts as not landed, so it applies no on-hit effects.
-- **Mana** (`Health/Mana.cs`) is a component the hero adds to itself in `Start` (it isn't on the prefab yet). It has `MaxMana = baseMana (50) + bonusMana` and regenerates `baseManaRegen (1) + bonusManaRegen` per second. It's a foundation only: nothing spends mana yet. Spells should call `TrySpend` and scale with `CharacterStats.TotalMagicPower`.
+- **Mana** (`Health/Mana.cs`) is a component the hero adds to itself in `Start` (it isn't on the prefab yet). It has `MaxMana = baseMana (50) + bonusMana` and regenerates `baseManaRegen (1) + bonusManaRegen` per second. Staffs and wands spend it (`TrySpend`) on magic bolts. Future spells should do the same and scale with `CharacterStats.TotalMagicPower`.
 - I-frames with a red flash and ignored Player/Enemy layer collision **only run when the configured player layer is layer 6** (hard-coded check).
 - Hero `TakeDamage` returns 0 while in Block or Roll.
 - Player defaults: 100 HP, speed 4, damage 15, armor 5. With the starting kit that becomes 120 HP, 20 damage and 30 armor.
@@ -145,7 +145,23 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - Death: `PersistentPlayerHealth` waits 2 s, then force-opens the pause menu, whose Respawn button calls `GameRespawn.RespawnPlayer` (fade, full heal, teleport to the checkpoint or the start position). Falling below `GameRespawn.threshold` (−200 in Level0, −15 on the prefab) calls `Health.Kill()`.
 
 ### Combat and enemies
-- **Player hits**: the `WeaponSensor` trigger on the `AttackSensor` child damages objects tagged `Enemy` once per attack state, using `stats.TotalDamage`. It flips with the hero's facing direction. When a hit lands, `CharacterStats.ApplyOnHitEffects` applies the wearer's bleed, poison and burn to the target.
+- **Player attacks** depend on the equipped weapon's **type** (`WeaponType` in `items.json`, `WeaponProfile` in `Items/WeaponType.cs`; no weapon fights like a sword). Every type still plays the hero's sword swing, sped up or slowed down:
+
+  | Type | Weapons | Swing time | Animation speed | Reach | Two-handed | Attack |
+  |---|---|---|---|---|---|---|
+  | Sword | Broadsword, Crimson Blade, Emberfang | 0.5 s | 1 | 1 | no | melee |
+  | Dagger | Venomfang Dagger | 0.3 s | 1.6 | 0.7 | no | melee |
+  | Greatweapon | Giant's Cleaver | 0.85 s | 0.65 | 1.4 | yes | melee |
+  | Bow | Elven Longbow | 0.7 s | 1 | – | yes | arrow (14 u/s, range 12) |
+  | Staff | Staff of Frostbite | 0.8 s | 0.9 | – | yes | magic bolt, 8 mana (10 u/s, range 9) |
+  | Wand | Spark Wand | 0.45 s | 1.3 | – | no | magic bolt, 4 mana |
+
+  - `AttackingState` plays one swing per click and chains the Attack1-2-3 combo. A click during a swing starts the next swing when the swing time is up. Each swing **strikes** once, 0.18 s into the swing divided by the animation speed (`Hero.Strike`).
+  - A melee strike hits every enemy inside the `AttackSensor` hitbox (widened forward by reach) once, through a physics overlap query (`WeaponSensor.Strike`). Before 2026-10-01 hits came from trigger-stay callbacks: a whole combo could only damage once, and a sleeping physics body could miss.
+  - A ranged strike launches a `Projectile`: it moves by raycasts, hits the first living enemy or wall, and uses code-drawn pixel sprites until there's projectile art. Arrows deal `TotalDamage`; magic bolts deal `TotalDamage + TotalMagicPower` and cost mana. Without enough mana, a staff or wand strikes as a melee weapon instead.
+  - Both kinds apply the wearer's bleed, poison and burn through `CharacterStats.ApplyOnHitEffects` when a hit lands. The hitbox turns with the hero's facing.
+  - **Two-handed rule** (`EquipmentSystem.EquipItem`): equipping a two-handed weapon puts the shield back in the inventory, and equipping a shield puts a two-handed weapon back. So no blocking with bows, staffs or the cleaver.
+  - Weapon tooltips end with the type's summary line.
 - **Status effects** (`Health/StatusEffects.cs`) are damage per second for N seconds. They tick once per second, starting one second after the hit, and briefly tint the sprite (red for bleed, green for poison, orange for burn). The component is added to a target the first time it's affected. Each type runs independently, and reapplying one **restarts it with the new values** rather than stacking. It stops when the target dies. Enemies call the same `ApplyOnHitEffects` when their attacks land (the Bandit melee and the spike trap), so giving an enemy's `CharacterStats` bleed or poison values makes its attacks apply them.
 - **Enemy** (`Enemy.cs`) implements `IEntity`:
   - When `isTrap` is true it deals damage on trigger enter (Spiketrap).
@@ -277,7 +293,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 
 ## How to extend
 
-- **Add an item**: append to `items.json` with a unique `id`, a `type` that matches the `ItemType` name (for example `"Weapon"`), a `spriteName` that exists in `Resources/Sprites` (or a sheet sub-sprite), `price`, `isSellable`, and effects. Use only supported `effectType`s, and put the matching `{placeholder}` in the description.
+- **Add an item**: append to `items.json` with a unique `id`, a `type` that matches the `ItemType` name (for example `"Weapon"`; weapons also get a `weaponType` such as `"Dagger"`), a `spriteName` that exists in `Resources/Sprites` (or a sheet sub-sprite), `price`, `isSellable`, and effects. Use only supported `effectType`s, and put the matching `{placeholder}` in the description.
 - **Add a status effect type**: add it to `StatusEffectType`, give it a tint in `StatusEffects.TintFor`, add its damage and duration fields plus the `switch` cases in `CharacterStats` (`AddStatusEffectBonus`, `ApplyOnHitEffects`), and map `<Name>Damage` / `<Name>Duration` in `RuntimeItem.ConvertCharacterStatsEffects`. The tooltip placeholders are `{<name>Damage}` / `{<name>Duration}`, with the name lower-cased.
 - **Add an effect type**: subclass `ItemEffect<CharacterStats>` or `ItemEffect<Health>` in `Items/Effects/` (implement `AdjustDescription`, `ApplyEffect`, `RemoveEffect`, `UseItem`), then add a `case` in `RuntimeItem.ConvertCharacterStatsEffects` / `ConvertHealthEffects`. New stats need fields and `Total*` properties in `CharacterStats`.
 - **Save something new**: add a public field to `PlayerSaveData` (or use `WorldStateManager` flags for quest-style state), fill it in `SaveSystem.CapturePlayer`, and apply it in `SaveSystem.RestorePlayer`. Only use JSON-friendly types (no `Vector3` or Unity objects). Missing fields in older saves load as defaults, but renaming a field loses its data: bump `SaveSystem.CurrentVersion` and migrate instead.
@@ -505,6 +521,13 @@ Design choice (made by the user): turn the imported Monsters pack into enemies; 
 - **Local vendor change:** the used monster sheets' `.png.meta` files have a new pixels-per-unit value and pivot. Re-importing the pack from the Asset Store would reset them.
 - **Not play-tested yet.** Things to check: sizes against the hero, the collider and health-bar fit, whether hits land on the attack frame, and walking direction.
 
+### 20. Weapon types (branch `weapon-types`)
+- [x] `WeaponType` per weapon, with speed, reach, two-handed and projectile profiles, arrows and mana-costing magic bolts, and the shield rule (see "Player attacks").
+- [x] **A combo could only damage an enemy once**, because `WeaponSensor` allowed one hit per attack state, and hits depended on trigger callbacks. Hits are now a query at each swing's strike.
+- [x] One click could play two swings: the press that started the attack was also read as the next swing, and the old code did the same. Presses are ignored on the frame a swing starts.
+- [x] Clicking a menu button while paused no longer starts an attack.
+- **Not play-tested yet.** Tune strike timing (0.18 s), swing times and reach against how the swings look, and check projectile speed, range and sprites.
+
 ### Needs a design decision (not scheduled)
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
 - More bosses, or boss attack patterns. Monster bosses could now be made like the Bandit Chief, from the monster prefabs. The Skeleton's unused `Shield` and every monster's `Attack2` sheet could give them a block or a second attack.
@@ -540,7 +563,7 @@ The rework should make the systems the single source of truth. Each window shoul
 - `EquipmentUI.uxml` has four fixed slot elements (`Weapon`, `Shield`, `Armor`, `Accessory`) plus labels, and `EquipmentUI` queries them by name. It needs the new slots and default icons (the Violet Theme UI `White Icons` folder has more).
 - **Saves already work**: `PlayerSaveData.equippedItemIds` is a plain id list and `RestorePlayer` re-equips each through `EquipItem`, so new slots need no save migration.
 
-**c) Weapon types with their own animations** (not started, waiting on the art decision). The weapons are already different kinds: Broadsword, Crimson Blade and Emberfang (swords), Venomfang Dagger (dagger), Giant's Cleaver (heavy two-hander), Elven Longbow (bow), Staff of Frostbite (staff) and Spark Wand (wand). All of them currently swing the same sword combo (`Attack1-3`), and the hero sprite always shows the same sword.
+**c) Weapon types with their own animations.** The mechanics were done on 2026-10-01 (see "Player attacks"; design choice by the user: bow, staff and wand fire projectiles). Still open: animations per type, since the art decision below is still waiting. The original plan: The weapons are already different kinds: Broadsword, Crimson Blade and Emberfang (swords), Venomfang Dagger (dagger), Giant's Cleaver (heavy two-hander), Elven Longbow (bow), Staff of Frostbite (staff) and Spark Wand (wand). All of them currently swing the same sword combo (`Attack1-3`), and the hero sprite always shows the same sword.
 - Data: add a weapon type to items (for example `"weaponType": "Sword" | "Dagger" | "Greatweapon" | "Bow" | "Staff" | "Wand"` in `items.json`, mapped to an enum in `RuntimeItem`).
 - Combat: the type should choose the attack animation set, attack speed and range (`WeaponSensor` hitbox), and possibly shield compatibility, since two-handers and bows can't be used with a shield. Bows need projectiles, and staffs or wands are the natural first users of the mana foundation (`Mana.TrySpend`, `CharacterStats.TotalMagicPower`).
 - **Art is the blocker**: the Hero Knight pack only has sword animations, with the sword baked into the sprite sheet. Options to discuss with the user:

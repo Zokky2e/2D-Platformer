@@ -66,7 +66,7 @@ public class IdleState : HeroState
             return new JumpingState(AirStart.Fall);
         }
 
-        if (GameInput.AttackPressed)
+        if (GameInput.AttackPressed && !PauseMenu.GameIsPaused) // Not the click on a menu button
         {
             return new AttackingState();
         }
@@ -291,67 +291,64 @@ public class LedgeGrabState : HeroState
     }
 }
 
+// Swinging the equipped weapon. Swings chain into the Attack1-2-3 combo while the attack button is pressed;
+// a press during a swing is remembered and starts the next one as soon as the current one allows. Speed,
+// reach and projectiles come from the weapon type (WeaponProfile).
 public class AttackingState : HeroState
 {
-    private int m_currentAttack = 0;
-    private float m_timeSinceAttack = 0.0f;
-    private bool canAttack;
+    private WeaponProfile weapon;
+    private int comboStep = 0;       // 1-3, which attack animation the current swing plays
+    private float timeSinceSwing = 0f;
+    private bool struck;             // The current swing has connected
+    private bool nextSwingQueued;
+    private int swingStartFrame;     // The press that started a swing isn't also a request for the next one
+
     public AttackingState() : base(HeroStates.Attack) { }
+
     override public HeroState handleInput()
     {
-        // If attack animation is done, go back to idle
-        if (IsAttacking() && canAttack)
-        {
-            return new AttackingState(); // Restart attack if valid
-        }
-        if (m_timeSinceAttack > 0.5f) return new IdleState();
+        // Done once the swing is over and no next swing was asked for
+        if (!nextSwingQueued && timeSinceSwing >= weapon.SwingTime)
+            return new IdleState();
         return this;
+    }
+
+    public override void startState(Hero hero)
+    {
+        base.startState(hero);
+        weapon = hero.Weapon;
+        m_animator.speed = weapon.AnimationSpeed;
+        StartSwing();
+    }
+
+    public override void exitState()
+    {
+        m_animator.speed = 1f;
     }
 
     override public void Update()
     {
         base.Update();
-        m_timeSinceAttack += Time.deltaTime;
-
-        if (IsAttacking() && !PauseMenu.GameIsPaused)
+        timeSinceSwing += Time.deltaTime;
+        if (GameInput.AttackPressed && !PauseMenu.GameIsPaused && Time.frameCount != swingStartFrame)
+            nextSwingQueued = true;
+        if (!struck && timeSinceSwing >= weapon.StrikeTime)
         {
-            m_currentAttack++;
-
-            // Loop back to one after third attack
-            if (m_currentAttack > 3)
-                m_currentAttack = 1;
-
-            // Reset Attack combo if time since last attack is too large
-            if (m_timeSinceAttack > 1.0f)
-                m_currentAttack = 1;
-
-            // Call one of three attack animations "Attack1", "Attack2", "Attack3"
-            m_animator.SetTrigger(AnimatorParams.HeroAttack(m_currentAttack));
-
-            // Reset timer
-            m_timeSinceAttack = 0.0f;
+            struck = true;
+            hero.Strike(weapon);
         }
+        if (nextSwingQueued && timeSinceSwing >= weapon.SwingTime)
+            StartSwing();
     }
-    public override void startState(Hero hero)
+
+    private void StartSwing()
     {
-        base.startState(hero);
-        if (!PauseMenu.GameIsPaused)
-        {
-            hero.StartCoroutine(AttackRoutine());
-        }
-    }
-    private IEnumerator AttackRoutine()
-    {
-        canAttack = false;
-
-        m_currentAttack++;
-        if (m_currentAttack > 3) m_currentAttack = 1;
-
-        m_animator.SetTrigger(AnimatorParams.HeroAttack(m_currentAttack));
-
-        yield return new WaitForSeconds(0.5f); // Adjust based on animation length
-
-        canAttack = true;
+        comboStep = comboStep % 3 + 1;
+        m_animator.SetTrigger(AnimatorParams.HeroAttack(comboStep));
+        timeSinceSwing = 0f;
+        struck = false;
+        nextSwingQueued = false;
+        swingStartFrame = Time.frameCount;
     }
 }
 public class BlockingState : HeroState

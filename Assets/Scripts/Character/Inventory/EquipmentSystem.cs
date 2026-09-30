@@ -33,6 +33,9 @@ public class EquipmentSystem : Singleton<EquipmentSystem>
 
     public static bool IsEquippable(Item item) => item != null && item.Type != ItemType.Consumable;
 
+    public static bool IsTwoHanded(Item item) =>
+        item != null && item.Type == ItemType.Weapon && WeaponProfile.For(item.WeaponType).TwoHanded;
+
     // The slot an item goes into. An accessory takes a free accessory slot, or replaces the first one
     public EquipmentSlot SlotFor(Item item)
     {
@@ -63,12 +66,12 @@ public class EquipmentSystem : Singleton<EquipmentSystem>
         if (!IsEquippable(item) || !inventory.RemoveItem(item, notify: false))
             return;
         EquipmentSlot slot = SlotFor(item);
-        Item previous = GetItem(slot);
-        if (previous != null)
-        {
-            previous.RemoveEffects(Player.stats, Player.Health);
-            inventory.AddItem(previous, notify: false);
-        }
+        MoveToInventory(slot, inventory);
+        // Two-handed weapons and shields exclude each other: equipping one puts the other back
+        if (IsTwoHanded(item))
+            MoveToInventory(EquipmentSlot.Shield, inventory);
+        else if (item.Type == ItemType.Shield && IsTwoHanded(GetItem(EquipmentSlot.Weapon)))
+            MoveToInventory(EquipmentSlot.Weapon, inventory);
         equipped[slot] = item;
         item.ApplyEffects(Player.stats, Player.Health);
         NotifyChanged(inventory);
@@ -76,13 +79,21 @@ public class EquipmentSystem : Singleton<EquipmentSystem>
 
     public void UnequipItem(EquipmentSlot slot)
     {
+        if (GetItem(slot) == null)
+            return;
+        MoveToInventory(slot, InventorySystem.Instance);
+        NotifyChanged(InventorySystem.Instance);
+    }
+
+    // Empties a slot into the inventory, removing the item's effects; the caller raises the events
+    private void MoveToInventory(EquipmentSlot slot, InventorySystem inventory)
+    {
         Item item = GetItem(slot);
         if (item == null)
             return;
         equipped.Remove(slot);
         item.RemoveEffects(Player.stats, Player.Health);
-        InventorySystem.Instance.AddItem(item, notify: false);
-        NotifyChanged(InventorySystem.Instance);
+        inventory.AddItem(item, notify: false);
     }
 
     // Listeners hear about the change once the slots, the inventory and the stats all agree

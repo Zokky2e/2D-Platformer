@@ -10,6 +10,7 @@ public class RuntimeItem : Item
         _name = data.name;
         _description = data.description;
         _type = data.type;
+        _weaponType = data.weaponType;
         _price = data.price;
         _isSellable = data.isSellable;
         SetSprite(data);
