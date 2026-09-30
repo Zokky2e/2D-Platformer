@@ -235,7 +235,8 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
   2. It places `startRoom` at grid (0,0), marks its exits as going Right, and places an `empty` cap at (−1,0).
   3. `ExpandToMaxDungeon()` repeatedly takes `activeNodes[0]` and calls `SpawnTile`. That computes the neighbour grid cell and world offset (map width and height), skips occupied cells, rolls a weighted room from the rules, reassigns node directions by position relative to the tile's bounds center, and searches for an entrance node pair that aligns with the exit pair (up to 10 attempts). On success it links the nodes, marks the cell occupied, grows the camera bounds, and queues the new room's other exits (sorted by direction).
   4. **Fill phase**: while exits remain open, the first open exit facing **Right** gets the `bossRoom` and every other exit gets an `empty` cap.
-  5. It moves the player to the `EntryPoint` inside `startRoom`.
+  5. If the fill phase found no open right-facing exit for the boss room, the dungeon would have no exit, so `ClearDungeon` destroys the layout and `BuildDungeon` tries again (up to 5 attempts, logging a warning each time). The dungeon level only goes up once.
+  6. It moves the player to the `EntryPoint` inside `startRoom`.
 - `bossRoom` contains an `ExitPoint` back to `Level0`, the **Bandit Chief** in the lower corridor between the entrance and the exit, and an inactive `RewardChest` (a `LootChest`) that appears when the boss dies. The chest is inside a `Room`, so its loot is rolled fresh each run.
 - Enemy rooms contain an `EnemyGenerator`, and loot rooms contain a `LootChest`.
 - `DungeonGeneratorEditor` adds Inspector buttons to step the generator manually in the Editor.
@@ -478,6 +479,9 @@ The user found reaching upper platforms very hard: it took 5-6 wall jumps, there
   - air attacks (every state transition goes through Idle)
   - a single wall-detection method: `Hero` computes `m_isWallSliding` from the four wall sensors but never uses it, while `JumpingState` uses the box-cast
 - [x] **P13. The pause menu's New Game button called `OnRespawnClicked`** instead of `OnNewGameClicked` (fixed in `5d7956e`).
+
+### 18. Found while fixing the play-test bugs (2026-10-01)
+- [x] **The dungeon could have no exit.** The boss room (the only way back to Level0) was only placed if an open exit facing right was left for the fill phase. If the layout used them all up, the player was trapped. The generator now rebuilds such layouts (see "Procedural dungeon", step 5).
 
 ### Needs a design decision (not scheduled)
 - `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.

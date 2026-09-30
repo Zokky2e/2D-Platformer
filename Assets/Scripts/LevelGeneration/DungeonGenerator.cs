@@ -14,6 +14,10 @@ public class DungeonGenerator : MonoBehaviour
     public int numberOfTiles = 10;
     private DungeonManager dungeonManager;
     private bool hasBossRoom;
+    // Every room this generator placed, so a dungeon without a boss room (and so without an exit) can be
+    // torn down and built again
+    private readonly List<GameObject> spawnedRooms = new List<GameObject>();
+    private const int MaxBuildAttempts = 5;
 
     [SerializeField]
     private CameraFollow camera;
@@ -37,9 +41,29 @@ public class DungeonGenerator : MonoBehaviour
     void GenerateDungeon()
     {
         dungeonManager.RegenerateDungeon();
+        numberOfTiles = dungeonManager.DungeonSize;
+        // The boss room holds the only exit, and the fill phase can only place it at an open exit facing
+        // right. If the layout left none, build a new layout rather than trap the player
+        for (int attempt = 1; attempt <= MaxBuildAttempts; attempt++)
+        {
+            BuildDungeon();
+            if (hasBossRoom)
+                break;
+            Debug.LogWarning($"Dungeon layout {attempt} had no room for the boss room (the exit); building another");
+            if (attempt < MaxBuildAttempts)
+                ClearDungeon();
+        }
+        if (!hasBossRoom)
+            Debug.LogError("No dungeon layout had room for the boss room, so this dungeon has no exit");
+        SpawnPlayer();
+    }
+
+    void BuildDungeon()
+    {
         occupiedTiles = new List<Tuple<int, int>>();
         // Spawn the first tile at (0,0) and register its exits
         Room firstTile = Instantiate(startTilePrefab, Vector2.zero, Quaternion.identity);
+        spawnedRooms.Add(firstTile.gameObject);
         Tuple<int, int> firstTileLocation = new Tuple<int, int>(0, 0);
         occupiedTiles.Add(firstTileLocation);
         foreach (Node node in firstTile.GetComponentsInChildren<Node>())
@@ -53,12 +77,27 @@ public class DungeonGenerator : MonoBehaviour
         }
         SuperMap map = firstTile.GetComponentInParent<SuperMap>();
         Room secondTile = Instantiate(emptyTilePrefab, new Vector3(-map.m_Width, 0) + map.transform.position, Quaternion.identity);
+        spawnedRooms.Add(secondTile.gameObject);
         Tuple<int, int> secondTileLocation = new Tuple<int, int>(-1, 0);
         secondTile.location = secondTileLocation;
         occupiedTiles.Add(secondTileLocation);
-        numberOfTiles = dungeonManager.DungeonSize;
         ExpandToMaxDungeon();
-        SpawnPlayer();
+    }
+
+    // Removes everything BuildDungeon placed. Immediate, because the next layout is built in the same frame
+    // and must not collide with the old rooms. Their Start (enemy and loot spawning) never ran
+    void ClearDungeon()
+    {
+        foreach (GameObject room in spawnedRooms)
+        {
+            if (room != null)
+                DestroyImmediate(room);
+        }
+        spawnedRooms.Clear();
+        activeNodes.Clear();
+        hasBossRoom = false;
+        lowestPoint = new Vector2(-11, -11);
+        highestPoint = new Vector2(12, 12);
     }
 
     void CheckForNewCameraBounds(Vector3 tilePosition)
@@ -195,6 +234,7 @@ public class DungeonGenerator : MonoBehaviour
             else
                     instatiateObject = ChooseRandomDungeonTile(lastRoom, exitNode);
             newTile = Instantiate(instatiateObject, Vector3.zero, Quaternion.identity);
+            spawnedRooms.Add(newTile.gameObject);
 
             AssignNodeDirections(newTile);
             nodes = newTile.GetComponentsInChildren<Node>();
@@ -240,6 +280,7 @@ public class DungeonGenerator : MonoBehaviour
             // No entrance lines up: discard the whole tile (destroying only the Room component left
             // the tilemap behind at the origin) and roll again
             Debug.Log("Failed to create");
+            spawnedRooms.Remove(newTile.gameObject);
             DestroyImmediate(newTile.gameObject);
             newTile = null;
             nodes = null;
