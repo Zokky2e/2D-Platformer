@@ -55,6 +55,8 @@ Assets/
     LevelGeneration/           DungeonGenerator, DungeonManager, RoomGeneration (rules), Room, Node
     WorldObjects/              RespawnCheckpoint
   Editor/DungeonGeneratorEditor.cs   Inspector buttons "Expand Dungeon" / "Expand Dungeon To Max"
+  Sprites/Hero/, Animations/Hero/   The hero's per-weapon sprite sheets and animations (generated, see below)
+Tools/HeroWeapons/            Python generator for those (outside Assets, so Unity ignores it)
   Levels/                      Level0.unity (hub), RoomGenerator.unity (dungeon)
   Prefabs/                     Player-facing prefabs (see "Prefab map")
   ScriptedItems/               ScriptableObject assets: NPC behaviors, shop and loot tables
@@ -67,6 +69,29 @@ Assets/
 Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art` (enemies), `Merchant - Pixel Art`, `Cainos` (village props, including the `Chest` script used by loot chests), `2D Pixel Art Platformer Biome - American Forest`, `RPG Icons Pixel Art`, `JohnFarmer` (keyboard key sprites for tutorial signs), `Violet Theme Ui`, `NaughtyAttributes`, `TextMesh Pro`, and `Imported Assets/` (Monsters Creatures Fantasy, a simple UI pack, and a Pet Cats pack, which were imported but not used yet, probably meant for future monsters and bosses).
 
 **HeroKnight exception:** the player prefab is the vendor's `Assets/Hero Knight - Pixel Art/Demo/HeroKnight.prefab`, modified in place. The vendor's `HeroKnight.cs` controller is not used. The project's `Hero.cs` and friends are attached instead, and only the vendor's `Sensor_HeroKnight` is reused. The vendor's animator controller (`Animations/HeroKnight_AnimController.controller`) is also **extended in place** (movement rework, 2026-10-01): a `LedgeGrab` bool parameter and `Ledge Grab` state, and a Wall Slide → Fall transition for letting go of a wall. The prefab's Rigidbody2D uses the pack's frictionless `Environment/Walls_noFriction` material.
+
+**Hero weapon looks** (2026-10-01): the hero appears holding the equipped weapon type. The design choice, made by the user, was one copy of the hero per type.
+- There are five looks: the vendor sheet for Sword (and Greatweapon), plus generated copies for Dagger, Bow, Staff and Wand.
+- `Tools/HeroWeapons/hero_weapon_sheets.py` (Python standard library) builds each copy from the vendor sheet. For every frame it:
+  - finds the sword (the gold guard plus the straight lavender blade from it),
+  - erases it,
+  - draws the new weapon at the same grip point and angle, as simple vector shapes rasterised to pixels,
+  - and keeps the swing trails for the Dagger, turns them magic blue for the Staff and Wand, and removes them for the Bow.
+
+  Only pixels that were transparent or part of the old sword get painted, so a hand or head that covered the sword also covers the new weapon.
+- The white hit-flash frames 45 and 48 borrow the sword's position from their matching frames. Frame 24, where the blade runs behind the body, has a manual entry in `OVERRIDES`.
+- Outputs:
+  - `Assets/Sprites/Hero/HeroKnight_<Weapon>.png`, sliced exactly like the vendor sheet
+  - the 15 hero clips copied into `Assets/Animations/Hero/<Weapon>/` and pointed at that sheet
+  - one Animator Override Controller of `HeroKnight_AnimController` per weapon type
+
+  Rerunning keeps the existing GUIDs. Run `python Tools/HeroWeapons/hero_weapon_sheets.py --preview <folder>` to also get contact sheets of every frame.
+- `Hero.UpdateWeaponLook` swaps the Animator's controller when the equipped weapon changes (`daggerLook`, `bowLook`, `staffLook`, `wandLook` on the prefab; the sword look is the prefab's own controller). It keeps the animator parameters across the swap, because swapping resets them.
+- **Limits:**
+  - Every weapon uses the sword's poses, so the bow is swung before it shoots.
+  - The weapons are plain placeholder pixel art; redraw them by editing `WEAPONS` in the tool and rerunning it.
+  - The no-blood death and no-effect block clips use other vendor sheets and still show the sword. Neither is used today.
+  - **The shield is still drawn into every frame**, even with a bow or staff. The plan is to cut it into an overlay layer that shows only while a shield is equipped; that needs the body patched where the shield covered it.
 
 ## Running the game
 
@@ -306,6 +331,7 @@ Tags in use: `Player`, `Enemy`, `NPC`, `Sensor`. Layers: `Ground`, `Player` (mus
 - **Add an NPC behavior**: subclass `NPCInteractionBehavior` with `[CreateAssetMenu(menuName = "NPC/Behaviors/...")]`, create the asset under `ScriptedItems/NPCBehaviors/<NPC>/`, and assign it to an NPC slot. Use `WorldStateManager` bools with unique, descriptive keys (for example `Merchant_Amulet_Given`) for one-time actions.
 - **Add an enemy from a sprite pack**: follow the monster setup (see "Combat and enemies"). Import the sheets at 32 pixels per unit with the pivot at the feet, make clips and an Animator Override Controller of `LightBandit_AnimController` (the attack clip needs a `DealDamage` event), then make a prefab variant of `Bandit` with that controller, a fitted collider and feet width, `spriteFacesRight` set to match the art, and its stats. Finally add it to an `EnemyGenerator` list (`enemyRoomLR`) with a weight and `minDungeonLevel`.
 - **Add a boss**: make a prefab variant of an enemy, add `BossEnemy`, set its patrol points to none, and place it inside a room prefab next to that room's `ExitPoint`. Add an inactive `LootChest` to the room for a reward. Scaling and rewards are Inspector fields on `BossEnemy`.
+- **Change a weapon's look**: edit its shapes in `WEAPONS` in `Tools/HeroWeapons/hero_weapon_sheets.py`, rerun the script, and check the frames with `--preview`. A new weapon type look also needs a field on `Hero` and a case in `Hero.UpdateWeaponLook`.
 - **Add a room**: create a 12x12 `.tmx` in `Assets/Sprites/Tilesets/` using `2D-Platformer-Tileset.tsx`. Make a prefab in `Prefabs/LevelGeneration/Rooms/` with the imported map, a `Room` component, and paired `Node`s at each opening, placed exactly where neighbouring rooms' nodes will sit. Then add it to `RoomGeneration.ruleEntries` in `RoomGenerator.unity`, both as an option under existing room types and as a source type with its own directions.
 - **Add enum values at the end only.** `RoomType`, `ItemType`, `NPCAction`, `NodeShouldGoTo` and `HeroStates` are serialized as integers in scenes, prefabs and assets, so inserting a value in the middle silently remaps existing data.
 
@@ -537,6 +563,11 @@ Design choice (made by the user): turn the imported Monsters pack into enemies; 
 - [x] `EnemyRoomBaseCount` / `LootRoomBaseCount` finally do something: they drive per-level room targets that the generator steers toward (see "Procedural dungeon"). Tunable on `DungeonManager` (no prefab, so change the defaults in code) and on the generator in `RoomGenerator.unity`.
 - **Not play-tested yet.** Check the Console for "short of the targets" warnings and how loot-heavy runs feel.
 
+### 22. Hero weapon art (branch `hero-weapon-art`)
+- [x] Dagger, Bow, Staff and Wand copies of the hero sheet and animations, swapped by weapon type (see "Hero weapon looks" near the top).
+- [ ] **Shield overlay**: cut the shield out of the frames into a layer shown only while a shield is equipped, and patch the torso where it overlapped.
+- **Not play-tested yet.** Look at every animation with each weapon, and watch for leftover sword pixels or weapons in odd places.
+
 ### Needs a design decision (not scheduled)
 - More bosses, or boss attack patterns. Monster bosses could now be made like the Bandit Chief, from the monster prefabs. The Skeleton's unused `Shield` and every monster's `Attack2` sheet could give them a block or a second attack.
 - A flying enemy (the Flying Eye) needs its own movement AI.
@@ -574,7 +605,7 @@ The rework should make the systems the single source of truth. Each window shoul
 **c) Weapon types with their own animations.** The mechanics were done on 2026-10-01 (see "Player attacks"; design choice by the user: bow, staff and wand fire projectiles). Still open: animations per type, since the art decision below is still waiting. The original plan: The weapons are already different kinds: Broadsword, Crimson Blade and Emberfang (swords), Venomfang Dagger (dagger), Giant's Cleaver (heavy two-hander), Elven Longbow (bow), Staff of Frostbite (staff) and Spark Wand (wand). All of them currently swing the same sword combo (`Attack1-3`), and the hero sprite always shows the same sword.
 - Data: add a weapon type to items (for example `"weaponType": "Sword" | "Dagger" | "Greatweapon" | "Bow" | "Staff" | "Wand"` in `items.json`, mapped to an enum in `RuntimeItem`).
 - Combat: the type should choose the attack animation set, attack speed and range (`WeaponSensor` hitbox), and possibly shield compatibility, since two-handers and bows can't be used with a shield. Bows need projectiles, and staffs or wands are the natural first users of the mana foundation (`Mana.TrySpend`, `CharacterStats.TotalMagicPower`).
-- **Art is the blocker**: the Hero Knight pack only has sword animations, with the sword baked into the sprite sheet. Options to discuss with the user:
+- **Art was the blocker** (resolved by the weapon-look copies, see "Hero weapon looks"): the Hero Knight pack only has sword animations, with the sword baked into the sprite sheet. Options to discuss with the user:
   - Find a character pack with multiple weapon animations.
   - Draw the weapon as a separate sprite on top of a weaponless body.
   - Keep the sword animations and change only timing, range and effects per type.

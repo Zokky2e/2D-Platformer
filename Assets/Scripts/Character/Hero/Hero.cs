@@ -74,6 +74,14 @@ public class Hero : MonoBehaviour, IEntity {
     // How far below the hands a ledge's top can be and still be grabbed (the hero is then snapped to it)
     private const float LedgeGrabRange = 0.3f;
 
+    [Header("Weapon looks")]
+    [Tooltip("The hero's animations holding each weapon type: override controllers made by Tools/HeroWeapons. The sword look is the prefab's own controller, which greatweapons use too")]
+    [SerializeField] RuntimeAnimatorController daggerLook;
+    [SerializeField] RuntimeAnimatorController bowLook;
+    [SerializeField] RuntimeAnimatorController staffLook;
+    [SerializeField] RuntimeAnimatorController wandLook;
+    private RuntimeAnimatorController swordLook;
+
     [SerializeField] bool       m_noBlood = false;
     public bool NoBlood
     {
@@ -193,6 +201,7 @@ public class Hero : MonoBehaviour, IEntity {
     void Start ()
     {
         m_animator = GetComponent<Animator>();
+        swordLook = m_animator.runtimeAnimatorController;
         m_body2d = GetComponent<Rigidbody2D>();
         boxCollider = GetComponent<BoxCollider2D>();
         m_spriteRenderer = GetComponent<SpriteRenderer>();
@@ -217,6 +226,57 @@ public class Hero : MonoBehaviour, IEntity {
             ItemSystem.Instance.AddToPlayerInventory(new[] {18, 18, 19, 20 });
             ItemSystem.Instance.AddAndEquipOnPlayer(new[] {69, 420, 1337});
             playerHealth.SetHealth(playerHealth.MaxHealth); // Full health including the kit's bonuses
+        }
+        EquipmentSystem.Instance.OnEquipmentChanged += UpdateWeaponLook;
+        UpdateWeaponLook();
+    }
+
+    private void OnDestroy()
+    {
+        if (EquipmentSystem.HasInstance)
+            EquipmentSystem.Instance.OnEquipmentChanged -= UpdateWeaponLook;
+    }
+
+    // Shows the hero holding the equipped weapon type by swapping in that type's copy of the animations
+    private void UpdateWeaponLook()
+    {
+        Item weapon = EquipmentSystem.Instance.GetItem(EquipmentSlot.Weapon);
+        RuntimeAnimatorController look = (weapon != null ? weapon.WeaponType : WeaponType.Sword) switch
+        {
+            WeaponType.Dagger => daggerLook,
+            WeaponType.Bow => bowLook,
+            WeaponType.Staff => staffLook,
+            WeaponType.Wand => wandLook,
+            _ => swordLook,
+        };
+        if (look == null)
+            look = swordLook;
+        if (m_animator.runtimeAnimatorController == look)
+            return;
+
+        // Swapping the controller resets the animator's parameters; keep the ones the states have set
+        // (for example LedgeGrab while hanging), or the hero would show the wrong pose until they change
+        AnimatorControllerParameter[] parameters = m_animator.parameters;
+        object[] values = new object[parameters.Length];
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            values[i] = parameters[i].type switch
+            {
+                AnimatorControllerParameterType.Float => m_animator.GetFloat(parameters[i].nameHash),
+                AnimatorControllerParameterType.Int => m_animator.GetInteger(parameters[i].nameHash),
+                AnimatorControllerParameterType.Bool => m_animator.GetBool(parameters[i].nameHash),
+                _ => null, // Triggers are one-shot; nothing to keep
+            };
+        }
+        m_animator.runtimeAnimatorController = look;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            switch (values[i])
+            {
+                case float f: m_animator.SetFloat(parameters[i].nameHash, f); break;
+                case int n: m_animator.SetInteger(parameters[i].nameHash, n); break;
+                case bool b: m_animator.SetBool(parameters[i].nameHash, b); break;
+            }
         }
     }
     void Update()
