@@ -19,6 +19,15 @@ public class DungeonGenerator : MonoBehaviour
     private readonly List<GameObject> spawnedRooms = new List<GameObject>();
     private const int MaxBuildAttempts = 5;
 
+    [Header("Room mix")]
+    [Tooltip("Weight multiplier for enemy or loot rooms once the dungeon has as many as DungeonManager aims for")]
+    [SerializeField] private float overTargetWeight = 0.1f;
+    [Tooltip("Weight multiplier for enemy or loot rooms that are still missing when few rooms are left to place")]
+    [SerializeField] private float catchUpWeight = 10f;
+    private readonly Dictionary<RoomType, int> roomTargets = new Dictionary<RoomType, int>();
+    private readonly Dictionary<RoomType, int> roomCounts = new Dictionary<RoomType, int>();
+    private int expansionStepsLeft;
+
     [SerializeField]
     private CameraFollow camera;
     private Vector2 lowestPoint = new Vector2(-11, -11);
@@ -44,12 +53,18 @@ public class DungeonGenerator : MonoBehaviour
         numberOfTiles = dungeonManager.DungeonSize;
         // The boss room holds the only exit, and the fill phase can only place it at an open exit facing
         // right. If the layout left none, build a new layout rather than trap the player
+        // The room mix is steered toward the targets while building; a layout that still misses them is
+        // rebuilt too, but the last attempt is kept if it has an exit
+        roomTargets[RoomType.Enemy] = dungeonManager.EnemyRoomTarget;
+        roomTargets[RoomType.Loot] = dungeonManager.LootRoomTarget;
         for (int attempt = 1; attempt <= MaxBuildAttempts; attempt++)
         {
             BuildDungeon();
-            if (hasBossRoom)
+            if (hasBossRoom && MissingRooms() == 0)
                 break;
-            Debug.LogWarning($"Dungeon layout {attempt} had no room for the boss room (the exit); building another");
+            Debug.LogWarning(hasBossRoom
+                ? $"Dungeon layout {attempt} has {RoomMix()}, short of the targets; building another"
+                : $"Dungeon layout {attempt} had no room for the boss room (the exit); building another");
             if (attempt < MaxBuildAttempts)
                 ClearDungeon();
         }
@@ -61,6 +76,7 @@ public class DungeonGenerator : MonoBehaviour
     void BuildDungeon()
     {
         occupiedTiles = new List<Tuple<int, int>>();
+        roomCounts.Clear();
         // Spawn the first tile at (0,0) and register its exits
         Room firstTile = Instantiate(startTilePrefab, Vector2.zero, Quaternion.identity);
         spawnedRooms.Add(firstTile.gameObject);
@@ -190,13 +206,13 @@ public class DungeonGenerator : MonoBehaviour
 
         foreach (DungeonRoomType roomTile in roomGeneration.rules[room.Type][node.shouldGoTo])
         {
-            totalChance += roomTile.spawnChance;
+            totalChance += RoomWeight(roomTile);
         }
         float randomValue = UnityEngine.Random.Range(0f, totalChance);
         float currentChance = 0f;
         foreach (DungeonRoomType roomTile in roomGeneration.rules[room.Type][node.shouldGoTo])
         {
-            currentChance += roomTile.spawnChance;
+            currentChance += RoomWeight(roomTile);
             if (randomValue <= currentChance)
             {
                 return roomTile.tilePrefab;
@@ -204,6 +220,30 @@ public class DungeonGenerator : MonoBehaviour
         }
         return null;
     }
+
+    // The rule's weight, adjusted toward DungeonManager's enemy and loot room targets: rarer once a type has
+    // enough rooms, much likelier while it's short and the rooms left to place barely cover what's missing
+    float RoomWeight(DungeonRoomType option)
+    {
+        RoomType type = option.tilePrefab.Type;
+        if (!roomTargets.TryGetValue(type, out int target))
+            return option.spawnChance;
+        int placed = roomCounts.TryGetValue(type, out int count) ? count : 0;
+        if (placed >= target)
+            return option.spawnChance * overTargetWeight;
+        return MissingRooms() >= expansionStepsLeft ? option.spawnChance * catchUpWeight : option.spawnChance;
+    }
+
+    int MissingRooms()
+    {
+        int missing = 0;
+        foreach (KeyValuePair<RoomType, int> target in roomTargets)
+            missing += Mathf.Max(0, target.Value - (roomCounts.TryGetValue(target.Key, out int count) ? count : 0));
+        return missing;
+    }
+
+    string RoomMix() =>
+        string.Join(", ", roomTargets.Select(t => $"{(roomCounts.TryGetValue(t.Key, out int n) ? n : 0)}/{t.Value} {t.Key} rooms"));
 
     void SpawnTile(Room lastRoom, Node exitNode, bool fillEmpty = false)
     {
@@ -299,6 +339,7 @@ public class DungeonGenerator : MonoBehaviour
 
             // Add newTileLocation to occupiedTiles
             occupiedTiles.Add(newTile.location);
+            roomCounts[newTile.Type] = (roomCounts.TryGetValue(newTile.Type, out int placed) ? placed : 0) + 1;
 
             CheckForNewCameraBounds(newTile.transform.position);
         }
@@ -329,6 +370,7 @@ public class DungeonGenerator : MonoBehaviour
         Room lastRoom = null;
         for (int i = 0; i <= numberOfTiles; i++)
         {
+            expansionStepsLeft = numberOfTiles - i + 1;
 
             if (activeNodes.Count > 0)
             {

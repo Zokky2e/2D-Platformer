@@ -261,10 +261,16 @@ Third-party packs: `Hero Knight - Pixel Art` (the player), `Bandits - Pixel Art`
 - **Algorithm** (`DungeonGenerator.Awake` → `GenerateDungeon`):
   1. `DungeonManager.RegenerateDungeon()` increments `DungeonLevel` and sets `DungeonSize = 8 + 8*level` for levels below 5. That gives 16, 24, 32 and 40, and stays at 40 after that.
   2. It places `startRoom` at grid (0,0), marks its exits as going Right, and places an `empty` cap at (−1,0).
-  3. `ExpandToMaxDungeon()` repeatedly takes `activeNodes[0]` and calls `SpawnTile`. That computes the neighbour grid cell and world offset (map width and height), skips occupied cells, rolls a weighted room from the rules, reassigns node directions by position relative to the tile's bounds center, and searches for an entrance node pair that aligns with the exit pair (up to 10 attempts). On success it links the nodes, marks the cell occupied, grows the camera bounds, and queues the new room's other exits (sorted by direction).
+  3. `ExpandToMaxDungeon()` repeatedly takes `activeNodes[0]` and calls `SpawnTile`. That computes the neighbour grid cell and world offset (map width and height), skips occupied cells, rolls a weighted room from the rules (weights adjusted by the room mix, below), reassigns node directions by position relative to the tile's bounds center, and searches for an entrance node pair that aligns with the exit pair (up to 10 attempts). On success it links the nodes, marks the cell occupied, grows the camera bounds, and queues the new room's other exits (sorted by direction).
   4. **Fill phase**: while exits remain open, the first open exit facing **Right** gets the `bossRoom` and every other exit gets an `empty` cap.
   5. If the fill phase found no open right-facing exit for the boss room, the dungeon would have no exit, so `ClearDungeon` destroys the layout and `BuildDungeon` tries again (up to 5 attempts, logging a warning each time). The dungeon level only goes up once.
   6. It moves the player to the `EntryPoint` inside `startRoom`.
+- **Room mix** (2026-10-01): `DungeonManager.EnemyRoomTarget` and `LootRoomTarget` set how many enemy and loot rooms a run aims for.
+  - Enemy rooms: `EnemyRoomBaseCount` (4) plus 2 per level after the first, at most 40% of `DungeonSize`.
+  - Loot rooms: `LootRoomBaseCount` (3) plus 1 every second level, at most 20% of `DungeonSize`.
+  - `DungeonGenerator.RoomWeight` multiplies a rule's weight by `overTargetWeight` (0.1) once that room type has reached its target. While a type is short and the expansion steps left barely cover what's missing, it multiplies by `catchUpWeight` (10) instead.
+  - A layout that still misses a target is rebuilt like one without a boss room; the last attempt is kept if it has an exit.
+  - Why both directions: the rules weight loot and enemy rooms 25 each against 5 for corridors, so dungeons rarely lacked them, but a 40-room dungeon had about 14 loot rooms. A rough simulation of the room-type chain, which ignores geometry, gives about 5 enemy and 4 loot rooms at level 1 and about 13 and 8 at level 4, with targets met in essentially every run.
 - `bossRoom` contains an `ExitPoint` back to `Level0`, the **Bandit Chief** in the lower corridor between the entrance and the exit, and an inactive `RewardChest` (a `LootChest`) that appears when the boss dies. The chest is inside a `Room`, so its loot is rolled fresh each run.
 - Enemy rooms contain an `EnemyGenerator`, and loot rooms contain a `LootChest`.
 - `DungeonGeneratorEditor` adds Inspector buttons to step the generator manually in the Editor.
@@ -335,7 +341,6 @@ Everything added on 2026-09-29 compiles. The first play-test (2026-09-30) found 
 - Enemies: Bandit, Goblin, Mushroom, Skeleton, Spiketrap, and the Bandit Chief boss. They all share one walking melee AI. The Flying Eye and the Pet Cats pack are unused.
 - No meta-progression, no win condition, and no story beyond the "Dark Lord" line.
 - Unity Behavior and NavMesh packages are installed but unused. The commit history shows they were tried and dropped in favour of the transform-based `Enemy` AI.
-- `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are declared but unused.
 
 ## Audit backlog (2026-09-29)
 
@@ -528,8 +533,11 @@ Design choice (made by the user): turn the imported Monsters pack into enemies; 
 - [x] Clicking a menu button while paused no longer starts an attack.
 - **Not play-tested yet.** Tune strike timing (0.18 s), swing times and reach against how the swings look, and check projectile speed, range and sprites.
 
+### 21. Dungeon room mix (branch `dungeon-mix`)
+- [x] `EnemyRoomBaseCount` / `LootRoomBaseCount` finally do something: they drive per-level room targets that the generator steers toward (see "Procedural dungeon"). Tunable on `DungeonManager` (no prefab, so change the defaults in code) and on the generator in `RoomGenerator.unity`.
+- **Not play-tested yet.** Check the Console for "short of the targets" warnings and how loot-heavy runs feel.
+
 ### Needs a design decision (not scheduled)
-- `DungeonManager.EnemyRoomBaseCount` / `LootRoomBaseCount` are unused.
 - More bosses, or boss attack patterns. Monster bosses could now be made like the Bandit Chief, from the monster prefabs. The Skeleton's unused `Shield` and every monster's `Attack2` sheet could give them a block or a second attack.
 - A flying enemy (the Flying Eye) needs its own movement AI.
 
