@@ -13,7 +13,7 @@ public class OpenShopBehavior : NPCInteractionBehavior
         if (shopInventory != null && shopInventory.itemsData?.Count > 0) 
         {
             shopInventory.SetItems();
-            ShopUI shopUI = FindAnyObjectByType<ShopUI>();
+            ShopUI shopUI = ShopUI.Instance;
             if (shopUI != null) 
             {
                 shopUI.shopKeeperName = npc.npcName;

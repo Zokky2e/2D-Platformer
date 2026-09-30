@@ -1,104 +1,94 @@
 ﻿using System;
-using System.Collections;
-using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
+// Equipment slots, in display and save order. Each has an element with the same name in EquipmentUI.uxml.
+// Add new slots at the end.
+public enum EquipmentSlot
+{
+    Weapon,
+    Shield,
+    Helmet,
+    Armor,
+    Gloves,
+    Accessory1,
+    Accessory2
+}
+
+// What the hero wears. Items move between the inventory and the slots only through EquipItem and
+// UnequipItem, which also apply and remove the item's effects, so the stats always match what is worn.
 public class EquipmentSystem : Singleton<EquipmentSystem>
 {
-    public Item EquippedWeapon;
-    public Item EquippedShield;
-    public Item EquippedArmor;
-    public Item EquippedAccessory;
-
-    private Hero player;
+    private readonly Dictionary<EquipmentSlot, Item> equipped = new Dictionary<EquipmentSlot, Item>();
     public event Action OnEquipmentChanged;
 
-    protected override void Awake()
+    private static Hero Player =>
+        PersistentPlayerHealth.Instance != null ? PersistentPlayerHealth.Instance.GetComponent<Hero>() : null;
+
+    public Item GetItem(EquipmentSlot slot) => equipped.TryGetValue(slot, out Item item) ? item : null;
+
+    // Everything worn, in slot order
+    public IEnumerable<Item> EquippedItems =>
+        ((EquipmentSlot[])Enum.GetValues(typeof(EquipmentSlot))).Select(GetItem).Where(item => item != null);
+
+    public static bool IsEquippable(Item item) => item != null && item.Type != ItemType.Consumable;
+
+    // The slot an item goes into. An accessory takes a free accessory slot, or replaces the first one
+    public EquipmentSlot SlotFor(Item item)
     {
-        base.Awake();
-        if (IsDuplicate) return;
-        player = FindAnyObjectByType<Hero>();
-        StartCoroutine(ApplyInitialStats());
+        switch (item.Type)
+        {
+            case ItemType.Weapon: return EquipmentSlot.Weapon;
+            case ItemType.Shield: return EquipmentSlot.Shield;
+            case ItemType.Helmet: return EquipmentSlot.Helmet;
+            case ItemType.Armor: return EquipmentSlot.Armor;
+            case ItemType.Gloves: return EquipmentSlot.Gloves;
+            case ItemType.Accessory:
+                if (GetItem(EquipmentSlot.Accessory1) == null)
+                    return EquipmentSlot.Accessory1;
+                if (GetItem(EquipmentSlot.Accessory2) == null)
+                    return EquipmentSlot.Accessory2;
+                return EquipmentSlot.Accessory1;
+            default:
+                throw new ArgumentException($"{item.Name} ({item.Type}) can't be equipped");
+        }
     }
 
-    private IEnumerator ApplyInitialStats()
-    {
-        // Only items assigned in the Inspector need this. Anything equipped while we wait (the starting
-        // kit, a loaded save) goes through EquipItem, which already applies its effects
-        Item[] initialItems = { EquippedWeapon, EquippedShield, EquippedArmor, EquippedAccessory };
-        while (player.stats == null || player.Health == null)
-        {
-            yield return null; // Wait for next frame
-        }
-        foreach (Item item in initialItems)
-        {
-            if (item != null)
-                item.ApplyEffects(player.stats, player.Health);
-        }
-    }
-
+    // Moves an item from the inventory into its slot. Whatever was in the slot goes back to the inventory with
+    // its effects removed, then the new item's effects are applied. An item that isn't in the inventory is
+    // ignored, so a click on an out-of-date window can't equip, and apply, the same item twice.
     public void EquipItem(Item item)
     {
-        switch(item.Type)
+        InventorySystem inventory = InventorySystem.Instance;
+        if (!IsEquippable(item) || !inventory.RemoveItem(item, notify: false))
+            return;
+        EquipmentSlot slot = SlotFor(item);
+        Item previous = GetItem(slot);
+        if (previous != null)
         {
-            case ItemType.Weapon:
-                Swap(ref EquippedWeapon, item);
-                break;
-            case ItemType.Shield:
-                Swap(ref EquippedShield, item);
-                break;
-            case ItemType.Armor:
-                Swap(ref EquippedArmor, item);
-                break;
-            case ItemType.Accessory:
-                Swap(ref EquippedAccessory, item);
-                break;
+            previous.RemoveEffects(Player.stats, Player.Health);
+            inventory.AddItem(previous, notify: false);
         }
-        item.ApplyEffects(player.stats, player.Health);
+        equipped[slot] = item;
+        item.ApplyEffects(Player.stats, Player.Health);
+        NotifyChanged(inventory);
     }
 
-    public void UnequipItem(ItemType type)
+    public void UnequipItem(EquipmentSlot slot)
     {
-        Item equippedItem = null;
-        if (type == ItemType.Weapon && EquippedWeapon != null)
-        {
-            InventorySystem.Instance.AddItem(EquippedWeapon);
-            equippedItem = EquippedWeapon;
-            EquippedWeapon = null;
-        }
-        else if (type == ItemType.Shield && EquippedShield != null)
-        {
-            InventorySystem.Instance.AddItem(EquippedShield);
-            equippedItem = EquippedShield;
-            EquippedShield = null;
-        }
-        else if (type == ItemType.Armor && EquippedArmor != null)
-        {
-            InventorySystem.Instance.AddItem(EquippedArmor);
-            equippedItem = EquippedArmor;
-            EquippedArmor = null;
-        }
-        else if (type == ItemType.Accessory && EquippedAccessory != null)
-        {
-            InventorySystem.Instance.AddItem(EquippedAccessory);
-            equippedItem = EquippedAccessory;
-            EquippedAccessory = null;
-        }
-
-        OnEquipmentChanged?.Invoke();
-        if (equippedItem != null)
-        {
-            equippedItem.RemoveEffects(player.stats, player.Health);
-        }
+        Item item = GetItem(slot);
+        if (item == null)
+            return;
+        equipped.Remove(slot);
+        item.RemoveEffects(Player.stats, Player.Health);
+        InventorySystem.Instance.AddItem(item, notify: false);
+        NotifyChanged(InventorySystem.Instance);
     }
 
-    private void Swap(ref Item equippedSlot, Item newItem)
+    // Listeners hear about the change once the slots, the inventory and the stats all agree
+    private void NotifyChanged(InventorySystem inventory)
     {
-        if (equippedSlot != null)
-        {
-            InventorySystem.Instance.AddItem(equippedSlot);
-        }
-        equippedSlot = newItem;
-        InventorySystem.Instance.RemoveItem(newItem);
-        OnEquipmentChanged?.Invoke();
+        inventory.NotifyChanged();
+        SafeEvent.Invoke(OnEquipmentChanged);
     }
 }

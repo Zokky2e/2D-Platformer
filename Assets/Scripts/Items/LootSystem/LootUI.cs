@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+// The loot window for an open chest. Take moves the selected item into the inventory, Take All empties the
+// chest and closes the window.
 public class LootUI : MonoBehaviour
 {
     private bool isOpen = false;
     public UIDocument uiDocument;
     private LootChest lootChest;
-    private InventorySystem playerInventory;
     private ScrollView loot;
     private VisualElement lootPanel;
     private VisualElement lootContainer;
@@ -20,45 +21,24 @@ public class LootUI : MonoBehaviour
     private ItemTooltip tooltip;
     private int selectedItem = -1;
     private VisualElement selectedItemSlot;
-    private static LootUI instance;
+    public static LootUI Instance { get; private set; }
 
     private void Awake()
     {
         // Keep the first UI; Level0 brings its own copy every time it is reloaded
-        if (instance != null && instance != this)
+        if (Instance != null && Instance != this)
         {
             gameObject.SetActive(false);
             Destroy(gameObject);
             return;
         }
 
-        instance = this;
+        Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    // Update is called once per frame
-    void Update()
+    void Start()
     {
-        if (isOpen && GameInput.CancelPressed)
-        {
-            ToggleLootInventory();
-        }
-
-    }
-    private void OnEnable()
-    {
-        StartCoroutine(WaitForInventorySystem());
-    }
-
-    private IEnumerator WaitForInventorySystem()
-    {
-        // Wait until the InventorySystem instance is ready
-        while (InventorySystem.Instance == null)
-        {
-            yield return null; // Wait for next frame
-        }
-        playerInventory = InventorySystem.Instance; // Find inventory
-
         var root = uiDocument.rootVisualElement;
         lootPanel = root;
         lootContainer = root.Q<VisualElement>("LootContainer");
@@ -75,6 +55,16 @@ public class LootUI : MonoBehaviour
         RefreshLoot();
     }
 
+    // Update is called once per frame
+    void Update()
+    {
+        if (isOpen && GameInput.CancelPressed)
+        {
+            ToggleLootInventory();
+        }
+
+    }
+
     public void ToggleLootInventory()
     {
         isOpen = lootPanel.style.display == DisplayStyle.None;
@@ -86,8 +76,12 @@ public class LootUI : MonoBehaviour
             ClearSelection();
             RefreshLoot();
         }
-        else if (lootChest.Loot.Count > 0)
-            lootChest.CloseChest(); // Emptied chests stay open
+        else
+        {
+            tooltip.Hide();
+            if (lootChest != null && lootChest.Loot.Count > 0)
+                lootChest.CloseChest(); // Emptied chests stay open
+        }
         Time.timeScale = isOpen ? 0f : 1f;
         PauseMenu.GameIsPaused = isOpen;
         StartCoroutine(DelayUIFlagClear());
@@ -101,7 +95,10 @@ public class LootUI : MonoBehaviour
 
     private void RefreshLoot()
     {
+        if (loot == null)
+            return; // Not set up yet (Start)
         loot.Clear();
+        selectedItemSlot = null;
         if (lootChest != null)
             loot.Add(UpdateItemsUI(lootChest.Loot));
         UpdateButtons();
@@ -128,7 +125,7 @@ public class LootUI : MonoBehaviour
         Item item = lootChest.Loot[selectedItem];
         lootChest.Loot.RemoveAt(selectedItem);
         lootChest.SaveContents();
-        playerInventory.AddItem(item);
+        InventorySystem.Instance.AddItem(item);
         ClearSelection();
 
         if (lootChest.Loot.Count == 0)
@@ -142,12 +139,14 @@ public class LootUI : MonoBehaviour
         if (lootChest == null)
             return;
 
+        InventorySystem inventory = InventorySystem.Instance;
         foreach (Item item in lootChest.Loot)
         {
-            playerInventory.AddItem(item);
+            inventory.AddItem(item, notify: false);
         }
         lootChest.Loot.Clear();
         lootChest.SaveContents();
+        inventory.NotifyChanged();
         ClearSelection();
         ToggleLootInventory();
     }
@@ -155,24 +154,24 @@ public class LootUI : MonoBehaviour
     private ScrollView UpdateItemsUI(List<Item> items)
     {
         VisualElement grid = ItemGrid.Build(items, 4, tooltip,
-            item => "Sell: " + ((int)MathF.Floor(item.Price * 0.6f)) + " G",
+            item => "Sell: " + ShopSystem.SellPrice(item) + " G",
             UpdateTooltipPosition,
             OnItemSlotClick,
             index => index == selectedItem);
+        if (selectedItem >= 0 && selectedItem < items.Count)
+            selectedItemSlot = grid.ElementAt(selectedItem); // The redrawn slot, for recoloring later
         return ItemGrid.WrapInScrollView(grid);
     }
     private void OnItemSlotClick(VisualElement itemSlot, int index)
     {
+        if (selectedItemSlot != null)
+            selectedItemSlot.style.backgroundColor = ItemGrid.SlotColor;
         if (index == selectedItem && selectedItem != -1)
         {
-            itemSlot.style.backgroundColor = ItemGrid.SlotColor;
-            selectedItem =  -1;
-            selectedItemSlot = null;
+            ClearSelection();
         }
         else
         {
-            if (selectedItemSlot != null)
-                selectedItemSlot.style.backgroundColor = ItemGrid.SlotColor;
             selectedItemSlot = itemSlot;
             selectedItem = index;
             itemSlot.style.backgroundColor = ItemGrid.SelectedColor;

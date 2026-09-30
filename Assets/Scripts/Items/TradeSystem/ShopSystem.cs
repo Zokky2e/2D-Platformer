@@ -1,46 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 
+[AutoCreatedSingleton]
 public class ShopSystem : Singleton<ShopSystem>
 {
+    public static int SellPrice(Item item) => (int)Math.Floor(item.Price * 0.6f);
 
-    protected override void Awake()
-    {
-        base.Awake();
-    }
-
-    public bool SellItem(int i)
+    public bool SellItem(Item item)
     {
         var inventorySystem = InventorySystem.Instance;
-
-        if (i < 0 || i >= inventorySystem.items.Count)
+        if (item == null || !item.IsSellable)
             return false;
+        if (!inventorySystem.RemoveItem(item, notify: false))
+            return false; // Not in the inventory any more
 
-        var item = inventorySystem.items[i];
-        if (item == null) { return false; }
-        if (!item.IsSellable) { return false; }
-
-        inventorySystem.UpdateGold((int)Math.Floor(item.Price * 0.6f));
-        inventorySystem.RemoveItem(item);
+        inventorySystem.UpdateGold(SellPrice(item)); // Raises the change event once, after both changes
         return true;
     }
 
-    public bool BuyItem(ShopInventory shopInventory, int i)
+    public bool BuyItem(ShopInventory shopInventory, Item item)
     {
-        if (shopInventory == null) { return false; }
-        var items = shopInventory.items;
+        if (shopInventory == null || item == null)
+            return false;
+        int index = shopInventory.items.IndexOf(item);
+        if (index < 0)
+            return false; // Sold out since the window was drawn
         var inventorySystem = InventorySystem.Instance;
-
-        if (i < 0 || i >= items.Count)
+        if (inventorySystem.gold < item.Price)
             return false;
 
-        var item = items[i];
-        if (item == null) { return false; }
-        if (inventorySystem.gold < item.Price) { return false; }
-
-        shopInventory.RecordPurchase(i); // Before the inventory events below refresh the shop window
-        inventorySystem.UpdateGold(-item.Price);
-        inventorySystem.AddItem(item);
+        shopInventory.RecordPurchase(index);
+        inventorySystem.AddItem(item, notify: false);
+        inventorySystem.UpdateGold(-item.Price); // Raises the change event once, after the stock and inventory changed
         return true;
     }
 }

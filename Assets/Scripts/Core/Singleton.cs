@@ -1,5 +1,12 @@
 ﻿using UnityEngine;
 
+// Marks a Singleton that has no prefab and is created on first use. Any other Singleton created that way logs
+// a warning, because it means its prefab is missing from the loaded scenes or was destroyed.
+[System.AttributeUsage(System.AttributeTargets.Class)]
+public class AutoCreatedSingletonAttribute : System.Attribute
+{
+}
+
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     private static T _instance;
@@ -20,6 +27,8 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 
                 if (_instance == null)
                 {
+                    if (!System.Attribute.IsDefined(typeof(T), typeof(AutoCreatedSingletonAttribute)))
+                        Debug.LogWarning($"No {typeof(T).Name} found, so an empty one was created. Its prefab is missing from the loaded scenes or was destroyed (enter Play mode from Level0).");
                     GameObject singletonObject = new GameObject(typeof(T).Name);
                     _instance = singletonObject.AddComponent<T>();
                     DontDestroyOnLoad(singletonObject);
@@ -28,6 +37,9 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
             return _instance;
         }
     }
+    // Whether an instance exists. Unlike Instance it never creates one, so it's safe in OnDestroy
+    public static bool HasInstance => !_isQuitting && _instance != null;
+
     // True on a duplicate that is being removed; subclasses should return right after base.Awake()
     protected bool IsDuplicate { get; private set; }
 

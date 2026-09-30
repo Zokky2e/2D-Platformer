@@ -7,7 +7,9 @@ public enum ItemType
     Weapon,
     Shield,
     Armor,
-    Accessory
+    Accessory,
+    Helmet, // New types go at the end: the values are serialized as integers
+    Gloves
 }
 
 [System.Serializable]

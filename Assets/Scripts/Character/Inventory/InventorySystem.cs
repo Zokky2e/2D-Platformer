@@ -1,41 +1,45 @@
+using System;
 using System.Collections.Generic;
 
 public class InventorySystem : Singleton<InventorySystem>
 {
     public List<Item> items = new List<Item>(); // List of items
     public int gold = 50;
-    public delegate void OnInventoryChanged();
-    private Hero player;
-    public event OnInventoryChanged onInventoryChanged;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    protected override void Awake()
-    {
-        base.Awake();
-        if (IsDuplicate) return;
-        player = FindAnyObjectByType<Hero>();
-    }
+    public event Action onInventoryChanged; // Raised after items or gold change
 
-    public void AddItem(Item newItem)
+    private static Hero Player =>
+        PersistentPlayerHealth.Instance != null ? PersistentPlayerHealth.Instance.GetComponent<Hero>() : null;
+
+    // notify: false lets a caller make several changes and raise the event once at the end (NotifyChanged)
+    public void AddItem(Item newItem, bool notify = true)
     {
         items.Add(newItem);
-        onInventoryChanged?.Invoke(); // Update UI when item is added
+        if (notify)
+            NotifyChanged();
     }
 
-    public void RemoveItem(Item item)
+    // Returns false if the item isn't in the inventory
+    public bool RemoveItem(Item item, bool notify = true)
     {
-        items.Remove(item);
-        onInventoryChanged?.Invoke(); // Update UI when item is removed
+        bool removed = items.Remove(item);
+        if (removed && notify)
+            NotifyChanged();
+        return removed;
     }
 
     public void UpdateGold(int amount)
     {
         gold += amount;  //positive to add, negative to remove
-        onInventoryChanged?.Invoke(); // Update UI when gold edited
+        NotifyChanged();
     }
 
-    public void UseItem(Item item) 
+    public void UseItem(Item item)
     {
-        item.UseItem(player.stats, player.Health);
+        if (!items.Contains(item))
+            return; // Already used, for example clicked in a window that hadn't redrawn yet
+        item.UseItem(Player.stats, Player.Health);
         RemoveItem(item); // Remove after use
     }
+
+    public void NotifyChanged() => SafeEvent.Invoke(onInventoryChanged);
 }

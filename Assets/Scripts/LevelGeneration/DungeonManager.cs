@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+[AutoCreatedSingleton]
 public class DungeonManager : Singleton<DungeonManager>
 {
     public int DungeonLevel = 0; // Tracks the dungeon level

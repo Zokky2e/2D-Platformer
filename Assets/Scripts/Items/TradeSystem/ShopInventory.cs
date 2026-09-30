@@ -35,8 +35,9 @@ public class ShopInventory : ScriptableObject
         }
     }
 
-    // -1 means unlimited
-    public int StockLeft(int index) => StockLeft(stockEntries[index]);
+    // -1 means unlimited; 0 for an index that isn't in the stock (any more)
+    public int StockLeft(int index) =>
+        index >= 0 && index < stockEntries.Count ? StockLeft(stockEntries[index]) : 0;
 
     private int StockLeft(ShopItemData entry) =>
         entry.quantity < 0 ? -1 : Mathf.Max(0, entry.quantity - WorldStateManager.Instance.GetInt(BoughtKey(entry)));

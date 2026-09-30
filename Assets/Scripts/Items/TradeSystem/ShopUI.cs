@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+// The shop window: the player's items on one side, the shop's stock on the other. Like InventoryUI it keeps
+// no copy of either list: it redraws from InventorySystem.Instance and the ShopInventory on each change,
+// when it opens and after each purchase or sale. Buying and selling act on the selected item, not a slot
+// index, so an out-of-date slot can't buy the wrong thing.
 public class ShopUI : MonoBehaviour
 {
     private bool isOpen = false;
     public UIDocument uiDocument;
-    private InventorySystem playerInventory;
     private ShopInventory shopInventory;
     private ScrollView playerItems;
     private ScrollView shopItems;
@@ -21,22 +24,51 @@ public class ShopUI : MonoBehaviour
     private Button buyButton;
     private ItemTooltip tooltip;
     public string shopKeeperName;
-    private (bool isPlayerInventory , int itemId) selectedItem = (false, -1);
-    private VisualElement selectedItemSlot;
-    private static ShopUI instance;
+    // The selected slot (for the highlight) and the item it showed (for the action)
+    private (bool isPlayerInventory, int index) selectedSlot = (false, -1);
+    private Item selectedItem;
+    private VisualElement selectedSlotElement;
+    public static ShopUI Instance { get; private set; }
 
     private void Awake()
     {
         // Keep the first UI; Level0 brings its own copy every time it is reloaded
-        if (instance != null && instance != this)
+        if (Instance != null && Instance != this)
         {
             gameObject.SetActive(false);
             Destroy(gameObject);
             return;
         }
 
-        instance = this;
+        Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    void Start()
+    {
+        var root = uiDocument.rootVisualElement;
+        shopPanel = root;
+        shopContainer = root.Q<VisualElement>("ShopContainer");
+        playerItems = shopContainer.Q<ScrollView>("PlayerItems");
+        shopItems = shopContainer.Q<ScrollView>("ShopItems");
+        closeButton = root.Q<Button>("ExitButton");
+        sellButton = root.Q<Button>("SellButton");
+        buyButton = root.Q<Button>("BuyButton");
+        gold = root.Q<Label>("Gold");
+        shopKeeper = root.Q<Label>("ShopKeeper");
+        shopPanel.style.display = DisplayStyle.None;
+        closeButton.clicked += ToggleShopInventory;
+        sellButton.clicked += OnSellButtonClicked;
+        buyButton.clicked += OnBuyButtonClicked;
+        tooltip = new ItemTooltip(shopContainer);
+        InventorySystem.Instance.onInventoryChanged += Refresh;
+        Refresh();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this && InventorySystem.HasInstance)
+            InventorySystem.Instance.onInventoryChanged -= Refresh;
     }
 
     // Update is called once per frame
@@ -48,40 +80,6 @@ public class ShopUI : MonoBehaviour
         }
 
     }
-    private void OnEnable()
-    {
-        StartCoroutine(WaitForInventorySystem());
-    }
-
-    private IEnumerator WaitForInventorySystem()
-    {
-        // Wait until the InventorySystem instance is ready
-        while (InventorySystem.Instance == null)
-        {
-            yield return null; // Wait for next frame
-        }
-        playerInventory = InventorySystem.Instance; // Find inventory
-        playerInventory.onInventoryChanged += UpdateInventoryUI; // Same delegate OnDisable removes
-
-        var root = uiDocument.rootVisualElement;
-        shopPanel = root;
-        shopContainer = root.Q<VisualElement>("ShopContainer");
-        playerItems = shopContainer.Q<ScrollView>("PlayerItems");
-        shopItems = shopContainer.Q<ScrollView>("ShopItems");
-        closeButton = root.Q<Button>("ExitButton");
-        sellButton = root.Q<Button>("SellButton");
-        buyButton = root.Q<Button>("BuyButton");
-        sellButton.SetEnabled(false);
-        buyButton.SetEnabled(false);
-        gold = root.Q<Label>("Gold");
-        shopKeeper = root.Q<Label>("ShopKeeper");
-        shopPanel.style.display = DisplayStyle.None;
-        closeButton.clicked += ToggleShopInventory;
-        sellButton.clicked += OnSellButtonClicked;
-        buyButton.clicked += OnBuyButtonClicked;
-        tooltip = new ItemTooltip(shopContainer);
-        UpdateInventoryUI();
-    }
 
     public void ToggleShopInventory()
     {
@@ -89,8 +87,13 @@ public class ShopUI : MonoBehaviour
 
         shopPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
 
-        if(isOpen)
-            UpdateInventoryUI();
+        if (isOpen)
+        {
+            ClearSelection();
+            Refresh();
+        }
+        else
+            tooltip.Hide();
         shopKeeper.text = shopKeeperName;
         Time.timeScale = isOpen ? 0f : 1f;
         PauseMenu.GameIsPaused = isOpen;
@@ -103,57 +106,72 @@ public class ShopUI : MonoBehaviour
         CoreUI.IsUIOpen = isOpen;
     }
 
-    private void OnDisable()
+    // Redraws both grids, the gold and the buttons from the current inventory and stock
+    private void Refresh()
     {
-        if (playerInventory != null)
-            playerInventory.onInventoryChanged -= UpdateInventoryUI;
-    }
+        if (playerItems == null)
+            return; // Not set up yet (Start)
+        InventorySystem inventory = InventorySystem.Instance;
+        List<Item> stock = shopInventory != null ? shopInventory.items : new List<Item>();
 
-    private void UpdateInventoryUI()
-    {
-        //player section
-        playerItems.Clear(); // Clear old items
-        gold.text = InventorySystem.Instance.gold.ToString();
-        playerItems.Add(UpdateItemsUI(playerInventory.items, true)); 
+        // Drop a selection whose slot now holds something else (sold, bought out, or moved)
+        if (selectedItem != null)
+        {
+            List<Item> selectedList = selectedSlot.isPlayerInventory ? inventory.items : stock;
+            if (selectedSlot.index >= selectedList.Count || selectedList[selectedSlot.index] != selectedItem)
+                ClearSelection();
+        }
 
-        //shop section
+        gold.text = inventory.gold.ToString();
+        playerItems.Clear();
+        playerItems.Add(BuildGrid(inventory.items, true));
         shopItems.Clear(); // Also when the last item sold out
         if (shopInventory != null)
-            shopItems.Add(UpdateItemsUI(shopInventory.items));
+            shopItems.Add(BuildGrid(stock, false));
+        SetEnabledButtons();
     }
 
-    private ScrollView UpdateItemsUI(List<Item> items, bool isPlayerInventory = false)
+    private ScrollView BuildGrid(List<Item> items, bool isPlayerInventory)
     {
-        VisualElement grid = ItemGrid.Build(items, 16, tooltip,
+        List<Item> shown = new List<Item>(items); // Each slot keeps the item it was drawn with
+        VisualElement grid = ItemGrid.Build(shown, 16, tooltip,
             item => isPlayerInventory
-                ? "Sell: " + (int)MathF.Floor(item.Price * 0.6f) + " G"
+                ? "Sell: " + ShopSystem.SellPrice(item) + " G"
                 : "Buy: " + item.Price + " G" + StockText(item),
             UpdateTooltipPosition,
-            (itemSlot, index) =>
-            {
-                OnItemSlotClick(isPlayerInventory, itemSlot, index);
-                SetEnabledButtons();
-            },
-            index => (isPlayerInventory, index) == selectedItem);
+            (itemSlot, index) => OnItemSlotClick(isPlayerInventory, itemSlot, index, shown[index]),
+            index => (isPlayerInventory, index) == selectedSlot);
+        if (selectedItem != null && selectedSlot.isPlayerInventory == isPlayerInventory)
+            selectedSlotElement = grid.ElementAt(selectedSlot.index); // The redrawn slot, for recoloring later
         return ItemGrid.WrapInScrollView(grid);
     }
-    private void OnItemSlotClick(bool isPlayerInventory, VisualElement itemSlot, int index)
+
+    // Selecting only recolors slots, so the grids (and their scroll position) aren't rebuilt
+    private void OnItemSlotClick(bool isPlayerInventory, VisualElement itemSlot, int index, Item item)
     {
-        if ((isPlayerInventory, index) == selectedItem && selectedItem.itemId != -1)
+        if (selectedSlotElement != null)
+            selectedSlotElement.style.backgroundColor = ItemGrid.SlotColor;
+        if ((isPlayerInventory, index) == selectedSlot)
         {
-            itemSlot.style.backgroundColor = ItemGrid.SlotColor;
-            selectedItem = (false, -1);
-            selectedItemSlot = null;
+            ClearSelection();
         }
         else
         {
-            if (selectedItemSlot != null)
-                selectedItemSlot.style.backgroundColor = ItemGrid.SlotColor;
-            selectedItemSlot = itemSlot;
-            selectedItem = (isPlayerInventory, index);
+            selectedSlot = (isPlayerInventory, index);
+            selectedItem = item;
+            selectedSlotElement = itemSlot;
             itemSlot.style.backgroundColor = ItemGrid.SelectedColor;
         }
+        SetEnabledButtons();
     }
+
+    private void ClearSelection()
+    {
+        selectedSlot = (false, -1);
+        selectedItem = null;
+        selectedSlotElement = null;
+    }
+
     private void UpdateTooltipPosition(Vector2 mousePosition)
     {
         float tooltipWidth = tooltip.Width;
@@ -182,52 +200,36 @@ public class ShopUI : MonoBehaviour
 
     private void SetEnabledButtons()
     {
-        if (selectedItem.itemId != -1)
-        {
-            if (selectedItem.isPlayerInventory)
-            {
-                sellButton.SetEnabled(playerInventory.items[selectedItem.itemId].IsSellable);
-                buyButton.SetEnabled(false);
-            }
-            else
-            {
-                sellButton.SetEnabled(false);
-                buyButton.SetEnabled(true);
-            }
-        }
-        else
-        {
-            sellButton.SetEnabled(false);
-            buyButton.SetEnabled(false);
-
-        }
+        bool fromPlayer = selectedItem != null && selectedSlot.isPlayerInventory;
+        bool fromShop = selectedItem != null && !selectedSlot.isPlayerInventory;
+        sellButton.SetEnabled(fromPlayer && selectedItem.IsSellable);
+        buyButton.SetEnabled(fromShop && InventorySystem.Instance.gold >= selectedItem.Price);
     }
 
     public void OnSellButtonClicked()
     {
-        var shopSystem = ShopSystem.Instance;
-        //select item, if in player inventory have a button for sell
-        //if in shop inventory have a button for buy
-        Debug.Log($"Selling {playerInventory.items[selectedItem.itemId].Name}");
-        bool isSold = shopSystem.SellItem(selectedItem.itemId);
-        if (isSold) selectedItem = (false, -1); 
-        SetEnabledButtons();
+        if (selectedItem == null || !selectedSlot.isPlayerInventory)
+            return;
+        Debug.Log($"Selling {selectedItem.Name}");
+        if (ShopSystem.Instance.SellItem(selectedItem))
+            ClearSelection();
+        Refresh();
     }
-    
+
     public void OnBuyButtonClicked()
     {
-        var shopSystem = ShopSystem.Instance;
-        //select item, if in player inventory have a button for sell
-        //if in shop inventory have a button for buy
-        Debug.Log($"Buying {shopInventory.items[selectedItem.itemId].Name}");
-        bool isBought = shopSystem.BuyItem(shopInventory, selectedItem.itemId);
-        if (isBought) selectedItem = (false, -1); 
-        SetEnabledButtons();
+        if (selectedItem == null || selectedSlot.isPlayerInventory)
+            return;
+        Debug.Log($"Buying {selectedItem.Name}");
+        if (ShopSystem.Instance.BuyItem(shopInventory, selectedItem))
+            ClearSelection();
+        Refresh();
     }
 
     private string StockText(Item item)
     {
-        int left = shopInventory.StockLeft(shopInventory.items.IndexOf(item));
+        int index = shopInventory.items.IndexOf(item);
+        int left = index >= 0 ? shopInventory.StockLeft(index) : 0;
         return left > 0 ? $" ({left} left)" : "";
     }
 

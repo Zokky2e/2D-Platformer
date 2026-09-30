@@ -1,12 +1,14 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+// The inventory window (with the equipment panel, EquipmentUI). It keeps no copy of the inventory: every
+// redraw reads InventorySystem.Instance, and it redraws on each change, when it opens and after each click.
 public class InventoryUI : MonoBehaviour
 {
     private bool isOpen = false;
     public UIDocument uiDocument;
-    private InventorySystem inventory;
     private VisualElement inventoryPanel;
     private VisualElement inventoryContainer;
     public EquipmentUI equipmentUI;
@@ -14,56 +16,26 @@ public class InventoryUI : MonoBehaviour
     private Label gold;
     private Button closeButton;
     private ItemTooltip tooltip;
-    private static InventoryUI instance;
+    public static InventoryUI Instance { get; private set; }
 
     private void Awake()
     {
         // Keep the first UI; Level0 brings its own copy every time it is reloaded
-        if (instance != null && instance != this)
+        if (Instance != null && Instance != this)
         {
             gameObject.SetActive(false);
             Destroy(gameObject);
             return;
         }
 
-        instance = this;
+        Instance = this;
         DontDestroyOnLoad(gameObject);
     }
+
     void Start()
     {
-        equipmentUI = GetComponentInChildren<EquipmentUI>();
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (!PauseMenu.GameIsPaused && !isOpen && GameInput.InventoryPressed)
-        {
-            ToggleInventory();
-        }
-
-        if (isOpen && GameInput.CancelPressed) 
-        {
-            ToggleInventory();
-        }
-
-    }
-    private void OnEnable()
-    {
-        StartCoroutine(WaitForInventorySystem());
-    }
-
-    private IEnumerator WaitForInventorySystem()
-    {
-        // Wait until the InventorySystem instance is ready
-        while (InventorySystem.Instance == null)
-        {
-            yield return null; // Wait for next frame
-        }
-        inventory = InventorySystem.Instance; // Find inventory
-        inventory.onInventoryChanged += UpdateInventoryUI; // Same delegate OnDisable removes
-            
+        if (equipmentUI == null)
+            equipmentUI = GetComponentInChildren<EquipmentUI>();
 
         var root = uiDocument.rootVisualElement;
         inventoryPanel = root;
@@ -74,7 +46,29 @@ public class InventoryUI : MonoBehaviour
         inventoryPanel.style.display = DisplayStyle.None;
         closeButton.clicked += ToggleInventory;
         tooltip = new ItemTooltip(inventoryContainer);
-        UpdateInventoryUI();
+        InventorySystem.Instance.onInventoryChanged += Refresh;
+        Refresh();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this && InventorySystem.HasInstance)
+            InventorySystem.Instance.onInventoryChanged -= Refresh;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (!PauseMenu.GameIsPaused && !isOpen && GameInput.InventoryPressed)
+        {
+            ToggleInventory();
+        }
+
+        if (isOpen && GameInput.CancelPressed)
+        {
+            ToggleInventory();
+        }
+
     }
 
     private void ToggleInventory()
@@ -82,6 +76,10 @@ public class InventoryUI : MonoBehaviour
         isOpen = inventoryPanel.style.display == DisplayStyle.None;
 
         inventoryPanel.style.display = isOpen ? DisplayStyle.Flex : DisplayStyle.None;
+        if (isOpen)
+            Refresh(); // Never show what was drawn before, whatever happened while the window was closed
+        else
+            tooltip.Hide();
 
         Time.timeScale = isOpen ? 0f : 1f;
         PauseMenu.GameIsPaused = isOpen;
@@ -94,31 +92,26 @@ public class InventoryUI : MonoBehaviour
         CoreUI.IsUIOpen = isOpen;
     }
 
-    private void OnDisable()
+    // Redraws gold, items and equipment from the systems' current state
+    public void Refresh()
     {
-        if (inventory != null)
-            inventory.onInventoryChanged -= UpdateInventoryUI;
-    }
-
-    private void UpdateInventoryUI()
-    {
-        //inventoryContainer.Clear(); //Clear inventory
-        items.Clear(); // Clear old items
-        gold.text = InventorySystem.Instance.gold.ToString();
-        UpdateInventoryItemsUI();
-    }
-
-    private void UpdateInventoryItemsUI()
-    {
-        VisualElement grid = ItemGrid.Build(inventory.items, 16, tooltip,
+        if (items == null)
+            return; // Not set up yet (Start)
+        InventorySystem inventory = InventorySystem.Instance;
+        gold.text = inventory.gold.ToString();
+        items.Clear();
+        List<Item> shown = new List<Item>(inventory.items); // Each slot keeps the item it was drawn with
+        VisualElement grid = ItemGrid.Build(shown, 16, tooltip,
             item => item.Price + " G",
             UpdateTooltipPosition,
             (itemSlot, index) =>
             {
                 itemSlot.style.backgroundColor = ItemGrid.SlotColor;
-                OnItemClick(inventory.items[index]);
+                OnItemClick(shown[index]);
             });
         items.Add(grid);
+        if (equipmentUI != null)
+            equipmentUI.Refresh();
     }
 
     private void UpdateTooltipPosition(Vector2 mousePosition)
@@ -149,17 +142,10 @@ public class InventoryUI : MonoBehaviour
 
     public void OnItemClick(Item item)
     {
-        if (item.Type != ItemType.Consumable)
-        {
+        if (EquipmentSystem.IsEquippable(item))
             EquipmentSystem.Instance.EquipItem(item);
-        }
         else
-        {
-            UseItem(item);
-        }
-    }
-    private void UseItem(Item item)
-    {
-        inventory.UseItem(item);
+            InventorySystem.Instance.UseItem(item);
+        Refresh(); // The change events redraw too; this keeps the window right even if a listener failed
     }
 }

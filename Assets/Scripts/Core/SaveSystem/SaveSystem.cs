@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 
 // Reads the save file once at startup and writes it at checkpoints, on scene changes and when quitting
 // from the pause menu. There is no main menu, so an existing save is always continued.
+[AutoCreatedSingleton]
 public class SaveSystem : Singleton<SaveSystem>
 {
     public const int CurrentVersion = 1;
@@ -113,8 +114,6 @@ public class SaveSystem : Singleton<SaveSystem>
         if (health == null)
             return null; // No player this session (Play mode started outside Level0)
 
-        EquipmentSystem equipment = EquipmentSystem.Instance;
-        Item[] equipped = { equipment.EquippedWeapon, equipment.EquippedShield, equipment.EquippedArmor, equipment.EquippedAccessory };
         GameRespawn respawn = GameRespawn.Instance;
         return new PlayerSaveData
         {
@@ -122,7 +121,7 @@ public class SaveSystem : Singleton<SaveSystem>
             health = health.CurrentHealth,
             mana = health.TryGetComponent(out Mana mana) ? mana.CurrentMana : null,
             dungeonLevel = DungeonManager.Instance.DungeonLevel,
-            equippedItemIds = ToItemIds(equipped),
+            equippedItemIds = ToItemIds(EquipmentSystem.Instance.EquippedItems),
             inventoryItemIds = ToItemIds(InventorySystem.Instance.items),
             checkpointScene = respawn.CheckpointScene,
             checkpointX = respawn.CheckpointPosition.x,
@@ -145,8 +144,7 @@ public class SaveSystem : Singleton<SaveSystem>
         if (player == null)
             return false;
 
-        // Equip before filling the inventory: EquipItem removes the item from the inventory,
-        // which would take a spare copy of the same item if the inventory were filled first
+        // Worn items first (each is added to the inventory and equipped from there), then the rest of the inventory
         ItemSystem.Instance.AddAndEquipOnPlayer(player.equippedItemIds.ToArray());
         ItemSystem.Instance.AddToPlayerInventory(player.inventoryItemIds.ToArray());
         InventorySystem.Instance.UpdateGold(player.gold - InventorySystem.Instance.gold);

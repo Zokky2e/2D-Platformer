@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 
+[AutoCreatedSingleton]
 public class ItemSystem : Singleton<ItemSystem>
 {
 
@@ -38,8 +39,10 @@ public class ItemSystem : Singleton<ItemSystem>
     {
         List<Item> items = GetItemsFromDatabase(itemIds);
         if (items.Count == 0) { return; }
-        foreach (Item item in items) 
+        foreach (Item item in items)
         {
+            // Into the inventory first: EquipItem only equips items the hero owns
+            InventorySystem.Instance.AddItem(item, notify: false);
             EquipmentSystem.Instance.EquipItem(item);
         }
     }

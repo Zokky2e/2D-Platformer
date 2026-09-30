@@ -67,7 +67,7 @@ public class LootChest : MonoBehaviour
         if (Loot != null && Loot.Count > 0)
         {
             yield return new WaitForSeconds(0.5f);
-            LootUI lootUI = FindAnyObjectByType<LootUI>();
+            LootUI lootUI = LootUI.Instance;
             if (lootUI != null)
             {
                 lootUI.SetLootChest(this);

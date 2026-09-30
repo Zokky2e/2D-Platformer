@@ -1,136 +1,97 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+// The equipment panel of the inventory window. Every EquipmentSlot has an element with the same name in
+// EquipmentUI.uxml, whose background image is the empty-slot icon. A filled slot shows the item's icon and
+// tooltip, and clicking it unequips the item. The callbacks are registered once and look up the slot's item
+// when they fire, so they can never act on an item the slot no longer holds.
 public class EquipmentUI : MonoBehaviour
 {
     public UIDocument uiDocument;
-    private EquipmentSystem equipment;
-    private TemplateContainer equipmentContainer;
-    private VisualElement weaponSlot;
-    private VisualElement shieldSlot;
-    private VisualElement armorSlot;
-    private VisualElement accessorySlot;
-    public Sprite defaultWeaponSprite;
-    public Sprite defaultShieldSprite;
-    public Sprite defaultArmorSprite;
-    public Sprite defaultAccessorySprite;
+    private readonly Dictionary<EquipmentSlot, VisualElement> slots = new Dictionary<EquipmentSlot, VisualElement>();
+    private readonly Dictionary<EquipmentSlot, StyleBackground> emptyIcons = new Dictionary<EquipmentSlot, StyleBackground>();
     private ItemTooltip tooltip;
+    private bool isSetUp;
 
-    private void OnEnable()
+    private void Start()
     {
-        StartCoroutine(WaitForEquipmentSystem());
-    }
-
-    private IEnumerator WaitForEquipmentSystem()
-    {
-        // Wait until the InventorySystem instance is ready
-        while (EquipmentSystem.Instance == null)
-        {
-            yield return null; // Wait for next frame
-        }
-        equipment = EquipmentSystem.Instance; // Find inventory
         var root = uiDocument.rootVisualElement;
-
-        // Find the "Loadout" VisualElement
-        var loadoutContainer = root.Q<VisualElement>("Loadout");
-
-        if (loadoutContainer != null)
+        VisualElement equipmentContainer = root.Q<VisualElement>("Loadout")?.Q<TemplateContainer>("EquipmentContainer");
+        if (equipmentContainer == null)
         {
-            equipmentContainer = loadoutContainer.Q<TemplateContainer>("EquipmentContainer");
-            weaponSlot = equipmentContainer.Q<VisualElement>("Weapon");
-            shieldSlot = equipmentContainer.Q<VisualElement>("Shield");
-            armorSlot = equipmentContainer.Q<VisualElement>("Armor");
-            accessorySlot = equipmentContainer.Q<VisualElement>("Accessory");
+            Debug.LogError("EquipmentUI: the inventory UXML has no Loadout/EquipmentContainer");
+            return;
         }
-
-        // Listen for equipment changes
-        EquipmentSystem.Instance.OnEquipmentChanged += UpdateUI;
-
-        // Initialize UI
         tooltip = new ItemTooltip(equipmentContainer);
-        UpdateUI();
-    }
 
-    private void OnDisable()
-    {
-        if (EquipmentSystem.Instance != null) 
-        { 
-            EquipmentSystem.Instance.OnEquipmentChanged -= UpdateUI;
-        }
-    }
-
-    private void UpdateUI()
-    {
-        UpdateSlot(weaponSlot, EquipmentSystem.Instance.EquippedWeapon, defaultWeaponSprite);
-        UpdateSlot(shieldSlot, EquipmentSystem.Instance.EquippedShield, defaultShieldSprite);
-        UpdateSlot(armorSlot, EquipmentSystem.Instance.EquippedArmor, defaultArmorSprite);
-        UpdateSlot(accessorySlot, EquipmentSystem.Instance.EquippedAccessory, defaultAccessorySprite);
-    }
-
-    private void UpdateSlot(VisualElement slot, Item item, Sprite defaultSprite)
-    {
-        var sprite = item != null ? item.Sprite : defaultSprite;
-        if (slot != null)
+        foreach (EquipmentSlot slot in Enum.GetValues(typeof(EquipmentSlot)))
         {
-            slot.style.backgroundImage = new StyleBackground(sprite); 
+            VisualElement element = equipmentContainer.Q<VisualElement>(slot.ToString());
+            if (element == null)
+            {
+                Debug.LogError($"EquipmentUI: EquipmentUI.uxml has no element named '{slot}'");
+                continue;
+            }
+            slots[slot] = element;
+            emptyIcons[slot] = element.style.backgroundImage; // The icon set in the UXML
+            EquipmentSlot captured = slot;
+            element.RegisterCallback<MouseEnterEvent>(evt => OnSlotEnter(captured, evt.mousePosition));
+            element.RegisterCallback<MouseMoveEvent>(evt => UpdateTooltipPosition(evt.mousePosition));
+            element.RegisterCallback<MouseLeaveEvent>(evt =>
+            {
+                element.style.backgroundColor = ItemGrid.SlotColor;
+                tooltip.Hide();
+            });
+            element.RegisterCallback<ClickEvent>(evt => OnSlotClick(captured));
+        }
+
+        EquipmentSystem.Instance.OnEquipmentChanged += Refresh;
+        isSetUp = true;
+        Refresh();
+    }
+
+    private void OnDestroy()
+    {
+        if (isSetUp && EquipmentSystem.HasInstance)
+            EquipmentSystem.Instance.OnEquipmentChanged -= Refresh;
+    }
+
+    // Shows each slot's item, or its empty-slot icon
+    public void Refresh()
+    {
+        if (!isSetUp)
+            return;
+        foreach (KeyValuePair<EquipmentSlot, VisualElement> pair in slots)
+        {
+            Item item = EquipmentSystem.Instance.GetItem(pair.Key);
+            VisualElement slot = pair.Value;
+            slot.style.backgroundImage = item != null ? new StyleBackground(item.Sprite) : emptyIcons[pair.Key];
             slot.style.backgroundSize = new BackgroundSize(Length.Percent(100), Length.Percent(100)); // Fit the element
-
-        }
-
-        slot.UnregisterCallback<MouseEnterEvent, Item>(OnMouseEnter);
-        slot.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
-        slot.UnregisterCallback<MouseLeaveEvent>(OnMouseLeave);
-        slot.UnregisterCallback<ClickEvent, Item>(OnItemClick);
-        if (item != null)
-        {
-            slot.RegisterCallback<MouseEnterEvent, Item>(OnMouseEnter, item); // Pass item via lambda
-            slot.RegisterCallback<MouseMoveEvent>(OnMouseMove);
-            slot.RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
-            slot.RegisterCallback<ClickEvent, Item>(OnItemClick, item);
-        }
-        else
-        {
-            // If no item, reset the slot background
             slot.style.backgroundColor = ItemGrid.SlotColor;
         }
     }
 
-    private void OnEquipedItemClicked(VisualElement slot, Item item)
+    private void OnSlotEnter(EquipmentSlot slot, Vector2 mousePosition)
     {
-        if (item != null) 
-        {
-            equipment.UnequipItem(item.Type);
-        }
-    }
-    private void OnMouseEnter(MouseEnterEvent evt, Item item)
-    {
-        var slot = evt.target as VisualElement;
-        slot.style.backgroundColor = ItemGrid.HoverColor;
+        Item item = EquipmentSystem.Instance.GetItem(slot);
+        if (item == null)
+            return;
+        slots[slot].style.backgroundColor = ItemGrid.HoverColor;
         tooltip.Show(item, item.Price + " G");
-        UpdateTooltipPosition(evt.mousePosition);
+        UpdateTooltipPosition(mousePosition);
     }
 
-    private void OnMouseMove(MouseMoveEvent evt)
+    private void OnSlotClick(EquipmentSlot slot)
     {
-        UpdateTooltipPosition(evt.mousePosition);
-    }
-
-    private void OnMouseLeave(MouseLeaveEvent evt)
-    {
-        var slot = evt.target as VisualElement;
-        slot.style.backgroundColor = ItemGrid.SlotColor; // Reset background when leaving
-
         tooltip.Hide();
-    }
-
-    private void OnItemClick(ClickEvent evt, Item item)
-    {
-        var slot = evt.target as VisualElement;
-        slot.style.backgroundColor = ItemGrid.SlotColor; // Reset background after clicking
-
-        tooltip.Hide();
-        OnEquipedItemClicked(slot, item);
+        EquipmentSystem.Instance.UnequipItem(slot);
+        // The change events redraw both panels; this keeps them right even if a listener failed
+        if (InventoryUI.Instance != null)
+            InventoryUI.Instance.Refresh();
+        else
+            Refresh();
     }
 
     private void UpdateTooltipPosition(Vector2 mousePosition)
